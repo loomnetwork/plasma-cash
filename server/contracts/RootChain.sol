@@ -106,26 +106,15 @@ contract RootChain is ERC721Receiver {
         emit Deposit(from, tokenId, _data); // create a utxo at `uid`
     }
 
-    /// @param txPos [0] Plasma block number in which the transaction occured
-    /// @param txPos [1] Transaction Index within the block
+    /// Concept: Pass in the transaction that is being exited along with a reference to a previous valid transaction
+    /// IF the previous transaction has valid merkle proof and was included in the specified block , then check that the signature on the previous transaction's new_owner is valid for the ecrecover for the current transaction. if valid, add to texits 
     // https://github.com/FourthState/plasma-mvp-rootchain/blob/master/contracts/RootChain/RootChain.sol#L165
-    function startExit(uint256[2] txPos, address owner, uint tokenId, bytes txBytes, bytes proof) public {
-        bytes32 txHash = keccak256(owner, tokenId);
-        uint256 priority = 1000000000*txPos[0] + 10000*txPos[1];
-
-        if (txPos[0] % childBlockInterval != 0 ) { // if exiting a deposit transaction
-            require(txHash == childChain[txPos[0]].root); 
-        } else {
-
-            // require(Validate.checkSigs( ... )
-
-            // If signatures are valid, check that tx was included in said block
-            // require(merkleHash.checkMembership(
-            //     txPos[1], childChain[txPos[0]].root, proof),
-            //     "Tx not included in block");
-            
-        }// todo: else check that signatures are correct 
-
+    function startExit(bytes prevTx, bytes exitingTx, bytes prevTxInclusionProof, bytes exitingTxInclusionProof,) public {
+        // Proof = Merkle branch of inclusion in specified block
+        // Also need to check signatures that match. It's OK if previous tx is invalid since someone will be able to challenge that exit as specified in the spec. 
+        
+        // how to set priotiy? 
+        uint priority = 1;
         exitsQueue.insert(priority);
         exits[priority] = Exit({
             owner: owner, 
@@ -133,6 +122,30 @@ contract RootChain is ERC721Receiver {
             created_at: block.timestamp
         });
     }
+    // function startexit(uint256[2] txpos, address owner, uint tokenid, bytes txbytes, bytes proof) public {
+    //     bytes32 txHash = keccak256(owner, tokenId);
+    //     uint256 priority = 1000000000*txPos[0] + 10000*txPos[1];
+
+    //     if (txPos[0] % childBlockInterval != 0 ) { // if exiting a deposit transaction
+    //         require(txHash == childChain[txPos[0]].root); 
+    //     } else {
+
+    //         // require(Validate.checkSigs( ... )
+
+    //         // If signatures are valid, check that tx was included in said block
+    //         // require(merkleHash.checkMembership(
+    //         //     txPos[1], childChain[txPos[0]].root, proof),
+    //         //     "Tx not included in block");
+    //         
+    //     }// todo: else check that signatures are correct 
+
+    //     exitsQueue.insert(priority);
+    //     exits[priority] = Exit({
+    //         owner: owner, 
+    //         tokenId: tokenId, 
+    //         created_at: block.timestamp
+    //     });
+    // // }
 
     function finalizeExits() public {
         require(exitsQueue.currentSize() > 0, "exit queue empty");
