@@ -1,4 +1,5 @@
 import rlp
+from web3.auto import w3
 from ethereum import utils
 from utils.utils import get_sender
 from .block import Block
@@ -37,11 +38,12 @@ class ChildChain(object):
     def submit_block(self, block):
         ''' Submit the merkle root to the chain from the authority '''
         block = rlp.decode(utils.decode_hex(block), Block)
+        signature = block.sig
         if (signature == b'\x00' * 65 or # block needs to be signed by authority, empty signatures do not count
            get_sender(block.hash, signature) != self.authority):
             raise InvalidBlockSignatureException('failed to submit a block')
 
-        merkle_hash = self.current_block.merklize_transaction_set()
+        merkle_hash = w3.toHex(block.merklize_transaction_set())
         self.root_chain.submit_block(merkle_hash)
 
         self.blocks[self.current_block_number] = self.current_block

@@ -108,15 +108,23 @@ contract RootChain is ERC721Receiver {
 
     /// @param txPos [0] Plasma block number in which the transaction occured
     /// @param txPos [1] Transaction Index within the block
-    /// @param txPos [2] Output Index within the transaction (either 0 or 1)
     // https://github.com/FourthState/plasma-mvp-rootchain/blob/master/contracts/RootChain/RootChain.sol#L165
-    function startExit(uint256[2] txPos, address owner, uint tokenId /* and proofs */) public {
+    function startExit(uint256[2] txPos, address owner, uint tokenId, bytes txBytes, bytes proof) public {
         bytes32 txHash = keccak256(owner, tokenId);
         uint256 priority = 1000000000*txPos[0] + 10000*txPos[1];
 
         if (txPos[0] % childBlockInterval != 0 ) { // if exiting a deposit transaction
             require(txHash == childChain[txPos[0]].root); 
-        } // todo: else check that signatures are correct 
+        } else {
+
+            // require(Validate.checkSigs( ... )
+
+            // If signatures are valid, check that tx was included in said block
+            // require(merkleHash.checkMembership(
+            //     txPos[1], childChain[txPos[0]].root, proof),
+            //     "Tx not included in block");
+            
+        }// todo: else check that signatures are correct 
 
         exitsQueue.insert(priority);
         exits[priority] = Exit({

@@ -28,7 +28,10 @@ Child Chain ALWAYS listens for events on the RootChain contract and acts on them
 
 ## TODO
 
-Challenges in contract and client, 
+Challenges in contract and client, proper exiting in contract
+
+`startExit(bytes prevTx, bytes tx, bytes txInclusionProof, bytes prevTxInclusionProof)` 
+Takes in the transaction transfering ownership to the current owner and the proofs necesary to prove their inclusion
 
 ## Dev notes
 ### Using monkeypatched web3.py 4.2.1 version for ganache issues

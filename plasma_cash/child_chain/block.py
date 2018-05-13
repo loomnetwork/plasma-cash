@@ -3,7 +3,7 @@ from rlp.sedes import CountableList, binary
 from web3.auto import w3
 
 from .transaction import Transaction
-
+from utils.utils import get_sender, sign
 from utils.merkle.sparse_merkle_tree import SparseMerkleTree
 
 class Block(rlp.Serializable):

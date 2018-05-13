@@ -20,8 +20,8 @@ class Transaction(rlp.Serializable):
         self.uid = uid
         self.new_owner = ethereum.utils.normalize_address(new_owner)
         self.sig = sig
-
         self.spent = False # not part of the rlp
+        self.make_mutable()
 
     @property
     def hash(self):

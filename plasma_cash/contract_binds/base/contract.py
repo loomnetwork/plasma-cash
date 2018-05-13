@@ -25,7 +25,7 @@ class Contract(object):
         return account
         
 
-    def sign_and_send(self, func, args, gas=300000):
+    def sign_and_send(self, func, args, gas=700000):
         ''' Expecting all arguments in 1 array '''
         signed_tx = self._sign_function_call(
                 func, 
@@ -37,12 +37,12 @@ class Contract(object):
         info = '{}, Args: {}'.format(func.__name__, args)
         try: 
             self._send_raw_tx(signed_tx)
-            info = 'Success '+info
-            self.logger.debug(green(info))
+            # info = 'Success '+info
+            # self.logger.debug(green(info))
         except Exception as e:
             print(e)
             info = 'Failed '+info
-            self.logger.debug(red(info))
+            # self.logger.debug(red(info))
 
     def send_transaction(self, to, value):
         signed_tx = self._sign_transaction(to, value)
@@ -50,7 +50,7 @@ class Contract(object):
         self._send_raw_tx(signed_tx)
 
         info = 'Sent {} to {}'.format(value, to)
-        self.logger.info(green(info))
+        # self.logger.info(green(info))
 
     def _sign_transaction(self, to, value):
         gas = 21000
@@ -80,7 +80,7 @@ class Contract(object):
             TODO: Add option to modify gas
         """
         info = 'Args => {}'.format(args)
-        self.logger.debug(yellow(info))
+        # self.logger.debug(yellow(info))
         # Build the raw transaction
 
         raw_tx = func(*args).buildTransaction({
@@ -88,6 +88,7 @@ class Contract(object):
             # 'gasPrice': self.w3.toWei('10', 'gwei'),
             'nonce': self.nonce
         })
+        raw_tx['to'] = self.w3.toChecksumAddress(raw_tx['to'])
 
         # info = 'Raw transaction before signing => {}'.format(raw_tx)
         # self.logger.debug(yellow(info))
@@ -111,7 +112,7 @@ class Contract(object):
         receipt = self.w3.eth.getTransactionReceipt(tx)
         while receipt == None:
             info = 'Waiting for transaction to get mined...'
-            self.logger.debug(yellow(info))
+            # self.logger.debug(yellow(info))
             time.sleep(12) # Block time avg
             receipt = self.w3.eth.getTransactionReceipt(tx)
         return receipt
