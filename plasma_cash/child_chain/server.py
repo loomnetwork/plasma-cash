@@ -19,3 +19,9 @@ def submit_block():
 def send_tx():
     tx = request.form['tx']
     return container.get_child_chain().send_transaction(tx)
+
+
+@bp.route('/get_block', methods=['POST'])
+def get_block():
+    number = int(request.form['number'])
+    return container.get_child_chain().get_block(number)

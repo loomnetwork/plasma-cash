@@ -22,7 +22,7 @@ class ChildChain(object):
 
         # Watch all deposit events, callback to self._send_deposit
         deposit_filter = self.root_chain.watch_event('Deposit', self._send_deposit, 1)
-    
+
     def _send_deposit(self, event):
         ''' Called by event watcher and creates a deposit block '''
         new_owner = event['args']['depositor']
@@ -70,3 +70,7 @@ class ChildChain(object):
 
     def get_current_block(self):
         return rlp.encode(self.current_block).hex()
+
+    def get_block(self, number):
+        return rlp.encode(self.blocks[number]).hex()
+    

@@ -32,6 +32,9 @@ class Client(object):
         ''' TODO '''
         pass
 
+    def exit(self, prev_tx, exiting_tx, exiting_tx_sig):
+        self.root_chain.start_exit(prev_tx, exiting_tx, exiting_tx_sig)
+
     def submit_block(self):
         block = self.get_current_block()
         block.make_mutable() # mutex for mutability? 
@@ -50,4 +53,8 @@ class Client(object):
 
     def get_current_block(self):
         block = self.child_chain.get_current_block()
+        return rlp.decode(utils.decode_hex(block), Block)
+
+    def get_block(self, number):
+        block = self.child_chain.get_block(number)
         return rlp.decode(utils.decode_hex(block), Block)

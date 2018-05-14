@@ -28,6 +28,13 @@ class ChildChainService(object):
         else:
             raise RequestFailedException('failed with response: {}'.format(response))
 
+    def get_block(self, number):
+        end_point = '/get_block'
+        data = {'number': number}
+        response = self.request(end_point, 'POST', data=data)
+        return response.text
+
+
     def get_current_block(self):
         end_point = '/block'
         response = self.request(end_point, 'GET')
