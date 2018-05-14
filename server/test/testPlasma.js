@@ -75,7 +75,9 @@ contract("Plasma ERC721 WIP", async function(accounts) {
             blk = await plasma.currentDepositBlock.call(); // his deposit is in the second deposit block
             blk = blk - 1000 - 1;
             let txIndex = 1; //since this is a deposit block, therei s only 1 tx
-            await plasma.startExit([blk, 1], bob, 7, {from: random_guy}); // anyone can submit an exit for someone else
+            let txBytes = 0x0; // mock
+            let proof = 0x0;
+            await plasma.startExit([blk, 1], bob, 7, txBytes, proof, {from: random_guy}); // anyone can submit an exit for someone else
             start = (await web3.eth.getBlock('latest')).timestamp;
         });
 
@@ -87,7 +89,7 @@ contract("Plasma ERC721 WIP", async function(accounts) {
 
         it("Exit is finalized, Bob can withdraw his tokens", async function() {
             plasma.withdraw({from : bob});
-            assert.equal(await cards.balanceOf.call(bob), 5);
+            assert.equal((await cards.balanceOf.call(bob)).toNumber(), 5);
             assert.equal(await cards.balanceOf.call(plasma.address), 1);
         })
     });
