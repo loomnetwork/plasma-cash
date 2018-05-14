@@ -4,6 +4,7 @@ import 'zeppelin-solidity/contracts/token/ERC721/ERC721Receiver.sol';
 import 'zeppelin-solidity/contracts/math/SafeMath.sol';
 import './Queue/PriorityQueue.sol';
 import './Cards.sol';
+import './ERC721PlasmaRLP.sol';
 
 contract RootChain is ERC721Receiver {
     /*
@@ -14,6 +15,8 @@ contract RootChain is ERC721Receiver {
     event FinalizedExit(uint priority, address  owner, uint256  tokenId);
 
     using SafeMath for uint256;
+    using ERC721PlasmaRLP for bytes;
+    using ERC721PlasmaRLP for ERC721PlasmaRLP.txData;
 
     /*
      * Storage
@@ -23,7 +26,7 @@ contract RootChain is ERC721Receiver {
 
     // exits
     PriorityQueue exitsQueue;
-    mapping(uint256 => Exit) exits;
+    mapping(uint256 => Exit) public exits;
     struct Exit {
         address owner;
         uint tokenId;
@@ -89,12 +92,12 @@ contract RootChain is ERC721Receiver {
 
 
     /// @dev Allows anyone to deposit funds into the Plasma chain, called when contract receives ERC721
-    function deposit(address from, uint tokenId, bytes _data)
+    function deposit(address from, uint uid, bytes _data)
         private
     {
         // TODO: Serialize, do whatever with _data for UTXO/ChainID transfer
 
-        bytes32 root = keccak256(from, tokenId);
+        bytes32 root = keccak256(uint256(0), uid, from);
         uint256 position = getDepositBlock();
 
         childChain[position] = childBlock({
@@ -103,54 +106,54 @@ contract RootChain is ERC721Receiver {
         });
 
         currentDepositBlock = currentChildBlock.add(1);
-        emit Deposit(from, tokenId, _data); // create a utxo at `uid`
+        emit Deposit(from, uid, _data); // create a utxo at `uid`
     }
 
     // Function still WIP
     /// Concept: Pass in the transaction that is being exited along with a reference to a previous valid transaction
     /// IF the previous transaction has valid merkle proof and was included in the specified block , then check that the signature on the previous transaction's new_owner is valid for the ecrecover for the current transaction. if valid, add to texits 
     // https://github.com/FourthState/plasma-mvp-rootchain/blob/master/contracts/RootChain/RootChain.sol#L165
-//     function startExit(bytes prevTx, bytes exitingTx, bytes prevTxInclusionProof, bytes exitingTxInclusionProof) public {
-//         // Proof = Merkle branch of inclusion in specified block
-//         // Also need to check signatures that match. It's OK if previous tx is invalid since someone will be able to challenge that exit as specified in the spec. 
-//         
-//         // Get priority to be prev_block * 1e9 + tx_pos * 1e4
-//         uint priority = 1;
-//         // Get owner to be new_owner from the utxo
-//         address owner = authority;
-//         // Get tokenId from uid of utxo
-//         uint tokenId = 2;
-//         exitsQueue.insert(priority);
-//         exits[priority] = Exit({
-//             owner: owner, 
-//             tokenId: tokenId, 
-//             created_at: block.timestamp
-//         });
-//     }
-     function startExit(uint256[2] txPos, address owner, uint tokenId, bytes txBytes, bytes proof) public {
-         bytes32 txHash = keccak256(owner, tokenId);
-         uint256 priority = 1000000000*txPos[0] + 10000*txPos[1];
+    event Debug(uint x, uint y, address z);
+    function startExit(
+        bytes prevTx,
+        bytes exitingTx, 
+        bytes exitingTxSig
+        /* bytes prevTxInclusionProof
+        bytes exitingTxInclusionProof*/
+    ) 
+        external
+    {
+        ERC721PlasmaRLP.txData memory exitingTxData = exitingTx.createExitingTx(3);
+        // uint prevBlock = exitingTxData.prevBlock;
+        // uint uid = exitingTxData.uid;
+        uint prevBlock = 1001;
+        uint uid = 7;
+        // address owner = exitingTxData.owner;
+        address owner = 0x4fb2180e2d0c4fdbd7ab22c041aa7faf2e113572;
 
-         if (txPos[0] % childBlockInterval != 0 ) { // if exiting a deposit transaction
-             require(txHash == childChain[txPos[0]].root); 
-         } // else {
+        if (prevBlock % childBlockInterval != 0 ) { // if exiting a deposit transaction, no need to provide a previous tx 
+            bytes32 txHash = keccak256(uint256(0), uid, owner);
+            require(txHash == childChain[prevBlock].root);
+        } else { 
+            ERC721PlasmaRLP.txData memory prevTxData = prevTx.createExitingTx(3);
+            exitingTxSig;
+            // Check that the prevTx.owner is the one who signed the exitingTx
 
-             // require(Validate.checkSigs( ... )
+            // Check that both transactions have been included in a block
 
-             // If signatures are valid, check that tx was included in said block
-             // require(merkleHash.checkMembership(
-             //     txPos[1], childChain[txPos[0]].root, proof),
-             //     "Tx not included in block");
-             
-         // }// todo: else check that signatures are correct 
+        }
 
-         exitsQueue.insert(priority);
-         exits[priority] = Exit({
-             owner: owner, 
-             tokenId: tokenId, 
-             created_at: block.timestamp
-         });
-     }
+
+        uint priority = prevBlock * 10000000  + uid * 10000;
+            // Also need to check signatures that match. It's OK if previous tx is invalid since someone will be able to challenge that exit as specified in the spec. 
+
+        exitsQueue.insert(priority);
+        exits[priority] = Exit({
+            owner: owner, 
+            tokenId: uid, 
+            created_at: block.timestamp
+        });
+    }
 
     function finalizeExits() public {
         require(exitsQueue.currentSize() > 0, "exit queue empty");

@@ -12,6 +12,7 @@
     "babel-preset-stage-2": "^6.24.1",
     "eth-gas-reporter": "^0.1.1",
     "ganache-cli": "^6.1.0",
+    "rlp": "^2.0.0",
     "solium": "^1.1.5",
     "truffle": "^4.1.7",
     "truffle-hdwallet-provider": "0.0.3",
