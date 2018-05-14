@@ -62,8 +62,8 @@ class Contract(object):
             'value': value,
             'gas': gas,
             'gasPrice': gasPrice,
-            'nonce': self.nonce
-            # 'nonce': self.w3.eth.getTransactionCount(self.account.address)
+            #'nonce': self.nonce
+            'nonce': self.w3.eth.getTransactionCount(self.account.address)
         }
 
         # print(raw_tx)
@@ -86,7 +86,9 @@ class Contract(object):
         raw_tx = func(*args).buildTransaction({
             'gas': gas,
             # 'gasPrice': self.w3.toWei('10', 'gwei'),
-            'nonce': self.nonce
+            # 'nonce': self.nonce
+            'nonce': self.w3.eth.getTransactionCount(self.account.address)
+
         })
         raw_tx['to'] = self.w3.toChecksumAddress(raw_tx['to'])
 
