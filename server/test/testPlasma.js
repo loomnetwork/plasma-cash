@@ -73,8 +73,8 @@ contract("Plasma ERC721 WIP", async function(accounts) {
         let blk; 
         it("Random guy submits an exit for Bob's coins (exiter as a service)", async function() {
             // Bob wants to get his coins back after doing whatever on the plasma chain so exits
-            let exitingTxBytes = RLP.encode([1001, 7, bob]).toString('binary');
-            let prevTxbytes = RLP.encode([0, 0, 0]).toString('binary');  // doesn't matter
+            let exitingTxBytes = '0x' + RLP.encode([1001, 7, bob]).toString('hex');
+            let prevTxbytes = '0x' + RLP.encode([0, 0, 0]).toString('hex');  // doesn't matter
             let sig = exitingTxBytes;
             await plasma.startExit(prevTxbytes, exitingTxBytes, sig); // anyone can submit an exit for someone else
             start = (await web3.eth.getBlock('latest')).timestamp;

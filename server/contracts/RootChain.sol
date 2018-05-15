@@ -113,7 +113,6 @@ contract RootChain is ERC721Receiver {
     /// Concept: Pass in the transaction that is being exited along with a reference to a previous valid transaction
     /// IF the previous transaction has valid merkle proof and was included in the specified block , then check that the signature on the previous transaction's new_owner is valid for the ecrecover for the current transaction. if valid, add to texits 
     // https://github.com/FourthState/plasma-mvp-rootchain/blob/master/contracts/RootChain/RootChain.sol#L165
-    event Debug(uint x, uint y, address z);
     function startExit(
         bytes prevTx,
         bytes exitingTx, 
@@ -124,13 +123,9 @@ contract RootChain is ERC721Receiver {
         external
     {
         ERC721PlasmaRLP.txData memory exitingTxData = exitingTx.createExitingTx(3);
-        // uint prevBlock = exitingTxData.prevBlock;
-        // uint uid = exitingTxData.uid;
-        uint prevBlock = 1001;
-        uint uid = 7;
-        // address owner = exitingTxData.owner;
-        address owner = 0x4fb2180e2d0c4fdbd7ab22c041aa7faf2e113572;
-
+        uint prevBlock = exitingTxData.prevBlock;
+        uint uid = exitingTxData.uid;
+        address owner = exitingTxData.owner;
         if (prevBlock % childBlockInterval != 0 ) { // if exiting a deposit transaction, no need to provide a previous tx 
             bytes32 txHash = keccak256(uint256(0), uid, owner);
             require(txHash == childChain[prevBlock].root);
