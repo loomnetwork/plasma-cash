@@ -5,6 +5,7 @@ import 'zeppelin-solidity/contracts/math/SafeMath.sol';
 import './Queue/PriorityQueue.sol';
 import './Cards.sol';
 import './ERC721PlasmaRLP.sol';
+import './ECVerify.sol';
 
 contract RootChain is ERC721Receiver {
     /*
@@ -17,6 +18,7 @@ contract RootChain is ERC721Receiver {
     using SafeMath for uint256;
     using ERC721PlasmaRLP for bytes;
     using ERC721PlasmaRLP for ERC721PlasmaRLP.txData;
+    using ECVerify for bytes32;
 
     /*
      * Storage
@@ -96,8 +98,12 @@ contract RootChain is ERC721Receiver {
         private
     {
         // TODO: Serialize, do whatever with _data for UTXO/ChainID transfer
+        // ERC721PlasmaRLP.txData memory depositTx = _data.createExitingTx(3);
+        // uint prevBlock = depositTx.prevBlock;
+        // uint uid = depositTx.uid;
+        // address owner = depositTx.owner;
 
-        bytes32 root = keccak256(uint256(0), uid, from);
+        bytes32 root = keccak256(_data);
         uint256 position = getDepositBlock();
 
         childChain[position] = childBlock({
@@ -105,7 +111,7 @@ contract RootChain is ERC721Receiver {
             created_at: block.timestamp
         });
 
-        currentDepositBlock = currentChildBlock.add(1);
+        currentDepositBlock = currentDepositBlock.add(1);
         emit Deposit(from, uid, _data); // create a utxo at `uid`
     }
 
@@ -123,21 +129,29 @@ contract RootChain is ERC721Receiver {
         external
     {
         ERC721PlasmaRLP.txData memory exitingTxData = exitingTx.createExitingTx(3);
+        ERC721PlasmaRLP.txData memory prevTxData = prevTx.createExitingTx(3);
         uint prevBlock = exitingTxData.prevBlock;
         uint uid = exitingTxData.uid;
+        require(uid == prevTxData.uid); // check that they are both for the same coin
         address owner = exitingTxData.owner;
-        if (prevBlock % childBlockInterval != 0 ) { // if exiting a deposit transaction, no need to provide a previous tx 
-            bytes32 txHash = keccak256(uint256(0), uid, owner);
-            require(txHash == childChain[prevBlock].root);
-        } else { 
-            ERC721PlasmaRLP.txData memory prevTxData = prevTx.createExitingTx(3);
-            exitingTxSig;
-            // Check that the prevTx.owner is the one who signed the exitingTx
 
-            // Check that both transactions have been included in a block
+        // Check if the exitingTx is signed by the previous tx's owner.
+        bytes32 txHash = keccak256(exitingTx);
+        require(
+            txHash.ecverify(
+                exitingTxSig, prevTxData.owner
+            ), "Invalid sig"
+        );
 
+        // if prevTx is a deposit transaction, no need to provide a previous tx. Need to verify that the block root matches.
+        if (prevBlock % childBlockInterval != 0 ) { 
+            bytes32 prevTxHash = keccak256(prevTx);
+            require(prevTxHash == childChain[prevBlock].root);
+        } 
+        // If exiting a transaction that was not in a deposit block, we need to check its merkle inclusion proof
+        else {  // Block has to be submitted by operator that checkpoints any extra offchain transfers
+             exitingTxSig;
         }
-
 
         uint priority = prevBlock * 10000000  + uid * 10000;
             // Also need to check signatures that match. It's OK if previous tx is invalid since someone will be able to challenge that exit as specified in the spec. 
@@ -149,6 +163,8 @@ contract RootChain is ERC721Receiver {
             created_at: block.timestamp
         });
     }
+
+
 
     function finalizeExits() public {
         require(exitsQueue.currentSize() > 0, "exit queue empty");

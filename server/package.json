@@ -17,6 +17,7 @@
     "truffle": "^4.1.7",
     "truffle-hdwallet-provider": "0.0.3",
     "truffle-privatekey-provider": "0.0.5",
+    "web3-utils": "^1.0.0-beta.34",
     "zeppelin-solidity": "^1.8.0"
   },
   "devDependencies": {},
