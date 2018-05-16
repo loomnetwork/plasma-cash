@@ -4,8 +4,8 @@ import 'zeppelin-solidity/contracts/token/ERC721/ERC721Receiver.sol';
 import 'zeppelin-solidity/contracts/math/SafeMath.sol';
 import './Queue/PriorityQueue.sol';
 import './Cards.sol';
-import './ERC721PlasmaRLP.sol';
-import './ECVerify.sol';
+import '../Libraries/ERC721PlasmaRLP.sol';
+import '../ECVerify.sol';
 
 contract RootChain is ERC721Receiver {
     /*
