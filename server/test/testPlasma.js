@@ -8,18 +8,26 @@ import {increaseTimeTo, duration} from './helpers/increaseTime'
 import assertRevert from './helpers/assertRevert.js';
 const utils = require('web3-utils');
 
+const Promisify = (inner) =>
+new Promise((resolve, reject) =>
+        inner((err, res) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(res);
+            }
+        })
+);
+
 contract("Plasma ERC721 WIP", async function(accounts) {
 
     let cards;
     let plasma;
     let start;
+    let utxo_slot; // the utxo that alice will attempt to withdraw
 
     let [authority, alice, bob, random_guy, random_guy2] = accounts;
 
-    // UTXO = (prev_block, uid, new_owner)
-    let aliceUTXO = '0x' + RLP.encode([0, 1, alice]).toString('hex');
-    // Alice's UTXO Is included in deposit block 1.
-    let bobUTXO = '0x' + RLP.encode([1, 1, bob]).toString('hex')
 
     before("Deploys the contracts", async function() {
         plasma = await RootChain.new({from: authority});
@@ -27,51 +35,70 @@ contract("Plasma ERC721 WIP", async function(accounts) {
         plasma.setCryptoCards(cards.address);
     });
 
-    describe("Tests Plasma Deposits through the linked ERC721 contract", function() {
+    describe("Tests that alice can deposit and withdraw a coin", function() {
 
         it("Registers alice charlie bob", async function() {
             cards.register({from: alice});
             assert.equal(await cards.balanceOf.call(alice), 5);
         });
 
-        it("Transfers NFT 1 from Alice to Plasma contract", async function() {
-
-            // Call without extra data
-            await cards.depositToPlasmaWithData(1, aliceUTXO, {from: alice});
-            assert.equal(await cards.balanceOf.call(alice), 4);
-            assert.equal(await cards.balanceOf.call(plasma.address), 1);
+        it("Transfers NFT 1,2,3 from Alice to Plasma contract", async function() {
+            await cards.depositToPlasma(1, {from: alice});
+            await cards.depositToPlasma(2, {from: alice});
+            await cards.depositToPlasma(3, {from: alice});
+            assert.equal(await cards.balanceOf.call(alice), 2);
+            assert.equal(await cards.balanceOf.call(plasma.address), 3);
 
         });
 
-        it("Checks that events were emitted correctly", async function() {
-            plasma.Deposit({}, {fromBlock: 0, toBlock: 'latest'}).get((error, res) => {
-               let aliceLogs = res[0].args; // Why only 1 event gets emitted?
-                assert.equal(aliceLogs.depositor, alice);
-                assert.equal(aliceLogs.tokenId.toNumber(), 1);
-                assert.equal(aliceLogs.data, aliceUTXO);
-            });
-        });
-    });
+        it("Submits an exit for the UTXO of Coin 2", async function() {
+            const depositEvent = plasma.Deposit({}, {fromBlock: 0, toBlock: 'latest'});
+            const events = await Promisify(cb => depositEvent.get(cb));
+            let coin2 = events[1].args;
 
-    describe("Exit of Alice's UTXO1 by Bob", function() {
+            // data for hash
+            utxo_slot = coin2.slot.toNumber();
+            let txHash = utils.soliditySha3(utxo_slot);
 
-        it("Alice signs a utxo for coin1, operator submits root proof", async function() {
-            let txHash = utils.soliditySha3(bobUTXO);
-            let sig = web3.eth.sign(alice, txHash);
-            await plasma.startExit(aliceUTXO, bobUTXO, sig);
+            let prevBlock = coin2.depositBlockNumber.toNumber();
+            let denom = coin2.denomination.toNumber();
+            let from  = coin2.from;
+            let data = [
+                utxo_slot, // exit coin id
+                prevBlock, // this is a deposit block
+                denom,
+                from
+            ];
+            let utxo = '0x' + RLP.encode(data).toString('hex');
+
+            // sign the exit with Alice's key since she is the owner of the private key that corresponds to `from`. If it's not signed by alice this should fail. 
+            let sig = web3.eth.sign(alice, txHash); 
+           //  console.log('RLP Encoded:', utxo);
+           //  console.log('TXHash:', txHash);
+           //  console.log('Signature', sig);
+            let rootBlkHash = await plasma.childChain.call(prevBlock);
+            // console.log('Block Hash:', rootBlkHash[0]);
+
+            // Since we are exiting a deposit UTXO, there is no need to provide a previous tx or proof.
+            await plasma.startExit(
+                    '0x', utxo,  // prevTx, exitingTx
+                    '0x0', '0x0', // inclusion proofs
+                    sig // msg signed by alice
+                    );
             start = (await web3.eth.getBlock('latest')).timestamp;
         });
 
-        it("Another random guy finalizes the exits 1 week later. No challlenge has happened this time period", async function() {
+        it("A random guy finalizes the exits 1 week later. No challlenge has happened this time period", async function() {
             let expire = start + 3600 * 24 * 8; // 8 days pass, can finalize exit
             await increaseTimeTo(expire);
             await plasma.finalizeExits({from: random_guy2 });
         });
 
-        it("Exit is finalized, Bob can withdraw his tokens", async function() {
-            plasma.withdraw({from : bob});
-            assert.equal((await cards.balanceOf.call(bob)).toNumber(), 1);
-            assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 0);
+        it("Exit is finalized, Alice can withdraw her tokens", async function() {
+            plasma.withdraw(utxo_slot, {from : alice });
+            assert.equal((await cards.balanceOf.call(alice)).toNumber(), 3);
+            assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 2);
         })
     });
+
 });
