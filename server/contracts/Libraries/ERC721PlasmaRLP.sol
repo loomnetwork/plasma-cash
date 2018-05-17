@@ -22,7 +22,7 @@ library ERC721PlasmaRLP {
 
     struct txData {
         uint256 slot;
-        uint256 depositBlock;
+        uint256 prevBlock;
         uint256 denomination;
         address owner;
     }
@@ -53,7 +53,7 @@ library ERC721PlasmaRLP {
         RLPItem[] memory txList = toList(toRLPItem(txDataBytes), 4);
         return txData({
             slot: toUint(txList[0]),
-            depositBlock: toUint(txList[1]),
+            prevBlock: toUint(txList[1]),
             denomination: toUint(txList[2]),
             owner: toAddress(txList[3])
         });
