@@ -24,15 +24,13 @@
   "scripts": {
     "console": "node_modules/.bin/truffle console --network rpc",
     "compile": "node_modules/.bin/truffle compile",
-    "test": "npm run ganache-cli:dev && truffle test --network rpc",
-    "test-meter:gas": "GAS_REPORTER=true npm run ganache-cli:dev && truffle test test/testMeter.js --network rpc",
+    "test": "npm run ganache-cli:dev && node_modules/.bin/truffle test --network rpc",
     "test:gas": "GAS_REPORTER=true npm test",
     "lint": "node_modules/.bin/solium --dir ./contracts",
     "ganache-cli:dev": "scripts/ganache-cli.sh",
     "migrate:dev": "rm -rf build && npm run ganache-cli:dev && npm run migrate:dev:contracts",
     "migrate:dev:contracts": "node_modules/.bin/truffle migrate --all --network rpc",
     "migrate:prod": "node_modules/.bin/truffle migrate --all --network prod",
-    "generate:artifacts-dev": "npm run migrate:dev && truffle exec --network rpc scripts/generate_artifacts.js",
     "prepublishOnly": "node_modules/.bin/truffle compile --all"
   },
   "author": "",

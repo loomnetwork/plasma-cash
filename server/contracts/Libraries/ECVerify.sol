@@ -23,7 +23,7 @@ library ECVerify {
     }
 
     function ecverify(bytes32 hash, bytes sig, address signer) internal pure returns (bool) {
-        return signer == ecrecovery(prefixed(hash), sig);
+        return signer == ecrecovery( prefixed(hash), sig);
     }
 
 	function prefixed(bytes32 hash) private pure returns (bytes32) {
