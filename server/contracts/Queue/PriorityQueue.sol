@@ -1,6 +1,6 @@
 pragma solidity ^0.4.22;
 
-import 'zeppelin-solidity/contracts/math/SafeMath.sol';
+import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
 
 /**
  * @title PriorityQueue

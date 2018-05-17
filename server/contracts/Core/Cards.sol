@@ -1,6 +1,6 @@
 pragma solidity ^0.4.22;
 
-import 'zeppelin-solidity/contracts/token/ERC721/ERC721Token.sol';
+import 'openzeppelin-solidity/contracts/token/ERC721/ERC721Token.sol';
 
 contract CryptoCards is ERC721Token("CryptoCards", "CCC") {
 
