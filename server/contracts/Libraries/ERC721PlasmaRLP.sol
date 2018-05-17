@@ -1,4 +1,4 @@
-pragma solidity ^0.4.22;
+pragma solidity ^0.4.23;
 
 /**
  * @title RLPReader
@@ -21,8 +21,9 @@ library ERC721PlasmaRLP {
     }
 
     struct txData {
-        uint256 prevBlock;
-        uint256 uid;
+        uint256 slot;
+        uint256 depositBlock;
+        uint256 denomination;
         address owner;
     }
 
@@ -35,40 +36,41 @@ library ERC721PlasmaRLP {
 
     function getUtxoPos(bytes memory challengingTxBytes, uint256 numItems, uint256 oIndex)
         internal
-        constant
+        pure
         returns (uint256)
     {
-        var txList = toList(toRLPItem(challengingTxBytes), numItems);
+        RLPItem[] memory txList = toList(toRLPItem(challengingTxBytes), numItems);
         uint256 oIndexShift = oIndex * 3;
         return toUint(txList[0 + oIndexShift]) + toUint(txList[1 + oIndexShift]) + toUint(txList[2 + oIndexShift]);
     }
 
     // prev_block, token id, new owner, sig
-    function createExitingTx(bytes memory txDataBytes, uint256 numItems)
+    function createExitingTx(bytes memory txDataBytes)
         internal
-        constant
+        pure
         returns (txData)
     {
-        var txList = toList(toRLPItem(txDataBytes), numItems);
+        RLPItem[] memory txList = toList(toRLPItem(txDataBytes), 4);
         return txData({
-            prevBlock: toUint(txList[0]),
-            uid: toUint(txList[1]),
-            owner: toAddress(txList[2])
+            slot: toUint(txList[0]),
+            depositBlock: toUint(txList[1]),
+            denomination: toUint(txList[2]),
+            owner: toAddress(txList[3])
         });
     }
 
     /* Iterator */
 
-    function next(Iterator memory self) private constant returns (RLPItem memory subItem) {
-        var ptr = self._unsafe_nextPtr;
-        var itemLength = _itemLength(ptr);
+    function next(Iterator memory self) private pure returns (RLPItem memory subItem) {
+        uint ptr = self._unsafe_nextPtr;
+        uint itemLength = _itemLength(ptr);
         subItem._unsafe_memPtr = ptr;
         subItem._unsafe_length = itemLength;
         self._unsafe_nextPtr = ptr + itemLength;
     }
 
-    function hasNext(Iterator memory self) private constant returns (bool) {
-        var item = self._unsafe_item;
+    function hasNext(Iterator memory self) private pure returns (bool) {
+        RLPItem memory item = self._unsafe_item;
         return self._unsafe_nextPtr < item._unsafe_memPtr + item._unsafe_length;
     }
 
@@ -77,7 +79,7 @@ library ERC721PlasmaRLP {
     /// @dev Creates an RLPItem from an array of RLP encoded bytes.
     /// @param self The RLP encoded bytes.
     /// @return An RLPItem
-    function toRLPItem(bytes memory self) private constant returns (RLPItem memory) {
+    function toRLPItem(bytes memory self) private pure returns (RLPItem memory) {
         uint len = self.length;
         uint memPtr;
         assembly {
@@ -89,7 +91,7 @@ library ERC721PlasmaRLP {
     /// @dev Create an iterator.
     /// @param self The RLP item.
     /// @return An 'Iterator' over the item.
-    function iterator(RLPItem memory self) private constant returns (Iterator memory it) {
+    function iterator(RLPItem memory self) private pure returns (Iterator memory it) {
         uint ptr = self._unsafe_memPtr + _payloadOffset(self);
         it._unsafe_item = self;
         it._unsafe_nextPtr = ptr;
@@ -99,9 +101,9 @@ library ERC721PlasmaRLP {
     /// Warning: This requires passing in the number of items.
     /// @param self The RLP item.
     /// @return Array of RLPItems.
-    function toList(RLPItem memory self, uint256 numItems) private constant returns (RLPItem[] memory list) {
+    function toList(RLPItem memory self, uint256 numItems) private pure returns (RLPItem[] memory list) {
         list = new RLPItem[](numItems);
-        var it = iterator(self);
+        Iterator memory it = iterator(self);
         uint idx;
         while(idx < numItems) {
             list[idx] = next(it);
@@ -113,8 +115,9 @@ library ERC721PlasmaRLP {
     /// RLPItem is a list.
     /// @param self The RLPItem.
     /// @return The decoded string.
-    function toUint(RLPItem memory self) private constant returns (uint data) {
-        var (rStartPos, len) = _decode(self);
+    function toUint(RLPItem memory self) private pure returns (uint data) {
+        uint rStartPos; uint len;
+        (rStartPos, len) = _decode(self);
         assembly {
             data := div(mload(rStartPos), exp(256, sub(32, len)))
         }
@@ -126,10 +129,11 @@ library ERC721PlasmaRLP {
     /// @return The decoded string.
     function toAddress(RLPItem memory self)
         private
-        view
+        pure
         returns (address data)
     {
-        var (rStartPos, len) = _decode(self);
+        uint rStartPos; uint len;
+        (rStartPos, len) = _decode(self);
         assembly {
             data := div(mload(rStartPos), exp(256, 12))
         }
@@ -138,7 +142,7 @@ library ERC721PlasmaRLP {
     // Get the payload offset.
     function _payloadOffset(RLPItem memory self)
         private
-        view
+        pure
         returns (uint)
     {
         uint b0;
@@ -155,7 +159,7 @@ library ERC721PlasmaRLP {
     // Get the full length of an RLP item.
     function _itemLength(uint memPtr)
         private
-        view
+        pure
         returns (uint len)
     {
         uint b0;
@@ -171,7 +175,7 @@ library ERC721PlasmaRLP {
     // Get start position and length of the data.
     function _decode(RLPItem memory self)
         private
-        view
+        pure
         returns (uint memPtr, uint len)
     {
         uint b0;
