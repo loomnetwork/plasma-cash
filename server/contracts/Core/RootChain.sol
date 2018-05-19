@@ -261,7 +261,7 @@ contract RootChain is ERC721Receiver {
     }
 
     /// receiver for erc721 to trigger a deposit
-    function onERC721Received(address _from, uint256 _uid, bytes _data) 
+    function onERC721Received(address _from, uint256 _uid, bytes) 
         public 
         returns(bytes4) 
     {
