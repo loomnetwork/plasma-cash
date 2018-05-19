@@ -71,6 +71,10 @@ class ChildChain(object):
     def get_current_block(self):
         return rlp.encode(self.current_block).hex()
 
-    def get_block(self, number):
-        return rlp.encode(self.blocks[number]).hex()
+    def get_block(self, blknum):
+        return rlp.encode(self.blocks[blknum]).hex()
+
+    def get_proof(self, blknum, uid):
+        block = self.blocks[blknum]
+        return block.merkle.create_merkle_proof(uid)
     
