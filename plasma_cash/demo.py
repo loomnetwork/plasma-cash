@@ -48,8 +48,9 @@ tx2 = bob.send_transaction(utxo_id, blk_num, 1, charlie.token_contract.account.a
 authority.submit_block()
 
 # Charlie should be able to submit an exit by referencing blocks 0 and 1 which included his transaction. 
-charlie.start_exit(utxo_id, 1000, 2000)
-# 
+# args = charlie.start_exit(utxo_id, 1000, 2000)
+
+
 # # After 7 days pass, charlie's exit should be finalizable
 # 
 # authority.finalize_exits()

@@ -25,7 +25,7 @@ class Contract(object):
         return account
         
 
-    def sign_and_send(self, func, args, gas=700000):
+    def sign_and_send(self, func, args, gas=1000000):
         ''' Expecting all arguments in 1 array '''
         signed_tx = self._sign_function_call(
                 func, 

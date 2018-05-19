@@ -76,8 +76,7 @@ class Client(object):
             prev_block = self.get_block(prev_tx_blk_num)
             prev_tx = prev_block.get_tx_by_uid(uid)
             prev_tx_proof = self.get_proof(prev_tx_blk_num, uid)
-
-            tx_proof = self.get_proof(tx_blk_num, uid)
+            exiting_tx_proof = self.get_proof(tx_blk_num, uid)
 
         return self.root_chain.start_exit(
                 rlp.encode(prev_tx), # rlp encoded

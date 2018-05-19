@@ -13,25 +13,23 @@ Child Chain ALWAYS listens for events on the RootChain contract and acts on them
 ## Demo
 
 1. `npm run migrate:dev` on the server directory, contracts are now deployed
-2. `./init` on server directory 
-3. `python demo.py`
+3. `python demo.py` on plasma-cash directory
 
 1. Alice registers and is given coins 1-5 
 2. Alice deposits `Coin 1`, `Coin 2`, `Coin 3` in the plasma chain
-3. Current block now has 3 transactions, all generated from thin air
-3. Alice sends coin 1 to Bob, current block has 4 transactions
-4. Bob sends coin 1 to Charlie, current block has 5 transactions
-5. Operator calls submitBlock, checkpointing the block merkle root which includes the transaction that gives ownership to charlie
+3. 3 Deposit Blocks have been generated in the child chain, each one having 1 UTXO at slots 0,1,2 repsectively
+4. Alice sends a Coin 1 to Bob, adding a transaction to the current block. 
+5. Operator calls submitBlock, checkpointing the block merkle root which includes the transaction that gives ownership to charlie. At this point, both the child chain and the root chain, have checkpointed alice's transaction at block number 1000.
+6. Bob transfers the previous UTXO to Charlie and the operator submits that block as well
 5. Charlie tries to exit coin 1, Alice & Bob should be unable to challenge
-6. Challenge period passes (simulate with evmAdvancetime), exits get finalized
-7. Charlie is able to withdraw coin 1.
+6. After challenge period passes, charlie should be able to withdraw his coin
 
 ## TODO
 
-Challenges in contract and client, proper exiting in contract
+- Challenges in contract and client
+- Verify exiting / optimize for size
 
-`startExit(bytes prevTx, bytes tx, bytes txInclusionProof, bytes prevTxInclusionProof)` 
-Takes in the transaction transfering ownership to the current owner and the proofs necesary to prove their inclusion
+
 
 ## Dev notes
 ### Using monkeypatched web3.py 4.2.1 version for ganache issues
