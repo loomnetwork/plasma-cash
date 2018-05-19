@@ -1,4 +1,5 @@
 from .base.contract import Contract
+from .utils.formatters import normalize
 
 '''Plasma Cash bindings for python ''' 
 
@@ -27,7 +28,7 @@ class PlasmaCash(Contract):
         return self
 
     def start_exit(self, prev_tx, exiting_tx, prev_tx_proof, exiting_tx_proof, exiting_tx_sig):
-        args = [prev_tx, exiting_tx, prev_tx_proof, exiting_tx_proof, exiting_tx_sig]
+        args = [prev_tx, exiting_tx, normalize(prev_tx_proof), normalize(exiting_tx_proof), exiting_tx_sig]
         self.sign_and_send(self.contract.functions.startExit, args)
         return self
 
