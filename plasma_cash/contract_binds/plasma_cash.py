@@ -26,20 +26,18 @@ class PlasmaCash(Contract):
             )
         return self
 
-    def start_exit(self, prev_tx, exiting_tx, exiting_tx_sig):
-        args = [prev_tx, exiting_tx, exiting_tx_sig]
+    def start_exit(self, prev_tx, exiting_tx, prev_tx_proof, exiting_tx_proof, exiting_tx_sig):
+        args = [prev_tx, exiting_tx, prev_tx_proof, exiting_tx_proof, exiting_tx_sig]
         self.sign_and_send(self.contract.functions.startExit, args)
         return self
 
     def finalize_exits(self):
-        pass
         args = []
         self.sign_and_send(self.contract.functions.finalizeExits, args)
         return self
 
-    def withdraw(self):
-        pass 
-        args = []
+    def withdraw(self, uid):
+        args = [uid]
         self.sign_and_send(self.contract.functions.withdraw, args)
         return self
 
