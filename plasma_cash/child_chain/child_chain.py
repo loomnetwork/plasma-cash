@@ -5,6 +5,7 @@ from utils.utils import get_sender
 from .block import Block
 from .exceptions import (InvalidBlockSignatureException,
                          InvalidTxSignatureException,
+                         CoinAlreadyIncludedException,
                          PreviousTxNotFoundException, TxAlreadySpentException,
                          TxAmountMismatchException)
 
@@ -29,10 +30,10 @@ class ChildChain(object):
         prevBlock = event['args']['depositBlockNumber']
         denomination = event['args']['denomination'] # currently always 1, to change in the future
         depositor = event['args']['from']
-        # uid = event['args']['uid']
         # deposit_tx = Transaction(0, uid, amount, new_owner)
         # Transaction gets minted from block 0
         deposit_tx = Transaction (slot, prevBlock, denomination, depositor)
+        print('Added transaction to block:', slot, prevBlock, denomination, depositor)
         self.current_block.add_tx(deposit_tx)
         # maybe automatically submit block after 999 deposits are counted? 
 
@@ -56,15 +57,24 @@ class ChildChain(object):
     def send_transaction(self, transaction):
         tx = rlp.decode(utils.decode_hex(transaction), Transaction)
 
-        # If tx was a deposit transaction then it has no previous tx to check in the chain
+        # a plasma cash block can only have 1 spend of a particular coin
+        tx_included = self.current_block.get_tx_by_uid(tx.uid)
+        if tx_included is not None and tx.uid == tx_included.uid:
+            raise CoinAlreadyIncludedException('double spend rejected')
+
+        # If the tx we are spending is not a deposit tx
         if tx.prev_block != 0:
+            # if the tx we are referencing is deposit transaction it does not have a sig
+            # The TX we are referencing should be included in a block, should not be spent.
+            # If the TX we are referencing was initially a deposit TX, then it does not have a signature attached
             prev_tx = self.blocks[tx.prev_block].get_tx_by_uid(tx.uid)
             if prev_tx is None:
                 raise PreviousTxNotFoundException('failed to send transaction')
             if prev_tx.spent:
                 raise TxAlreadySpentException('failed to send transaction')
-            if tx.sig == b'\x00' * 65 or tx.sender != prev_tx.new_owner:
-                raise InvalidTxSignatureException('failed to send transaction')
+            if prev_tx.prev_block != 0: # deposit tx if prev_block is 0
+                if tx.sig == b'\x00' * 65 or tx.sender != prev_tx.new_owner:
+                    raise InvalidTxSignatureException('failed to send transaction')
             prev_tx.spent = True  # Mark the previous tx as spent
         self.current_block.add_tx(tx)
         return tx.hash
@@ -77,5 +87,6 @@ class ChildChain(object):
 
     def get_proof(self, blknum, uid):
         block = self.blocks[blknum]
+        block.merklize_transaction_set()
         return block.merkle.create_merkle_proof(uid)
     

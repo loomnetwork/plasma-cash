@@ -26,7 +26,7 @@ class Block(rlp.Serializable):
 
     @property
     def merkle_hash(self):
-        return w3.sha3(self.hash + self.sig)
+        return w3.sha3(rlp.encode(self))
 
     @property
     def sender(self):
