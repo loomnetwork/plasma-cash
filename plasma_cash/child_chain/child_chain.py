@@ -25,13 +25,14 @@ class ChildChain(object):
 
     def _send_deposit(self, event):
         ''' Called by event watcher and creates a deposit block '''
-        new_owner = event['args']['depositor']
-        tokenId = event['args']['tokenId']
-        data = event['args']['data']
+        slot = event['args']['slot']
+        prevBlock = event['args']['depositBlockNumber']
+        denomination = event['args']['denomination'] # currently always 1, to change in the future
+        depositor = event['args']['from']
         # uid = event['args']['uid']
         # deposit_tx = Transaction(0, uid, amount, new_owner)
         # Transaction gets minted from block 0
-        deposit_tx = Transaction (0, tokenId, new_owner)
+        deposit_tx = Transaction (slot, prevBlock, denomination, depositor)
         self.current_block.add_tx(deposit_tx)
         # maybe automatically submit block after 999 deposits are counted? 
 

@@ -9,15 +9,17 @@ from .exceptions import InvalidTxSignatureException
 class Transaction(rlp.Serializable):
 
     fields = [
-        ('prev_block', big_endian_int),
         ('uid', big_endian_int),
+        ('prev_block', big_endian_int),
+        ('denomination', big_endian_int),
         ('new_owner', ethereum.utils.address),
         ('sig', binary)
     ]
 
-    def __init__(self, prev_block, uid, new_owner, sig=b'\x00' * 65):
-        self.prev_block = prev_block
+    def __init__(self, uid, prev_block, denomination, new_owner, sig=b'\x00' * 65):
         self.uid = uid
+        self.prev_block = prev_block
+        self.denomination = denomination
         self.new_owner = ethereum.utils.normalize_address(new_owner)
         self.sig = sig
         self.spent = False # not part of the rlp
@@ -29,7 +31,7 @@ class Transaction(rlp.Serializable):
 
     @property
     def merkle_hash(self):
-        return w3.sha3(self.hash + self.sig)
+        return w3.sha3(rlp.encode(self))
 
     @property
     def sender(self):
