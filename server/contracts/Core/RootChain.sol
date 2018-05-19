@@ -94,7 +94,7 @@ contract RootChain is ERC721Receiver {
         isAuthority
     {
         // ensure finality on previous blocks before submitting another
-        require(block.number >= lastParentBlock.add(6));
+        // require(block.number >= lastParentBlock.add(6)); // commented out while prototyping
 
         childChain[currentChildBlock] = childBlock({
             root: root,
@@ -142,8 +142,6 @@ contract RootChain is ERC721Receiver {
         external
     {
         ERC721PlasmaRLP.txData memory exitingTxData = exitingTxBytes.createExitingTx();
-        ERC721PlasmaRLP.txData memory prevTxData = prevTxBytes.createExitingTx();
-
 
         //  Need to check that the exiting transaction has a valid signatrue by its owner in order to prevent someone else exiting the owner's funds when they don't want it.
         bytes32 txHash = keccak256(exitingTxData.slot);
