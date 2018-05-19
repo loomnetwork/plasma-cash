@@ -19,7 +19,8 @@ class ChildChain(object):
         self.authority = self.root_chain.account.address
         self.blocks = {}
         self.current_block = Block()
-        self.current_block_number = 1
+        self.child_block_interval = 1000
+        self.current_block_number = self.child_block_interval
 
         # Watch all deposit events, callback to self._send_deposit
         deposit_filter = self.root_chain.watch_event('Deposit', self._send_deposit, 1)
@@ -27,15 +28,13 @@ class ChildChain(object):
     def _send_deposit(self, event):
         ''' Called by event watcher and creates a deposit block '''
         slot = event['args']['slot']
-        prevBlock = event['args']['depositBlockNumber']
+        blknum = event['args']['depositBlockNumber']
         denomination = event['args']['denomination'] # currently always 1, to change in the future
         depositor = event['args']['from']
-        # deposit_tx = Transaction(0, uid, amount, new_owner)
-        # Transaction gets minted from block 0
-        deposit_tx = Transaction (slot, prevBlock, denomination, depositor)
-        print('Added transaction to block:', slot, prevBlock, denomination, depositor)
-        self.current_block.add_tx(deposit_tx)
-        # maybe automatically submit block after 999 deposits are counted? 
+        deposit_tx = Transaction (slot, blknum, denomination, depositor)
+        deposit_block = Block( [ deposit_tx ] ) # create a new plasma block on deposit
+
+        self.blocks[blknum] = deposit_block
 
     def submit_block(self, block):
         ''' Submit the merkle root to the chain from the authority '''
@@ -49,7 +48,7 @@ class ChildChain(object):
         self.root_chain.submit_block(merkle_hash)
 
         self.blocks[self.current_block_number] = self.current_block
-        self.current_block_number += 1
+        self.current_block_number += self.child_block_interval
         self.current_block = Block()
 
         return merkle_hash
@@ -63,7 +62,7 @@ class ChildChain(object):
             raise CoinAlreadyIncludedException('double spend rejected')
 
         # If the tx we are spending is not a deposit tx
-        if tx.prev_block != 0:
+        if tx.prev_block % self.child_block_interval == 0:
             # if the tx we are referencing is deposit transaction it does not have a sig
             # The TX we are referencing should be included in a block, should not be spent.
             # If the TX we are referencing was initially a deposit TX, then it does not have a signature attached
@@ -72,7 +71,7 @@ class ChildChain(object):
                 raise PreviousTxNotFoundException('failed to send transaction')
             if prev_tx.spent:
                 raise TxAlreadySpentException('failed to send transaction')
-            if prev_tx.prev_block != 0: # deposit tx if prev_block is 0
+            if prev_tx.prev_block % self.child_block_interval == 0: # deposit tx if prev_block is 0
                 if tx.sig == b'\x00' * 65 or tx.sender != prev_tx.new_owner:
                     raise InvalidTxSignatureException('failed to send transaction')
             prev_tx.spent = True  # Mark the previous tx as spent
@@ -89,4 +88,7 @@ class ChildChain(object):
         block = self.blocks[blknum]
         block.merklize_transaction_set()
         return block.merkle.create_merkle_proof(uid)
+
+    def get_block_number(self):
+        return self.current_block_number
     
