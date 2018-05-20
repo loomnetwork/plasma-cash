@@ -8,6 +8,7 @@ from utils.utils import sign
 from .child_chain_service import ChildChainService
 
 from dependency_config import container
+import base64
 
 class Client(object):
 
@@ -60,7 +61,7 @@ class Client(object):
         return rlp.decode(utils.decode_hex(block), Block)
 
     def get_proof(self, blknum, uid):
-        return self.child_chain.get_proof(blknum, uid)
+        return base64.b64decode(self.child_chain.get_proof(blknum, uid))
 
     def start_exit(self, uid, prev_tx_blk_num, tx_blk_num):
         ''' As a user, you declare that you want to exit a coin at slot `uid` at the state which happened at block `tx_blk_num` and you also need to reference a previous block'''

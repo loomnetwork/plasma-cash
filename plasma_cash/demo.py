@@ -40,7 +40,7 @@ authority.submit_block()
 blk_num = 1000
 submitted_block = alice.get_block(blk_num)
 onchain_block = alice.root_chain.contract.functions.childChain(blk_num).call()[0].hex() # block 1000 is the block that the authority submitted
-assert submitted_block.merklize_transaction_set().hex() == onchain_block # check that child-chain and root-chain are in sync
+assert submitted_block.merklize_transaction_set().hex() == '0x' + onchain_block # check that child-chain and root-chain are in sync
 
 # Bob is now checkpointed as the owner of `utxo_id`. He makes a spend to charlie by referencing block 1 which was in the child chain.
 tx2 = bob.send_transaction(utxo_id, blk_num, 1, charlie.token_contract.account.address)

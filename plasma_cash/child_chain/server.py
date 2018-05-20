@@ -1,5 +1,6 @@
 from flask import Blueprint, request
 from dependency_config import container
+import base64
 
 bp = Blueprint('api', __name__)
 
@@ -18,7 +19,8 @@ def get_current_block():
 def get_proof():
     blknum = int(request.args.get('blknum'))
     uid = int(request.args.get('uid'))
-    return container.get_child_chain().get_proof(blknum, uid)
+    data = container.get_child_chain().get_proof(blknum, uid)
+    return base64.b64encode(data) # proofs are binary so encoding b64 during transmission
 
 
 @bp.route('/submit_block', methods=['POST'])
@@ -31,4 +33,3 @@ def submit_block():
 def send_tx():
     tx = request.form['tx']
     return container.get_child_chain().send_transaction(tx)
-
