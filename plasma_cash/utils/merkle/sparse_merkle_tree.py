@@ -1,6 +1,8 @@
 from collections import OrderedDict
 
-from ethereum.utils import sha3
+# from ethereum.utils import w3.sha3
+from web3.auto import w3
+from hexbytes import HexBytes
 
 
 class SparseMerkleTree(object):
@@ -24,10 +26,11 @@ class SparseMerkleTree(object):
 
     def create_default_nodes(self, depth):
         # Default nodes are the nodes whose children are both empty nodes at each level.
-        default_nodes = [b'\x00' * 32]
+        default_hash = w3.sha3(HexBytes('00' * 32 ))
+        default_nodes = [default_hash]
         for level in range(1, depth):
             prev_default = default_nodes[level - 1]
-            default_nodes.append(sha3(prev_default + prev_default))
+            default_nodes.append(w3.sha3(prev_default + prev_default))
         return default_nodes
 
     def create_tree(self, ordered_leaves, depth, default_nodes):
@@ -41,13 +44,13 @@ class SparseMerkleTree(object):
                     # If the node is a left node, assume the right sibling is a default node.
                     # in the case right sibling is not default node,
                     # it would override on next round
-                    next_level[index // 2] = sha3(value + default_nodes[level])
+                    next_level[index // 2] = w3.sha3(value + default_nodes[level])
                 else:
                     # If the node is a right node, check if its left sibling is a default node.
                     if index == prev_index + 1:
-                        next_level[index // 2] = sha3(tree_level[prev_index] + value)
+                        next_level[index // 2] = w3.sha3(tree_level[prev_index] + value)
                     else:
-                        next_level[index // 2] = sha3(default_nodes[level] + value)
+                        next_level[index // 2] = w3.sha3(default_nodes[level] + value)
                 prev_index = index
             tree_level = next_level
             tree.append(tree_level)

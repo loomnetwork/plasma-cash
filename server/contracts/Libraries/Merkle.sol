@@ -7,11 +7,14 @@ library Merkle {
         pure
         returns (bool)
     {
-        require(proof.length == 512);
+        // Merkle tree depth is 32, each proof segment is 32 bytes
+        // lg2(5) * 32 = 160
+        // Needs to be improved with caching for empty trees. 
+        require(proof.length == 160); 
         bytes32 proofElement;
         bytes32 computedHash = leaf;
 
-        for (uint256 i = 32; i <= 512; i += 32) {
+        for (uint256 i = 32; i <= 160; i += 32) {
             assembly {
                 proofElement := mload(add(proof, i))
             }

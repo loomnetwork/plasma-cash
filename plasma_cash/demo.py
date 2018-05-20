@@ -27,8 +27,8 @@ alice.token_contract.deposit(tokenId+1)
 alice.token_contract.deposit(tokenId+2)
 
 # Alice's UTXOs are with id 0, 1 and 2.
-utxo_id = 0
-blk_num = 1
+utxo_id = 2
+blk_num = 3
 
 tx1 = alice.send_transaction(utxo_id, blk_num, 1, bob.token_contract.account.address)
 
