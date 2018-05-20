@@ -20,6 +20,7 @@ class Client(object):
         self.key = token_contract.account.privateKey
         self.token_contract = token_contract
         self.child_chain = child_chain
+        self.child_block_interval = 1000
 
     def register(self):
         ''' Register a new player and grant 5 cards, for demo purposes'''
@@ -73,7 +74,7 @@ class Client(object):
         prev_tx = '0x0'
         prev_tx_proof = '0x0'
         exiting_tx_proof = '0x0'
-        if prev_tx_blk_num != 0:
+        if prev_tx_blk_num % self.child_block_interval == 0:
             prev_block = self.get_block(prev_tx_blk_num)
             prev_tx = prev_block.get_tx_by_uid(uid)
             prev_tx_proof = self.get_proof(prev_tx_blk_num, uid)
