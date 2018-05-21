@@ -91,4 +91,3 @@ class ChildChain(object):
 
     def get_block_number(self):
         return self.current_block_number
-    
