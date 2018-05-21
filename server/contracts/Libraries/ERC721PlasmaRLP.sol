@@ -25,6 +25,7 @@ library ERC721PlasmaRLP {
         uint256 prevBlock;
         uint256 denomination;
         address owner;
+        bytes sig;
     }
 
     struct Iterator {
@@ -34,28 +35,18 @@ library ERC721PlasmaRLP {
 
     /* Public Functions */
 
-    function getUtxoPos(bytes memory challengingTxBytes, uint256 numItems, uint256 oIndex)
-        internal
-        pure
-        returns (uint256)
-    {
-        RLPItem[] memory txList = toList(toRLPItem(challengingTxBytes), numItems);
-        uint256 oIndexShift = oIndex * 3;
-        return toUint(txList[0 + oIndexShift]) + toUint(txList[1 + oIndexShift]) + toUint(txList[2 + oIndexShift]);
-    }
-
-    // prev_block, token id, new owner, sig
-    function createExitingTx(bytes memory txDataBytes)
+    function getTxData(bytes memory txDataBytes)
         internal
         pure
         returns (txData)
     {
-        RLPItem[] memory txList = toList(toRLPItem(txDataBytes), 4);
+        RLPItem[] memory txList = toList(toRLPItem(txDataBytes), 5);
         return txData({
             slot: toUint(txList[0]),
             prevBlock: toUint(txList[1]),
             denomination: toUint(txList[2]),
-            owner: toAddress(txList[3])
+            owner: toAddress(txList[3]),
+            sig: toBytes(txList[4])
         });
     }
 
@@ -201,5 +192,63 @@ library ERC721PlasmaRLP {
         }
         return;
     }
-}
+    
+    /// @dev Return the RLP encoded bytes.
+    /// @param self The RLPItem.
+    /// @return The bytes.
+    function toBytes(RLPItem memory self)
+        internal
+        pure
+        returns (bytes memory bts)
+    {
+        uint len = self._unsafe_length;
+        if (len == 0)
+            return;
+        bts = new bytes(len);
+        _copyToBytes(self._unsafe_memPtr, bts, len);
+    }
 
+    /// @dev Decode an RLPItem into bytes. This will not work if the
+    /// RLPItem is a list.
+    /// @param self The RLPItem.
+    /// @return The decoded string.
+    function toData(RLPItem memory self)
+        internal
+        pure
+        returns (bytes memory bts)
+    {
+        // require(isData(self));
+        uint rStartPos; uint len;
+        (rStartPos, len) = _decode(self);
+        bts = new bytes(len);
+        _copyToBytes(rStartPos, bts, len);
+    }
+
+    // Assumes that enough memory has been allocated to store in target.
+    function _copyToBytes(uint btsPtr, bytes memory tgt, uint btsLen)
+        private
+        pure
+    {
+        // Exploiting the fact that 'tgt' was the last thing to be allocated,
+        // we can write entire words, and just overwrite any excess.
+        assembly {
+            {
+                // evm operations on words
+                let words := div(add(btsLen, 31), 32)
+                let rOffset := btsPtr
+                let wOffset := add(tgt, 0x20)
+                for
+                    { let i := 0 } // start at arr + 0x20 -> first byte corresponds to length
+                    lt(i, words)
+                    { i := add(i, 1) }
+                {
+                    let offset := mul(i, 0x20)
+                    mstore(add(wOffset, offset), mload(add(rOffset, offset)))
+                }
+                mstore(add(tgt, add(0x20, mload(tgt))), 0)
+            }
+        }
+
+	}
+
+}
