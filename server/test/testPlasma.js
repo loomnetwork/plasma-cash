@@ -24,81 +24,134 @@ contract("Plasma ERC721 WIP", async function(accounts) {
     let cards;
     let plasma;
     let start;
-    let utxo_slot; // the utxo that alice will attempt to withdraw
+    let utxo_slot; // the utxo that alice will attempt to withdrawo
 
-    let [authority, alice, bob, random_guy, random_guy2] = accounts;
+    const UTXO_ID = 2
+
+    let [authority, alice, bob, charlie, random_guy, random_guy2] = accounts;
+
+    let exit_coin;
+    let data;
+    let rawdata;
+
+    function createUTXO(slot, prevBlock, from, to) {
+        let data = [ slot, prevBlock, 1, to ]
+        data = '0x' + RLP.encode(data).toString('hex')
+        let txHash = utils.soliditySha3(data);
+        let sig = web3.eth.sign(from, txHash); 
+        return [data, sig];
+    }
 
 
-    before("Deploys the contracts", async function() {
+    beforeEach("Deploys the contracts, Registers Alice and deposits her coins", async function() {
         plasma = await RootChain.new({from: authority});
         cards = await CryptoCards.new(plasma.address);
         plasma.setCryptoCards(cards.address);
+        cards.register({from: alice});
+        assert.equal(await cards.balanceOf.call(alice), 5);
+
+
+        let ret = createUTXO(0, 0, alice, alice); data = ret[0];
+        await cards.depositToPlasmaWithData(1, data, {from: alice});
+
+        ret = createUTXO(1, 0, alice, alice); data = ret[0];
+        await cards.depositToPlasmaWithData(2, data, {from: alice});
+
+        ret = createUTXO(2, 0, alice, alice); data = ret[0];
+        await cards.depositToPlasmaWithData(3, data, {from: alice});
+
+        assert.equal((await cards.balanceOf.call(alice)).toNumber(), 2);
+        assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 3);
+
+        const depositEvent = plasma.Deposit({}, {fromBlock: 0, toBlock: 'latest'});
+        const events = await Promisify(cb => depositEvent.get(cb));
+        exit_coin = events[2].args;
+        assert.equal(exit_coin.slot.toNumber(), 2);
+        assert.equal(exit_coin.depositBlockNumber.toNumber(), 3);
+        assert.equal(exit_coin.denomination.toNumber(), 1);
+        assert.equal(exit_coin.from, alice);
+
     });
 
-    describe("Tests that alice can deposit and withdraw a coin", function() {
+    it("Submits an exit for the UTXO of Coin 3 (utxo id 2)  directly after depositing it", async function() {
+        utxo_slot = exit_coin.slot.toNumber();
+        let includedBlock = exit_coin.depositBlockNumber.toNumber();
+        let denom = exit_coin.denomination.toNumber();
+        let from  = exit_coin.from;
 
-        it("Registers alice charlie bob", async function() {
-            cards.register({from: alice});
-            assert.equal(await cards.balanceOf.call(alice), 5);
-        });
+        let ret = createUTXO(2, 0, alice, alice); 
+        let utxo = ret[0];
+        let sig = ret[1];
 
-        it("Transfers NFT 1,2,3 from Alice to Plasma contract", async function() {
-            await cards.depositToPlasma(1, {from: alice});
-            await cards.depositToPlasma(2, {from: alice});
-            await cards.depositToPlasma(3, {from: alice});
-            assert.equal(await cards.balanceOf.call(alice), 2);
-            assert.equal(await cards.balanceOf.call(plasma.address), 3);
+        await plasma.startExit(
+                 utxo_slot,
+                '0x', utxo,  // prevTx, exitingTx
+                '0x0', '0x0', // inclusion proofs
+                 sig,
+                 0, includedBlock, 
+                 {'from': alice}
+        );
 
-        });
+        start = (await web3.eth.getBlock('latest')).timestamp;
+        let expire = start + 3600 * 24 * 8; // 8 days pass, can finalize exit
+        await increaseTimeTo(expire);
 
-        it("Submits an exit for the UTXO of Coin 2", async function() {
-            const depositEvent = plasma.Deposit({}, {fromBlock: 0, toBlock: 'latest'});
-            const events = await Promisify(cb => depositEvent.get(cb));
-            let coin2 = events[1].args;
+        await plasma.finalizeExits({from: random_guy2 });
 
-            // data for hash
-            utxo_slot = coin2.slot.toNumber();
-            let txHash = utils.soliditySha3(utxo_slot);
-
-            let prevBlock = coin2.depositBlockNumber.toNumber();
-            let denom = coin2.denomination.toNumber();
-            let from  = coin2.from;
-            let data = [
-                utxo_slot, // exit coin id
-                prevBlock, // this is a deposit block
-                denom,
-                from
-            ];
-            let utxo = '0x' + RLP.encode(data).toString('hex');
-
-            // sign the exit with Alice's key since she is the owner of the private key that corresponds to `from`. If it's not signed by alice this should fail. 
-            let sig = web3.eth.sign(alice, txHash); 
-           //  console.log('RLP Encoded:', utxo);
-           //  console.log('TXHash:', txHash);
-           //  console.log('Signature', sig);
-            let rootBlkHash = await plasma.childChain.call(prevBlock);
-            // console.log('Block Hash:', rootBlkHash[0]);
-
-            // Since we are exiting a deposit UTXO, there is no need to provide a previous tx or proof.
-            await plasma.startExit(
-                    '0x', utxo,  // prevTx, exitingTx
-                    '0x0', '0x0', // inclusion proofs
-                    sig // msg signed by alice
-                    );
-            start = (await web3.eth.getBlock('latest')).timestamp;
-        });
-
-        it("A random guy finalizes the exits 1 week later. No challlenge has happened this time period", async function() {
-            let expire = start + 3600 * 24 * 8; // 8 days pass, can finalize exit
-            await increaseTimeTo(expire);
-            await plasma.finalizeExits({from: random_guy2 });
-        });
-
-        it("Exit is finalized, Alice can withdraw her tokens", async function() {
-            plasma.withdraw(utxo_slot, {from : alice });
-            assert.equal((await cards.balanceOf.call(alice)).toNumber(), 3);
-            assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 2);
-        })
+        plasma.withdraw(utxo_slot, {from : alice });
+        assert.equal((await cards.balanceOf.call(alice)).toNumber(), 3);
+        assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 2);
     });
+
+    it("Transfers Coin 2 from Alice to Bob and then to Charlie who tries to exit it", async function() {
+        // We submit 2 precomputed block roots which represent:
+        // Block 1000: Transaction from Alice to Bob
+        // Block 2000: Transaction from Bob to Charlie
+        // These were precomputed from the Python client for a Sparse Merkle Tree of Depth 32.
+        
+        let utxo_slot = 2;
+        // Tx to Bob from Alice referencing Alice's UTXO at block 3
+        let to_bob = createUTXO(utxo_slot, 3, alice, bob);
+        let block_1000_root = '0x20d4251cbfd45b0f2c708e63f9c96ddd8cd832d087bacfa241716e41ddbe136b';
+        // plasma.submitBlock(block_1000_root, {'from': authority});
+
+        // Tx to Charlie from Bob referencing Bob's UTXO at block 1000
+        let to_charlie = createUTXO(utxo_slot, 1000, bob, charlie);
+        let block_2000_root = '0xe9ac5d9bc7cb7cc7c00d06b80a4e2f0a40a3803d3a84968f403aa312474e1ca6';
+
+        plasma.submitBlock(block_2000_root, {'from': authority});
+       
+        // Concatenate the 2 signatures
+        let sigs = to_bob[1] + to_charlie[1].substr(2, 132);
+
+        // Merkle branches -> TODO
+        let prev_tx_proof = '0x';
+        let exiting_tx_proof = '0x'; // To add the valid proofs of inclusion
+
+        let prev_tx = to_bob[0];
+        let exiting_tx = to_charlie[0];
+
+        plasma.startExit(
+                utxo_slot,
+                prev_tx, exiting_tx, 
+                prev_tx_proof, exiting_tx_proof, 
+                sigs,
+                1000, 2000,
+                {'from': charlie }
+        );
+
+        start = (await web3.eth.getBlock('latest')).timestamp;
+        let expire = start + 3600 * 24 * 8; // 8 days pass, can finalize exit
+        await increaseTimeTo(expire);
+
+        await plasma.finalizeExits({from: random_guy2 });
+
+        plasma.withdraw(utxo_slot, {from : charlie });
+        assert.equal((await cards.balanceOf.call(alice)).toNumber(), 2);
+        assert.equal((await cards.balanceOf.call(bob)).toNumber(), 0);
+        assert.equal((await cards.balanceOf.call(charlie)).toNumber(), 1);
+        assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 2);
+    });
+
 
 });

@@ -5,9 +5,9 @@ import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
 import './Cards.sol';
 
 // Lib deps
-import '../Queue/PriorityQueue.sol';
 import '../Libraries/ERC721PlasmaRLP.sol';
 import '../Libraries/ECVerify.sol';
+import '../Libraries/ByteUtils.sol';
 import '../Libraries/Merkle.sol';
 
 contract RootChain is ERC721Receiver {
@@ -15,8 +15,8 @@ contract RootChain is ERC721Receiver {
      * Events
      */
     event Deposit(uint256 slot, uint256 depositBlockNumber, uint256 denomination, address indexed from);
-    event CanWithdraw(address  owner, uint  uid);
-    event FinalizedExit(uint priority, address  owner, uint256  uid);
+    event ExitStarted(uint indexed slot, address indexed owner, uint created_at);
+    event FinalizedExit(address  owner, uint256  uid);
 
     using SafeMath for uint256;
     using ERC721PlasmaRLP for bytes;
@@ -31,11 +31,10 @@ contract RootChain is ERC721Receiver {
     address public authority;
 
     // exits
-    PriorityQueue exitsQueue;
+    uint[] public exitSlots;
     mapping(uint256 => Exit) public exits;
     struct Exit {
         address owner;
-        uint256 slot;
         uint256 created_at;
     }
 
@@ -80,7 +79,6 @@ contract RootChain is ERC721Receiver {
         currentDepositBlock = 1;
         lastParentBlock = block.number; // to ensure no chain reorgs
 
-        exitsQueue = new PriorityQueue();
     }
 
     function setCryptoCards(CryptoCards _cryptoCards) isAuthority public {
@@ -108,94 +106,122 @@ contract RootChain is ERC721Receiver {
 
 
     /// @dev Allows anyone to deposit funds into the Plasma chain, called when contract receives ERC721
-    function deposit(address from, uint256 uid, uint256 denomination)
+    function deposit(address from, uint256 uid, uint256 denomination, bytes txBytes)
         private
     {
+        ERC721PlasmaRLP.txData memory txData = txBytes.getTxData();
+        // Verify that the transaction data sent matches the coin data from ERC721
+        require(txData.slot == NUM_COINS);
+        require(txData.denomination == denomination);
+        require(txData.owner == from);
+        require(txData.prevBlock == 0);
+
         // Update state "tree"
         coins[NUM_COINS] = NFT_UTXO({
                 uid: uid, 
                 denomination: denomination,
                 owner: from, 
-                canExit: false // cannot directly withdraw a coin, need to go through normal exit process
-            });
-        // TX hash is always the hash slot of the coin
-        bytes32 txHash = keccak256(NUM_COINS); 
+                canExit: false 
+        });
+
+        bytes32 txHash = keccak256(txBytes);
         uint256 depositBlockNumber = getDepositBlock();
 
         childChain[depositBlockNumber] = childBlock({
-            root: txHash,
+            root: txHash, // save signed transaction hash as root
             created_at: block.timestamp
         });
 
         currentDepositBlock = currentDepositBlock.add(1);
-        emit Deposit(NUM_COINS, depositBlockNumber, denomination, from); // create a utxo at `uid`
+        emit Deposit(NUM_COINS, depositBlockNumber, denomination, from); // create a utxo at slot `NUM_COINS`
 
         NUM_COINS += 1;
     }
 
-    /// txBlk is not needed for sure, maybe to prevent replay attacks, still unclear. May help for splitting/merging
-
     function startExit(
+        uint slot,
         bytes prevTxBytes, bytes exitingTxBytes, 
         bytes prevTxInclusionProof, bytes exitingTxInclusionProof, 
-        bytes exitingTxSig ) 
+        bytes sigs,
+        uint prevTxIncBlock, uint exitingTxIncBlock) 
         external
     {
-        ERC721PlasmaRLP.txData memory exitingTxData = exitingTxBytes.createExitingTx();
-
-        //  Need to check that the exiting transaction has a valid signatrue by its owner in order to prevent someone else exiting the owner's funds when they don't want it.
-        bytes32 txHash = keccak256(exitingTxData.slot);
-        require(txHash.ecverify(exitingTxSig, exitingTxData.owner), "Invalid sig");
-
-        if (exitingTxData.prevBlock % childBlockInterval != 0 ) { 
-            // If it's an exit of a deposit transaction then we need to check that:
-            // the transaction hash was indeed the root of the claimed deposit block
-            require(txHash == childChain[exitingTxData.prevBlock].root, 
-                    "Deposit Tx not included in block");
+        // Different inclusion check depending on if we're exiting a deposit transaction or not
+        if (exitingTxIncBlock % childBlockInterval != 0 ) { 
+           require(
+                checkDepositBlockInclusion(
+                    exitingTxBytes, 
+                    sigs, // for deposit blocks this is just a single sig
+                    exitingTxIncBlock
+                ),
+                "Not included in deposit block"
+            );
         } else {
-            // Otherwise we need to check for a proper inclusion of the transaction and the
-            // referenced transaction in the blocks' merkle roots
-            require(checkBlockInclusion(
+            require(
+                checkBlockInclusion(
                     prevTxBytes, exitingTxBytes,
-                    prevTxInclusionProof, exitingTxInclusionProof
-                )
+                    prevTxInclusionProof, exitingTxInclusionProof,
+                    sigs,
+                    prevTxIncBlock, exitingTxIncBlock
+                ), 
+                "Not included in blocks"
             );
         }
-        uint priority = exitingTxData.prevBlock * 10000000  + exitingTxData.slot * 10000;
 
-        exitsQueue.insert(priority);
-        exits[priority] = Exit({
-            owner: exitingTxData.owner, 
-            slot: exitingTxData.slot, 
+        exitSlots.push(slot);
+        exits[slot] = Exit({
+            owner: msg.sender, 
             created_at: block.timestamp
         });
+
+        emit ExitStarted(slot, msg.sender, block.timestamp);
     }
+
+    function getSig(bytes sigs, uint i) public pure returns(bytes) {
+        return ByteUtils.slice(sigs, 65 * i,  65);
+    }
+
+    function checkDepositBlockInclusion(
+        bytes txBytes,
+        bytes signature,
+        uint txIncBlock
+    )
+         private 
+         view 
+         returns (bool) 
+    {
+        ERC721PlasmaRLP.txData memory txData = txBytes.getTxData();
+        bytes32 txHash = keccak256(txBytes); 
+        require(txHash.ecverify(signature, txData.owner), "Invalid sig");
+        require(
+            txHash == childChain[txIncBlock].root, 
+            "Deposit Tx not included in block"
+        );
+
+        return true;
+    }
+
 
     function checkBlockInclusion(
             bytes prevTxBytes, bytes exitingTxBytes,
-            bytes prevTxInclusionProof, bytes exitingTxInclusionProof) 
+            bytes prevTxInclusionProof, bytes exitingTxInclusionProof,
+            bytes sigs,
+            uint prevTxIncBlock, uint exitingTxIncBlock) 
+            private
+            view
             returns (bool)
     {
-        ERC721PlasmaRLP.txData memory prevTxData = prevTxBytes.createExitingTx();
-        bytes32 prevMerkleHash = keccak256(prevTxBytes);
-        bytes32 prevRoot = childChain[prevTxData.prevBlock].root;
+        ERC721PlasmaRLP.txData memory prevTxData = prevTxBytes.getTxData();
+        ERC721PlasmaRLP.txData memory exitingTxData = exitingTxBytes.getTxData();
 
+        bytes32 txHash = keccak256(exitingTxBytes);
+        bytes32 root = childChain[exitingTxIncBlock].root;
 
-        ERC721PlasmaRLP.txData memory exitingTxData = exitingTxBytes.createExitingTx();
-        bytes32 merkleHash = keccak256(exitingTxBytes);
-        bytes32 root = childChain[exitingTxData.prevBlock].root;
-
+        require(txHash.ecverify(getSig(sigs, 1), prevTxData.owner), "Invalid sig");
+        require(exitingTxData.owner == msg.sender, "Invalid sender");
+        /* 
         require(
-            prevMerkleHash.checkMembership(
-                prevTxData.slot,
-                prevRoot, 
-                prevTxInclusionProof
-            ),
-            "Previous tx not included in claimed block"
-        );
-
-        require(
-            merkleHash.checkMembership(
+            txHash.checkMembership(
                 exitingTxData.slot, 
                 root, 
                 exitingTxInclusionProof
@@ -203,48 +229,53 @@ contract RootChain is ERC721Receiver {
             "Exiting tx not included in claimed block"
         );
 
+        bytes32 prevTxHash = keccak256(prevTxBytes);
+        bytes32 prevRoot = childChain[prevTxIncBlock].root;
+
+        if (prevTxIncBlock % childBlockInterval != 0 ) { 
+            require(prevTxHash == prevRoot); // like in deposit block
+        } else {
+            require(
+                prevTxHash.checkMembership(
+                    prevTxData.slot,
+                    prevRoot, 
+                    prevTxInclusionProof
+                ),
+                "Previous tx not included in claimed block"
+            );
+        }
+       */
+
         return true;
     }
 
+    function finalizeExits() external {
+        Exit memory currentExit;
+        uint exitSlotsLength = exitSlots.length;
+        uint slot;
+        for (uint i = 0; i < exitSlotsLength; i++) { 
+            slot = exitSlots[i];
+            currentExit = exits[slot];
 
-    function finalizeExits() public {
-        require(exitsQueue.currentSize() > 0, "exit queue empty");
+            // Process an exit only if it has matured and hasn't been challenged. Only checking date since a challenged exit will dissapear. < Commented out during Development > 
+            // if ((block.timestamp - currentExit.created_at) > 7 days ) {
+                // Change owner of coin at exit.slot and allow that coin to be exited
+                coins[slot].owner = currentExit.owner;
+                coins[slot].canExit = true;
+                
+                // delete the finalized exit
+                delete exits[slot];
+                delete exitSlots[i];
 
-        uint256 priority = exitsQueue.getMin();
-        Exit memory currentExit = exits[priority];
-
-        // finalize exits that are older than `1 week`.
-        while (exitsQueue.currentSize() > 0 && 
-               (block.timestamp - currentExit.created_at) > 1 weeks) {
-            // this can occur if challengeExit is sucessful on an exit
-            if (currentExit.owner == address(0)) { // handles exits
-                exitsQueue.delMin();
-                if (exitsQueue.currentSize() == 0) return; // no revert because we wwant to keep the delete
-
-                // move onto the next oldest exit
-                priority = exitsQueue.getMin();
-                currentExit = exits[priority];
-                continue; // Prevent incorrect processing of deleted exits.
-            }
-
-            // Change owner of coin at exit.slot
-            coins[currentExit.slot].owner = currentExit.owner;
-            coins[currentExit.slot].canExit = true;
-
-            emit FinalizedExit(priority, currentExit.owner, currentExit.slot);
-            emit CanWithdraw(currentExit.owner, currentExit.slot);
-
-            // delete the finalized exit
-            exitsQueue.delMin();
-            delete exits[priority];
-
-            // move onto the next oldest exit
-            if (exitsQueue.currentSize() == 0) {
-                return;
-            }
-            priority = exitsQueue.getMin();
-            currentExit = exits[priority];
+                emit FinalizedExit(currentExit.owner, slot);
+            // }
         }
+    }
+
+    function challengeExit(uint slot) external {
+        // perform validation
+        delete exits[slot];    
+        delete exitSlots[slot];
     }
 
     // Withdraw a UTXO that has been exited
@@ -259,16 +290,13 @@ contract RootChain is ERC721Receiver {
     }
 
     /// receiver for erc721 to trigger a deposit
-    function onERC721Received(address _from, uint256 _uid, bytes) 
+    function onERC721Received(address _from, uint256 _uid, bytes _data) 
         public 
         returns(bytes4) 
     {
         require(msg.sender == address(cryptoCards)); // can only be called by the associated cryptocards contract. 
-        deposit(_from, _uid, 1); //, _data);
+        deposit(_from, _uid, 1, _data);
         return ERC721_RECEIVED;
     }
-
-
-
 }
 
