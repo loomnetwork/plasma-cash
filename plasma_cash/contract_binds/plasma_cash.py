@@ -1,34 +1,33 @@
 from .base.contract import Contract
 from .utils.formatters import normalize
 
+from child_chain.transaction import Transaction
+import rlp
+
 '''Plasma Cash bindings for python ''' 
 
 class PlasmaCash(Contract):
     def __init__(self, private_key, abi_file, address, endpoint):
         super().__init__(private_key, address, abi_file, endpoint)
 
-    def register(self):
-        args = []
-        self.sign_and_send(self.contract.functions.register, args)
+    def challenge(self, slot):
+        args = [slot]
+        self.sign_and_send(self.contract.functions.challengeExit, args)
         return self
 
-    def deposit(self, tokenId, data=None):
-        if data is None:
-            args = [tokenId]
-            self.sign_and_send(
-                    self.contract.functions.depositToPlasma, 
-                    args
-            )
-        else:
-            args = [tokenId, data]
-            self.sign_and_send(
-                    self.contract.functions.depositToPlasmaWithDataWithDataWithDataWithDataWithData,
-                    args
-            )
-        return self
-
-    def start_exit(self, prev_tx, exiting_tx, prev_tx_proof, exiting_tx_proof, exiting_tx_sig):
-        args = [prev_tx, exiting_tx, normalize(prev_tx_proof), normalize(exiting_tx_proof), exiting_tx_sig]
+    def start_exit(self, 
+            uid, 
+            prev_tx, exiting_tx, 
+            prev_tx_proof, exiting_tx_proof, 
+            sigs, 
+            prev_tx_blk_num, tx_blk_num):
+        args = [
+                uid, 
+                prev_tx, exiting_tx, 
+                prev_tx_proof, exiting_tx_proof, 
+                sigs, 
+                prev_tx_blk_num, tx_blk_num
+            ]
         self.sign_and_send(self.contract.functions.startExit, args)
         return self
 
