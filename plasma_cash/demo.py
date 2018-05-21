@@ -4,16 +4,18 @@ from dependency_config import container
 from child_chain.transaction import UnsignedTransaction, Transaction
 import rlp
 
+alice = Client(container.get_root('alice'), container.get_token('alice'))
+bob = Client(container.get_root('bob'), container.get_token('bob'))
+charlie = Client(container.get_root('charlie'), container.get_token('charlie'))
+authority = Client(container.get_root('authority'), container.get_token('authority'))
 
-alice = Client(container.root_chain)
-bob = Client(container.root_chain, container.bob)
-charlie = Client(container.root_chain, container.charlie)
-authority = alice
-authority.key = authority.root_chain.account.privateKey # hack to give proper private key to authority
+# alice = Client(container.root_chain)
+# bob = Client(container.root_chain, container.bob)
+# charlie = Client(container.root_chain, container.charlie)
+# authority = alice
+# authority.key = authority.root_chain.account.privateKey # hack to give proper private key to authority
 
 # Give alice 5 tokens
-print ('Current block has {} transactions'.format(alice.get_current_block().transaction_set))
-
 alice.token_contract.register()
 
 print('Alice has {} tokens'.format(alice.token_contract.balanceOf()))
@@ -22,9 +24,9 @@ print('Charlie has {} tokens'.format(bob.token_contract.balanceOf()))
 
 # Alice deposits 3 of her coins to the plasma contract and gets 3 plasma nft utxos in return 
 tokenId = 1
-alice.token_contract.deposit(tokenId)
-alice.token_contract.deposit(tokenId+1)
-alice.token_contract.deposit(tokenId+2)
+alice.deposit(tokenId)
+alice.deposit(tokenId+1)
+alice.deposit(tokenId+2)
 
 # Alice's UTXOs are with id 0, 1 and 2.
 utxo_id = 2
@@ -47,16 +49,23 @@ tx2 = bob.send_transaction(utxo_id, blk_num, 1, charlie.token_contract.account.a
 
 authority.submit_block()
 
-# Charlie should be able to submit an exit by referencing blocks 0 and 1 which included his transaction. 
-# charlie.start_exit(utxo_id, 1000, 2000)
+prev_tx_blk_num = 1000
+exiting_tx_blk_num = 2000
+uid = utxo_id
 
+# Charlie should be able to submit an exit by referencing blocks 0 and 1 which included his transaction. 
+utxo_id = 2
+prev_tx_blk_num = 1000
+exiting_tx_blk_num = 2000
+charlie.start_exit(utxo_id, prev_tx_blk_num, exiting_tx_blk_num)
 
 # # After 7 days pass, charlie's exit should be finalizable
-# 
-# authority.finalize_exits()
-# 
-# # Charlie should now be able to withdraw the utxo which included token 2 to his wallet.
-# 
-# charlie.withdraw(tokenId)
+authority.finalize_exits()
+
+# Charlie should now be able to withdraw the utxo which included token 2 to his wallet.
+charlie.withdraw(2)
+print('Alice has {} tokens'.format(alice.token_contract.balanceOf()))
+print('Bob has {} tokens'.format(bob.token_contract.balanceOf()))
+print('Charlie has {} tokens'.format(charlie.token_contract.balanceOf()))
 
 # Plasma Cash with ERC721 tokens success :) 
