@@ -37,6 +37,8 @@ contract("Plasma ERC721 WIP", async function(accounts) {
     function createUTXO(slot, prevBlock, from, to) {
         let data = [ slot, prevBlock, 1, to ]
         data = '0x' + RLP.encode(data).toString('hex')
+        // console.log('Created UTXO for slot', slot);
+        // console.log(data)
         let txHash = utils.soliditySha3(data);
         let sig = web3.eth.sign(from, txHash); 
         return [data, sig];
