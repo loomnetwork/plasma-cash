@@ -1,30 +1,31 @@
 pragma solidity ^0.4.22;
 
+// Linked contract for withdrawals, import only safeTransferFrom interface for gas efficiency in the future
+import './Cards.sol';
+
+// Zeppelin Imports
 import 'openzeppelin-solidity/contracts/token/ERC721/ERC721Receiver.sol';
 import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
-import './Cards.sol';
 
 // Lib deps
 import '../Libraries/Transaction/Transaction.sol';
 import '../Libraries/ByteUtils.sol';
-import '../Libraries/SparseMerkleTree.sol';
+import '../Libraries/ECVerify.sol';
 
-contract RootChain is ERC721Receiver {
+// Sparse Merkle Tree functionalities
+import './SparseMerkleTree.sol';
+
+contract RootChain is ERC721Receiver, SparseMerkleTree {
     /*
      * Events
      */
-    event Deposit(uint256 slot, uint256 depositBlockNumber, uint256 denomination, address indexed from);
-    event ExitStarted(uint indexed slot, address indexed owner, uint created_at);
-    event FinalizedExit(address  owner, uint256  uid);
+    event Deposit(uint64 indexed slot, uint256 depositBlockNumber, uint64 denomination, address indexed from);
+    event ExitStarted(uint64 indexed slot, address indexed owner, uint created_at);
+    event FinalizedExit(address  owner, uint64  slot);
 
-    using SafeMath for uint256;
-    using ERC721PlasmaRLP for bytes;
-    using ERC721PlasmaRLP for ERC721PlasmaRLP.txData;
-
-    using ECVerify for bytes32;
-
+    using SafeMath for uint256; // if few operations consider removing and doing asserts inline for less gas costs
     using Transaction for bytes;
-    using SparseMerkleTree for bytes32;
+    using ECVerify for bytes32;
 
     /*
      * Storage
@@ -33,19 +34,20 @@ contract RootChain is ERC721Receiver {
     address public authority;
 
     // exits
-    uint[] public exitSlots;
-    mapping(uint256 => Exit) public exits;
+    uint64[] public exitSlots;
+    mapping(uint64 => Exit) public exits;
+
     struct Exit {
         address owner;
         uint256 created_at;
     }
 
     // tracking of NFTs deposited in each slot
-    uint public NUM_COINS;
-    mapping (uint => NFT_UTXO) public coins; 
+    uint64 public NUM_COINS;
+    mapping (uint64 => NFT_UTXO) public coins; 
     struct NFT_UTXO {
-        uint256 uid; // there are up to 2^256 cards, can probably make it less
-        uint256 denomination; // an owner cannot own more than 256 of a card. Currently set to 1 always, subject to change once the token changes
+        uint64 uid; // there are up to 2^256 cards, can probably make it less
+        uint32 denomination; // an owner cannot own more than 256 of a card. Currently set to 1 always, subject to change once the token changes
         address owner; // who owns that nft
         bool canExit;
     }
@@ -62,7 +64,6 @@ contract RootChain is ERC721Receiver {
 
     uint public depositCount;
     mapping(uint => childBlock) public childChain;
-    mapping(address => uint256[]) public pendingWithdrawals; //  the pending cards to withdraw
     CryptoCards cryptoCards;
 
     /*
@@ -108,10 +109,10 @@ contract RootChain is ERC721Receiver {
 
 
     /// @dev Allows anyone to deposit funds into the Plasma chain, called when contract receives ERC721
-    function deposit(address from, uint256 uid, uint256 denomination, bytes txBytes)
+    function deposit(address from, uint64 uid, uint32 denomination, bytes txBytes)
         private
     {
-        ERC721PlasmaRLP.txData memory txData = txBytes.getTxData();
+        Transaction.TX memory txData = txBytes.getTx();
         // Verify that the transaction data sent matches the coin data from ERC721
         require(txData.slot == NUM_COINS);
         require(txData.denomination == denomination);
@@ -141,10 +142,10 @@ contract RootChain is ERC721Receiver {
     }
 
     function startExit(
-        uint slot,
+        uint64 slot,
         bytes prevTxBytes, bytes exitingTxBytes, 
         bytes prevTxInclusionProof, bytes exitingTxInclusionProof, 
-        // bytes sigs,
+        bytes sigs,
         uint prevTxIncBlock, uint exitingTxIncBlock) 
         external
     {
@@ -192,8 +193,9 @@ contract RootChain is ERC721Receiver {
          view 
          returns (bool) 
     {
-        ERC721PlasmaRLP.txData memory txData = txBytes.getTxData();
+        Transaction.TX memory txData = txBytes.getTx();
         bytes32 txHash = keccak256(txBytes); 
+
         require(txHash.ecverify(signature, txData.owner), "Invalid sig");
         require(
             txHash == childChain[txIncBlock].root, 
@@ -213,20 +215,21 @@ contract RootChain is ERC721Receiver {
             view
             returns (bool)
     {
-        ERC721PlasmaRLP.txData memory prevTxData = prevTxBytes.getTxData();
-        ERC721PlasmaRLP.txData memory exitingTxData = exitingTxBytes.getTxData();
+        Transaction.TX memory prevTxData = prevTxBytes.getTx();
+        Transaction.TX memory exitingTxData = exitingTxBytes.getTx();
 
         bytes32 txHash = keccak256(exitingTxBytes);
         bytes32 root = childChain[exitingTxIncBlock].root;
 
         // TODO: Debug the requires.
-        // require(txHash.ecverify(getSig(sigs, 1), prevTxData.owner), "Invalid sig");
-        // require(exitingTxData.owner == msg.sender, "Invalid sender");
-        /* 
+        require(txHash.ecverify(getSig(sigs, 1), prevTxData.owner), "Invalid sig");
+        require(exitingTxData.owner == msg.sender, "Invalid sender");
+        
         require(
-            txHash.checkMembership(
-                exitingTxData.slot, 
+            checkMembership(
+                txHash,
                 root, 
+                exitingTxData.slot, 
                 exitingTxInclusionProof
             ),
             "Exiting tx not included in claimed block"
@@ -239,15 +242,15 @@ contract RootChain is ERC721Receiver {
             require(prevTxHash == prevRoot); // like in deposit block
         } else {
             require(
-                prevTxHash.checkMembership(
-                    prevTxData.slot,
+                checkMembership(
+                    prevTxHash,
                     prevRoot, 
+                    prevTxData.slot,
                     prevTxInclusionProof
                 ),
                 "Previous tx not included in claimed block"
             );
         }
-       */
 
         return true;
     }
@@ -255,7 +258,7 @@ contract RootChain is ERC721Receiver {
     function finalizeExits() external {
         Exit memory currentExit;
         uint exitSlotsLength = exitSlots.length;
-        uint slot;
+        uint64 slot;
         for (uint i = 0; i < exitSlotsLength; i++) { 
             slot = exitSlots[i];
             currentExit = exits[slot];
@@ -275,17 +278,17 @@ contract RootChain is ERC721Receiver {
         }
     }
 
-    function challengeExit(uint slot) external {
+    function challengeExit(uint64 slot) external {
         // perform validation
         delete exits[slot];    
         delete exitSlots[slot];
     }
 
     // Withdraw a UTXO that has been exited
-    function withdraw(uint slot) external {
+    function withdraw(uint64 slot) external {
         require(coins[slot].owner == msg.sender, "You do not own that UTXO");
         require(coins[slot].canExit, "You cannot exit that coin!");
-        cryptoCards.safeTransferFrom(address(this), msg.sender, coins[slot].uid);
+        cryptoCards.safeTransferFrom(address(this), msg.sender, uint256(coins[slot].uid));
     }
 
     function getDepositBlock() public view returns (uint256) {
@@ -298,7 +301,7 @@ contract RootChain is ERC721Receiver {
         returns(bytes4) 
     {
         require(msg.sender == address(cryptoCards)); // can only be called by the associated cryptocards contract. 
-        deposit(_from, _uid, 1, _data);
+        deposit(_from, uint64(_uid), uint32(1), _data);
         return ERC721_RECEIVED;
     }
 }

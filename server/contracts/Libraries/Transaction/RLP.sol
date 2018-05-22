@@ -20,34 +20,92 @@ library RLP {
         uint _unsafe_length;    // Number of bytes. This is the full length of the string.
     }
 
-    struct txData {
-        uint256 slot;
-        uint256 prevBlock;
-        uint256 denomination;
-        address owner;
-    }
-
     struct Iterator {
         RLPItem _unsafe_item;   // Item that's being iterated over.
         uint _unsafe_nextPtr;   // Position of the next item in the list.
     }
 
-    /* Public Functions */
+    /* RLPItem */
 
-    function getTxData(bytes memory txDataBytes)
-        internal
-        pure
-        returns (txData)
-    {
-        RLPItem[] memory txList = toList(toRLPItem(txDataBytes), 5);
-        return txData({
-            slot: toUint(txList[0]),
-            prevBlock: toUint(txList[1]),
-            denomination: toUint(txList[2]),
-            owner: toAddress(txList[3]),
-        });
+    /// @dev Creates an RLPItem from an array of RLP encoded bytes.
+    /// @param self The RLP encoded bytes.
+    /// @return An RLPItem
+    function toRLPItem(bytes memory self) internal pure returns (RLPItem memory) {
+        uint len = self.length;
+        uint memPtr;
+        assembly {
+            memPtr := add(self, 0x20)
+        }
+        return RLPItem(memPtr, len);
     }
 
+    /// @dev Get the list of sub-items from an RLP encoded list.
+    /// Warning: This requires passing in the number of items.
+    /// @param self The RLP item.
+    /// @return Array of RLPItems.
+    function toList(RLPItem memory self, uint256 numItems) internal pure returns (RLPItem[] memory list) {
+        list = new RLPItem[](numItems);
+        Iterator memory it = iterator(self);
+        uint idx;
+        while(idx < numItems) {
+            list[idx] = next(it);
+            idx++;
+        }
+    }
+
+    /// @dev Decode an RLPItem into a uint. This will not work if the
+    /// RLPItem is a list.
+    /// @param self The RLPItem.
+    /// @return The decoded string.
+    function toUint(RLPItem memory self) internal pure returns (uint data) {
+        uint rStartPos; uint len;
+        (rStartPos, len) = _decode(self);
+        assembly {
+            data := div(mload(rStartPos), exp(256, sub(32, len)))
+        }
+    }
+
+    /// @dev Decode an RLPItem into an address. This will not work if the
+    /// RLPItem is a list.
+    /// @param self The RLPItem.
+    /// @return The decoded string.
+    function toAddress(RLPItem memory self)
+        internal
+        pure
+        returns (address data)
+    {
+        uint rStartPos; uint len;
+        (rStartPos, len) = _decode(self);
+        assembly {
+            data := div(mload(rStartPos), exp(256, 12))
+        }
+    }
+
+    /// @dev Decode an RLPItem into bytes. This will not work if the
+    /// RLPItem is a list.
+    /// @param self The RLPItem.
+    /// @return The decoded string.
+    function toData(RLPItem memory self)
+        internal
+        pure
+        returns (bytes memory bts)
+    {
+        // require(isData(self));
+        uint rStartPos; uint len;
+        (rStartPos, len) = _decode(self);
+        bts = new bytes(len);
+        _copyToBytes(rStartPos, bts, len);
+    }
+
+
+    /// @dev Create an iterator.
+    /// @param self The RLP item.
+    /// @return An 'Iterator' over the item.
+    function iterator(RLPItem memory self) private pure returns (Iterator memory it) {
+        uint ptr = self._unsafe_memPtr + _payloadOffset(self);
+        it._unsafe_item = self;
+        it._unsafe_nextPtr = ptr;
+    }
     /* Iterator */
 
     function next(Iterator memory self) private pure returns (RLPItem memory subItem) {
@@ -63,70 +121,6 @@ library RLP {
         return self._unsafe_nextPtr < item._unsafe_memPtr + item._unsafe_length;
     }
 
-    /* RLPItem */
-
-    /// @dev Creates an RLPItem from an array of RLP encoded bytes.
-    /// @param self The RLP encoded bytes.
-    /// @return An RLPItem
-    function toRLPItem(bytes memory self) private pure returns (RLPItem memory) {
-        uint len = self.length;
-        uint memPtr;
-        assembly {
-            memPtr := add(self, 0x20)
-        }
-        return RLPItem(memPtr, len);
-    }
-
-    /// @dev Create an iterator.
-    /// @param self The RLP item.
-    /// @return An 'Iterator' over the item.
-    function iterator(RLPItem memory self) private pure returns (Iterator memory it) {
-        uint ptr = self._unsafe_memPtr + _payloadOffset(self);
-        it._unsafe_item = self;
-        it._unsafe_nextPtr = ptr;
-    }
-
-    /// @dev Get the list of sub-items from an RLP encoded list.
-    /// Warning: This requires passing in the number of items.
-    /// @param self The RLP item.
-    /// @return Array of RLPItems.
-    function toList(RLPItem memory self, uint256 numItems) private pure returns (RLPItem[] memory list) {
-        list = new RLPItem[](numItems);
-        Iterator memory it = iterator(self);
-        uint idx;
-        while(idx < numItems) {
-            list[idx] = next(it);
-            idx++;
-        }
-    }
-
-    /// @dev Decode an RLPItem into a uint. This will not work if the
-    /// RLPItem is a list.
-    /// @param self The RLPItem.
-    /// @return The decoded string.
-    function toUint(RLPItem memory self) private pure returns (uint data) {
-        uint rStartPos; uint len;
-        (rStartPos, len) = _decode(self);
-        assembly {
-            data := div(mload(rStartPos), exp(256, sub(32, len)))
-        }
-    }
-
-    /// @dev Decode an RLPItem into an address. This will not work if the
-    /// RLPItem is a list.
-    /// @param self The RLPItem.
-    /// @return The decoded string.
-    function toAddress(RLPItem memory self)
-        private
-        pure
-        returns (address data)
-    {
-        uint rStartPos; uint len;
-        (rStartPos, len) = _decode(self);
-        assembly {
-            data := div(mload(rStartPos), exp(256, 12))
-        }
-    }
 
     // Get the payload offset.
     function _payloadOffset(RLPItem memory self)
@@ -204,22 +198,6 @@ library RLP {
             return;
         bts = new bytes(len);
         _copyToBytes(self._unsafe_memPtr, bts, len);
-    }
-
-    /// @dev Decode an RLPItem into bytes. This will not work if the
-    /// RLPItem is a list.
-    /// @param self The RLPItem.
-    /// @return The decoded string.
-    function toData(RLPItem memory self)
-        internal
-        pure
-        returns (bytes memory bts)
-    {
-        // require(isData(self));
-        uint rStartPos; uint len;
-        (rStartPos, len) = _decode(self);
-        bts = new bytes(len);
-        _copyToBytes(rStartPos, bts, len);
     }
 
     // Assumes that enough memory has been allocated to store in target.

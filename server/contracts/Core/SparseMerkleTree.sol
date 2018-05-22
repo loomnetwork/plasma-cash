@@ -1,7 +1,7 @@
 pragma solidity ^0.4.23;
 
 // Based on https://rinkeby.etherscan.io/address/0x881544e0b2e02a79ad10b01eca51660889d5452b#code
-library SparseMerkleTree {
+contract SparseMerkleTree {
 
     uint8 constant DEPTH = 32;
     bytes32[DEPTH] public defaultHashes;
