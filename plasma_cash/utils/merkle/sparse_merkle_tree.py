@@ -61,14 +61,18 @@ class SparseMerkleTree(object):
         # the hash of node's sibling from leaf to root.
         index = uid
         proof = b''
+        proofbits = b''
         for level in range(self.depth - 1):
             sibling_index = index + 1 if index % 2 == 0 else index - 1
             index = index // 2
             if sibling_index in self.tree[level]:
                 proof += self.tree[level][sibling_index]
+                proofbits += b'1'
+
             else:
-                proof += self.default_nodes[level]
-        return proof
+                # proof += self.default_nodes[level]
+                proofbits += b'0'
+        return proofbits + proof
 
     class TreeSizeExceededException(Exception):
         """there are too many leaves for the tree to build"""
