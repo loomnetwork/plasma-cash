@@ -5,10 +5,9 @@ import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
 import './Cards.sol';
 
 // Lib deps
-import '../Libraries/ERC721PlasmaRLP.sol';
-import '../Libraries/ECVerify.sol';
+import '../Libraries/Transaction/Transaction.sol';
 import '../Libraries/ByteUtils.sol';
-import '../Libraries/Merkle.sol';
+import '../Libraries/SparseMerkleTree.sol';
 
 contract RootChain is ERC721Receiver {
     /*
@@ -21,8 +20,11 @@ contract RootChain is ERC721Receiver {
     using SafeMath for uint256;
     using ERC721PlasmaRLP for bytes;
     using ERC721PlasmaRLP for ERC721PlasmaRLP.txData;
+
     using ECVerify for bytes32;
-    using Merkle for bytes32;
+
+    using Transaction for bytes;
+    using SparseMerkleTree for bytes32;
 
     /*
      * Storage
@@ -142,7 +144,7 @@ contract RootChain is ERC721Receiver {
         uint slot,
         bytes prevTxBytes, bytes exitingTxBytes, 
         bytes prevTxInclusionProof, bytes exitingTxInclusionProof, 
-        bytes sigs,
+        // bytes sigs,
         uint prevTxIncBlock, uint exitingTxIncBlock) 
         external
     {

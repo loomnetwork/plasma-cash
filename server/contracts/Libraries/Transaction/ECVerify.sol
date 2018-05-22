@@ -1,7 +1,7 @@
 pragma solidity ^0.4.22;
 
 library ECVerify {
-    function ecrecovery(bytes32 hash, bytes sig) internal pure returns (address) {
+    function recover(bytes32 hash, bytes sig) internal pure returns (address) {
         bytes32 r;
         bytes32 s;
         uint8 v;
@@ -23,7 +23,7 @@ library ECVerify {
     }
 
     function ecverify(bytes32 hash, bytes sig, address signer) internal pure returns (bool) {
-        return signer == ecrecovery( prefixed(hash), sig);
+        return signer == recover( prefixed(hash), sig);
     }
 
 	function prefixed(bytes32 hash) private pure returns (bytes32) {

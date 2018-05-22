@@ -6,7 +6,7 @@ pragma solidity ^0.4.23;
  * @author Andreas Olofsson (androlo1980@gmail.com)
  */
 
-library ERC721PlasmaRLP {
+library RLP {
     uint constant DATA_SHORT_START = 0x80;
     uint constant DATA_LONG_START = 0xB8;
     uint constant LIST_SHORT_START = 0xC0;
@@ -25,7 +25,6 @@ library ERC721PlasmaRLP {
         uint256 prevBlock;
         uint256 denomination;
         address owner;
-        bytes sig;
     }
 
     struct Iterator {
@@ -46,7 +45,6 @@ library ERC721PlasmaRLP {
             prevBlock: toUint(txList[1]),
             denomination: toUint(txList[2]),
             owner: toAddress(txList[3]),
-            sig: toBytes(txList[4])
         });
     }
 
