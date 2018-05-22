@@ -49,9 +49,11 @@ class Client(object):
         if prev_tx_blk_num % self.child_block_interval == 0:
             prev_block = self.get_block(prev_tx_blk_num)
             prev_tx = prev_block.get_tx_by_uid(uid)
+            sigs = prev_tx.sig + exiting_tx.sig
+
             prev_tx_proof = self.get_proof(prev_tx_blk_num, uid)
             exiting_tx_proof = self.get_proof(tx_blk_num, uid)
-            sigs = prev_tx.sig + exiting_tx.sig
+
 
         return self.root_chain.start_exit(
                 uid,

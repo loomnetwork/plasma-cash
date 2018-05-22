@@ -7,7 +7,7 @@ from hexbytes import HexBytes
 
 class SparseMerkleTree(object):
 
-    def __init__(self, depth=256, leaves={}):
+    def __init__(self, depth=64, leaves={}):
         self.depth = depth
         if len(leaves) > 2**(depth-1):
             raise self.TreeSizeExceededException(
@@ -57,8 +57,9 @@ class SparseMerkleTree(object):
         return tree
 
     def create_merkle_proof(self, uid):
-        # Generate a merkle proof for a leaf with provided index. A proof is the concatenation of
-        # the hash of node's sibling from leaf to root.
+        # Generate a merkle proof for a leaf with provided index.
+        # First `depth/8` bytes of the proof are necessary for checking if 
+        # we are at a default-node
         index = uid
         proof = b''
         proofbits = b''
@@ -70,9 +71,18 @@ class SparseMerkleTree(object):
                 proofbits += b'1'
 
             else:
-                # proof += self.default_nodes[level]
                 proofbits += b'0'
-        return proofbits + proof
+
+        # Need to convert the binary string to bytes for solidity to understand.
+        proof_bytes = _to_bytes(proofbits)
+        return proof_bytes + proof
+
+    def _to_bytes(bits):
+        # lord have mercy on my soul for this hack. 
+        # There is probably a better way to store the slots that were 0/1 in a number
+        b = w3.toBytes(hexstr=hex(int(bits,2)))
+        b  = b.rjust(self.depth / 8, b'\0') # pad to bytes needed
+        return b
 
     class TreeSizeExceededException(Exception):
         """there are too many leaves for the tree to build"""
