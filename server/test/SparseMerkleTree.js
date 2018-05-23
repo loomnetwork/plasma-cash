@@ -75,9 +75,11 @@ module.exports = class SparseMerkleTree {
       }
     }
 
-    let bits = new BN(proofbits, 2);
-    let buf = bits.toBuffer();
-    return buf.toString('binary').padStart(8, '\x00') + proof;
+    let reversed = proofbits.split("").reverse().join("");
+    let bits = new BN(reversed, 2);
+    // Must convert the BN to '\x12\x34' hexstring. Currently buggy. Uncomment the second transaction in testPlasma.js to test this
+    let buf = bits.toBuffer().toString().padStart(8, '\x00')
+    return buf + proof;
   }
 
 }

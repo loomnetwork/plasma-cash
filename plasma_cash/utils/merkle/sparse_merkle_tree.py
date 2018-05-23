@@ -74,7 +74,7 @@ class SparseMerkleTree(object):
                 proofbits += b'0'
 
         # Need to convert the binary string to bytes for solidity to understand.
-        proof_bytes = to_bytes(proofbits)
+        proof_bytes = to_bytes(proofbits[::-1])
         return proof_bytes + proof
 
     def verify(self, uid, proof):
@@ -99,8 +99,6 @@ class SparseMerkleTree(object):
                 computed_hash = keccak256(proof_element, computed_hash)
             proofbits = proofbits // 2
             index = index // 2
-        print(computed_hash.hex())
-        print(self.root.hex())
         return computed_hash == self.root
 
         

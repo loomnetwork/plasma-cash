@@ -81,8 +81,7 @@ contract("Plasma ERC721 WIP", async function(accounts) {
         let slot = 1500;
         let prevblock = 1000;
         let denom = 1;
-        let newowner = bob;
-        let data = [slot, prevblock, denom, newowner];
+        let data = [slot, prevblock, denom, bob];
         let tx = '0x' + RLP.encode(data).toString('hex');
         let txHash = utils.soliditySha3(tx);
 
@@ -90,16 +89,17 @@ contract("Plasma ERC721 WIP", async function(accounts) {
         leaves[slot] = txHash;
 
         // slot = 63;
-        // data = [slot, prevblock, denom, newowner];
+        // data = [slot, prevblock, denom, alice];
         // tx = '0x' + RLP.encode(data).toString('hex');
         // txHash = utils.soliditySha3(tx);
         // leaves[slot] = txHash;
 
+        // This will be happening on the Plasma Cash client
+        // The root will be submitted by the authority
         let tree = new SparseMerkleTree(64, leaves);
         let proof = tree.createMerkleProof(slot);
 
         let ret = await plasma.checkMembership(txHash, tree.root, slot, proof);
-        // console.log('Sent:', txHash, tree.root, slot, proof);
         assert.equal(ret, true);
 
     
