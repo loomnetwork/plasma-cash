@@ -32,7 +32,7 @@ contract SparseMerkleTree {
         uint64 proofBits;
         assembly { proofBits := div(mload(add(proof, 32)), exp(256, 24))}
 
-        for (uint d = 0; d < DEPTH; d++ ) {
+        for (uint d = 0; d < DEPTH-1; d++ ) {
             if (proofBits % 2 == 0) { // check if last bit of proofBits is 0
                 proofElement = defaultHashes[d];
             } else {

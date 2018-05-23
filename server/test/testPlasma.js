@@ -78,7 +78,7 @@ contract("Plasma ERC721 WIP", async function(accounts) {
     });
 
     it('Tests that Merkle Proofs work', async function() {
-        let slot = 60
+        let slot = 1500;
         let prevblock = 1000;
         let denom = 1;
         let newowner = bob;
@@ -96,12 +96,11 @@ contract("Plasma ERC721 WIP", async function(accounts) {
         // leaves[slot] = txHash;
 
         let tree = new SparseMerkleTree(64, leaves);
-        // tree.root will be submited to `submitBlock`
         let proof = tree.createMerkleProof(slot);
 
         let ret = await plasma.checkMembership(txHash, tree.root, slot, proof);
-        console.log('Sent:', txHash, tree.root, slot, proof);
-        console.log(ret);
+        // console.log('Sent:', txHash, tree.root, slot, proof);
+        assert.equal(ret, true);
 
     
     });
