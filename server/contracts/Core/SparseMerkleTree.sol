@@ -18,7 +18,7 @@ contract SparseMerkleTree {
         }
     }
 
-    function checkMembership(bytes32 leaf, bytes32 root, uint64 tokenID, bytes proof) internal view returns (bool) {
+    function checkMembership(bytes32 leaf, bytes32 root, uint64 tokenID, bytes proof) public view returns (bool) {
         bytes32 computedHash = getRoot(leaf, tokenID, proof);
         return (computedHash == root);
     }

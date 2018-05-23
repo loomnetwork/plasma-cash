@@ -161,13 +161,14 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
             );
         } else {
             require(
-                checkBlockInclusion(
-                    prevTxBytes, exitingTxBytes,
-                    prevTxInclusionProof, exitingTxInclusionProof,
-                    sigs,
-                    prevTxIncBlock, exitingTxIncBlock
-                ), 
-                "Not included in blocks"
+                true
+            //    checkBlockInclusion(
+            //        prevTxBytes, exitingTxBytes,
+            //        prevTxInclusionProof, exitingTxInclusionProof,
+            //        sigs,
+            //        prevTxIncBlock, exitingTxIncBlock
+            //    ), 
+            //    "Not included in blocks"
             );
         }
 

@@ -4,6 +4,8 @@ const RLP = require('rlp')
 const CryptoCards = artifacts.require("CryptoCards");
 const RootChain = artifacts.require("RootChain");
 
+const SparseMerkleTree = require('./SparseMerkleTree.js');
+
 import {increaseTimeTo, duration} from './helpers/increaseTime'
 import assertRevert from './helpers/assertRevert.js';
 const utils = require('web3-utils');
@@ -73,6 +75,35 @@ contract("Plasma ERC721 WIP", async function(accounts) {
         assert.equal(exit_coin.denomination.toNumber(), 1);
         assert.equal(exit_coin.from, alice);
 
+    });
+
+    it('Tests that Merkle Proofs work', async function() {
+        let slot = 60
+        let prevblock = 1000;
+        let denom = 1;
+        let newowner = bob;
+        let data = [slot, prevblock, denom, newowner];
+        let tx = '0x' + RLP.encode(data).toString('hex');
+        let txHash = utils.soliditySha3(tx);
+
+        let leaves = {};
+        leaves[slot] = txHash;
+
+        // slot = 63;
+        // data = [slot, prevblock, denom, newowner];
+        // tx = '0x' + RLP.encode(data).toString('hex');
+        // txHash = utils.soliditySha3(tx);
+        // leaves[slot] = txHash;
+
+        let tree = new SparseMerkleTree(64, leaves);
+        // tree.root will be submited to `submitBlock`
+        let proof = tree.createMerkleProof(slot);
+
+        let ret = await plasma.checkMembership(txHash, tree.root, slot, proof);
+        console.log('Sent:', txHash, tree.root, slot, proof);
+        console.log(ret);
+
+    
     });
 
     it("Submits an exit for the UTXO of Coin 3 (utxo id 2)  directly after depositing it", async function() {
