@@ -40,12 +40,12 @@ module.exports = class SparseMerkleTree {
         var value = treeLevel[index]; 
         if (index % 2 === 0) {
           nextLevel[ Math.floor(index/2) ] = 
-                  utils.soliditySha3(value + defaultNodes[level].replace('0x', ''));
+                  utils.soliditySha3(value, defaultNodes[level]);
         } else {
           if (index === prevIndex + 1) {
-            nextLevel[Math.floor(index/2)] = utils.soliditySha3(treeLevel[prevIndex] + defaultNodes[level].replace('0x', ''));
+            nextLevel[Math.floor(index/2)] = utils.soliditySha3(treeLevel[prevIndex], value);
           } else {
-            nextLevel[Math.floor(index/2)] = utils.soliditySha3(defaultNodes[level] + value.replace('0x', ''));
+            nextLevel[Math.floor(index/2)] = utils.soliditySha3(defaultNodes[level], value);
           }
         }
         prevIndex = index;

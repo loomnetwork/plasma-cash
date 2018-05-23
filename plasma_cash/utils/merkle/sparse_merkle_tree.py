@@ -30,7 +30,7 @@ class SparseMerkleTree(object):
         default_nodes = [default_hash]
         for level in range(1, depth):
             prev_default = default_nodes[level - 1]
-            default_nodes.append(w3.soliditySha3(['bytes32'], [prev_default + prev_default]))
+            default_nodes.append(w3.soliditySha3(['bytes32', 'bytes32'], [prev_default,  prev_default]))
         return default_nodes
 
     def create_tree(self, ordered_leaves, depth, default_nodes):
@@ -44,13 +44,13 @@ class SparseMerkleTree(object):
                     # If the node is a left node, assume the right sibling is a default node.
                     # in the case right sibling is not default node,
                     # it would override on next round
-                    next_level[index // 2] = w3.soliditySha3(['bytes32'], [value + default_nodes[level]])
+                    next_level[index // 2] = w3.soliditySha3(['bytes32', 'bytes32'], [value, default_nodes[level]])
                 else:
                     # If the node is a right node, check if its left sibling is a default node.
                     if index == prev_index + 1:
-                        next_level[index // 2] = w3.soliditySha3(['bytes32'], [tree_level[prev_index] + value])
+                        next_level[index // 2] = w3.soliditySha3(['bytes32', 'bytes32'], [tree_level[prev_index], value])
                     else:
-                        next_level[index // 2] = w3.soliditySha3(['bytes32'], [default_nodes[level] + value])
+                        next_level[index // 2] = w3.soliditySha3(['bytes32', 'bytes32'], [default_nodes[level], value])
                 prev_index = index
             tree_level = next_level
             tree.append(tree_level)
