@@ -1,6 +1,5 @@
 const utils = require('web3-utils');
-// const BN = require('bn.js');
-const BN = require('bignumber.js');
+const BN = require('bn.js');
 
 module.exports = class SparseMerkleTree {
   constructor(depth, leaves) {
@@ -41,18 +40,16 @@ module.exports = class SparseMerkleTree {
         var value = treeLevel[index]; 
         if (index % 2 === 0) {
           nextLevel[ Math.floor(index/2) ] = 
-                  utils.soliditySha3(value + defaultNodes[level]);
+                  utils.soliditySha3(value + defaultNodes[level].replace('0x', ''));
         } else {
           if (index === prevIndex + 1) {
-            nextLevel[Math.floor(index/2)] = utils.soliditySha3(value + defaultNodes[level]);
+            nextLevel[Math.floor(index/2)] = utils.soliditySha3(treeLevel[prevIndex] + defaultNodes[level].replace('0x', ''));
           } else {
-            nextLevel[Math.floor(index/2)] = utils.soliditySha3(value + defaultNodes[level]);
+            nextLevel[Math.floor(index/2)] = utils.soliditySha3(defaultNodes[level] + value.replace('0x', ''));
           }
         }
+        prevIndex = index;
       }
-
-      // console.log(nextLevel);
-
       treeLevel = nextLevel;
       tree.push(treeLevel);
     }
@@ -71,38 +68,16 @@ module.exports = class SparseMerkleTree {
 
       siblingHash = this.tree[level][siblingIndex];
       if (siblingHash) {
-        proof += siblingHash.slice(2, siblingHash.length)
+        proof += siblingHash.replace('0x', '')
         proofbits += '1'
       } else {
         proofbits += '0';
       }
     }
+
     let bits = new BN(proofbits, 2);
-    console.log(proof);
-    return utils.hexToBytes(utils.fromDecimal(bits));
+    let buf = bits.toBuffer();
+    return buf.toString('binary').padStart(8, '\x00') + proof;
   }
 
 }
-//// tx = (slot, prevblock, denom, newowner)
-//slot = 1;
-//prevblock = 1000;
-//denom = 1;
-//newowner = '0x123456789';
-//data = [slot, prevblock, denom, newowner];
-//tx = '0x' + RLP.encode(data).toString('hex'); 
-
-
-// let leaves = {};
-// leaves[slot] = utils.soliditySha3(tx);
-// 
-// slot = 5
-// data = [slot, prevblock, denom, newowner];
-// tx2 = '0x' + RLP.encode(data).toString('hex');
-// leaves[slot] = utils.soliditySha3(tx2);
-// 
-
-// tree = new SparseMerkleTree(8, leaves);
-// 
-// tree.createMerkleProof(1);
-// 
-// tree = new SparseMerkleTree(4);

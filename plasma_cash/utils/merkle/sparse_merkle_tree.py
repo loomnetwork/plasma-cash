@@ -26,11 +26,11 @@ class SparseMerkleTree(object):
 
     def create_default_nodes(self, depth):
         # Default nodes are the nodes whose children are both empty nodes at each level.
-        default_hash = w3.sha3(HexBytes('00' * 32 ))
+        default_hash = w3.soliditySha3(['bytes32'], [HexBytes('00' * 32 )])
         default_nodes = [default_hash]
         for level in range(1, depth):
             prev_default = default_nodes[level - 1]
-            default_nodes.append(w3.sha3(prev_default + prev_default))
+            default_nodes.append(w3.soliditySha3(['bytes32'], [prev_default + prev_default]))
         return default_nodes
 
     def create_tree(self, ordered_leaves, depth, default_nodes):
@@ -44,13 +44,13 @@ class SparseMerkleTree(object):
                     # If the node is a left node, assume the right sibling is a default node.
                     # in the case right sibling is not default node,
                     # it would override on next round
-                    next_level[index // 2] = w3.sha3(value + default_nodes[level])
+                    next_level[index // 2] = w3.soliditySha3(['bytes32'], [value + default_nodes[level]])
                 else:
                     # If the node is a right node, check if its left sibling is a default node.
                     if index == prev_index + 1:
-                        next_level[index // 2] = w3.sha3(tree_level[prev_index] + value)
+                        next_level[index // 2] = w3.soliditySha3(['bytes32'], [tree_level[prev_index] + value])
                     else:
-                        next_level[index // 2] = w3.sha3(default_nodes[level] + value)
+                        next_level[index // 2] = w3.soliditySha3(['bytes32'], [default_nodes[level] + value])
                 prev_index = index
             tree_level = next_level
             tree.append(tree_level)
@@ -74,14 +74,15 @@ class SparseMerkleTree(object):
                 proofbits += b'0'
 
         # Need to convert the binary string to bytes for solidity to understand.
-        proof_bytes = _to_bytes(proofbits)
+        proof_bytes = self._to_bytes(proofbits)
         return proof_bytes + proof
 
-    def _to_bytes(bits):
+    def _to_bytes(self, bits):
         # lord have mercy on my soul for this hack. 
         # There is probably a better way to store the slots that were 0/1 in a number
+        # struct.pack('>Q', 0x200000000000000) <- hexstr does the job
         b = w3.toBytes(hexstr=hex(int(bits,2)))
-        b  = b.rjust(self.depth / 8, b'\0') # pad to bytes needed
+        b  = b.rjust(self.depth // 8, b'\0') # pad to bytes needed
         return b
 
     class TreeSizeExceededException(Exception):
