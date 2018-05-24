@@ -89,14 +89,14 @@ contract("Plasma ERC721 WIP", async function(accounts) {
 
     it('Tests that Merkle Proofs work', async function() {
         let slot = 1500;
-        let tx = createUTXO(slot, 1000, bob, charlie);
+        let tx = createUTXO(slot, 1000, alice, bob);
         let txHash = utils.soliditySha3(tx[0]);
 
         let leaves = {};
         leaves[slot] = txHash;
 
         // slot = 63;
-        // data = [slot, prevblock, denom, alice];
+        // data = [slot, 2000, bob, charlie];
         // tx = '0x' + RLP.encode(data).toString('hex');
         // txHash = utils.soliditySha3(tx);
         // leaves[slot] = txHash;
@@ -168,10 +168,10 @@ contract("Plasma ERC721 WIP", async function(accounts) {
 
         plasma.startExit(
                 utxo_slot,
-                prev_tx, exiting_tx, 
-                prev_tx_proof, exiting_tx_proof, 
-                sigs,
-                1000, 2000,
+                prev_tx, exiting_tx, // rlp encoded
+                prev_tx_proof, exiting_tx_proof, // proofs from the tree
+                sigs, // concatenated signatures
+                1000, 2000, // 1000 is when alice->bob got included, 2000 for bob->charlie
                 {'from': charlie }
         );
 
