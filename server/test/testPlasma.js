@@ -21,7 +21,7 @@ new Promise((resolve, reject) =>
         })
 );
 
-contract("Plasma ERC721 WIP", async function(accounts) {
+contract("Plasma ERC721", async function(accounts) {
 
     let cards;
     let plasma;
@@ -36,11 +36,19 @@ contract("Plasma ERC721 WIP", async function(accounts) {
     let data;
     let rawdata;
 
+    function signPrefixed(from, hash) {
+        let prefix = "\u0019Ethereum Signed Message:\n32";
+        let prefixedHash = utils.soliditySha3(prefix, hash);
+        // BUG! Recovering the sender from the signing does not work for some reason. WIP
+        let sig = web3.eth.sign(from, prefixedHash);
+        return sig
+    }
+
     function createUTXO(slot, prevBlock, from, to) {
-        let data = [ slot, prevBlock, 1, to ]
-        data = '0x' + RLP.encode(data).toString('hex')
+        let data = [ slot, prevBlock, 1, to ];
+        data = '0x' + RLP.encode(data).toString('hex');
         let txHash = utils.soliditySha3(data);
-        let sig = web3.eth.sign(from, txHash); 
+        let sig = signPrefixed(from, txHash); // prefixed signature on the hash
         return [data, sig];
     }
     //
@@ -95,6 +103,7 @@ contract("Plasma ERC721 WIP", async function(accounts) {
         let leaves = {};
         leaves[slot] = txHash;
 
+        // BUG! proofbits are not properly returned. WIP
         // slot = 63;
         // data = [slot, 2000, bob, charlie];
         // tx = '0x' + RLP.encode(data).toString('hex');

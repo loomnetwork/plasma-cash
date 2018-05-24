@@ -23,11 +23,7 @@ library ECVerify {
     }
 
     function ecverify(bytes32 hash, bytes sig, address signer) internal pure returns (bool) {
-        return signer == recover( prefixed(hash), sig);
+        return signer == recover(hash, sig);
     }
 
-	function prefixed(bytes32 hash) private pure returns (bytes32) {
-		bytes memory prefix = "\x19Ethereum Signed Message:\n32";
-		return keccak256(prefix, hash);
-	}
 }

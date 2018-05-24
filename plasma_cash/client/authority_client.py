@@ -2,7 +2,7 @@ import rlp
 from ethereum import utils
 
 from child_chain.block import Block
-from child_chain.transaction import Transaction
+from child_chain.transaction import Transaction, UnsignedTransaction
 from utils.utils import sign
 
 from .child_chain_service import ChildChainService
@@ -41,25 +41,25 @@ class Client(object):
         # TODO The actual proof information should be passed to a user from its previous owners, this is a hacky way of getting the info from the operator which sould be changed in the future after the exiting process is more standardized
         block = self.get_block(tx_blk_num)
         exiting_tx = block.get_tx_by_uid(uid)
+        exiting_tx_proof = self.get_proof(tx_blk_num, uid)
+        sigs = exiting_tx.sig
 
         # If the referenced transaction is a deposit transaction then no need 
         prev_tx = '0x0'
         prev_tx_proof = '0x0'
-        exiting_tx_proof = '0x0'
         if prev_tx_blk_num % self.child_block_interval == 0:
             prev_block = self.get_block(prev_tx_blk_num)
             prev_tx = prev_block.get_tx_by_uid(uid)
-            sigs = prev_tx.sig + exiting_tx.sig
-
             prev_tx_proof = self.get_proof(prev_tx_blk_num, uid)
-            exiting_tx_proof = self.get_proof(tx_blk_num, uid)
 
+            # Overwrite sigs
+            sigs = prev_tx.sig + exiting_tx.sig
 
         return self.root_chain.start_exit(
                 uid,
-                rlp.encode(prev_tx), rlp.encode(exiting_tx),
+                rlp.encode(prev_tx, UnsignedTransaction), rlp.encode(exiting_tx, UnsignedTransaction),
                 prev_tx_proof, exiting_tx_proof,
-                sigs,
+                sigs.hex(),
                 prev_tx_blk_num, tx_blk_num
         )
 

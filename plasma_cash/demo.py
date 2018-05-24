@@ -33,6 +33,7 @@ utxo_id = 2
 blk_num = 3
 
 tx1 = alice.send_transaction(utxo_id, blk_num, 1, bob.token_contract.account.address)
+tx4 = alice.send_transaction(utxo_id-1, blk_num-1, 1, charlie.token_contract.account.address)
 
 # Alice's 3 coins are now checkpointed in block `1000` in the root chain
 authority.submit_block() 
