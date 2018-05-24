@@ -39,11 +39,21 @@ contract("Plasma ERC721 WIP", async function(accounts) {
     function createUTXO(slot, prevBlock, from, to) {
         let data = [ slot, prevBlock, 1, to ]
         data = '0x' + RLP.encode(data).toString('hex')
-        // console.log('Created UTXO for slot', slot);
-        // console.log(data)
         let txHash = utils.soliditySha3(data);
         let sig = web3.eth.sign(from, txHash); 
         return [data, sig];
+    }
+    //
+    async function submitUTXO(slot, tx) {
+        // Create merkle Tree from A SINGLE UTXO and submit it.
+        // Returns merkle tree that was created
+        let leaves = {}
+        leaves[slot] = utils.soliditySha3(tx);
+
+        let tree = new SparseMerkleTree(64, leaves);
+        await plasma.submitBlock(tree.root, {'from': authority});
+
+        return tree;
     }
 
 
@@ -79,11 +89,8 @@ contract("Plasma ERC721 WIP", async function(accounts) {
 
     it('Tests that Merkle Proofs work', async function() {
         let slot = 1500;
-        let prevblock = 1000;
-        let denom = 1;
-        let data = [slot, prevblock, denom, bob];
-        let tx = '0x' + RLP.encode(data).toString('hex');
-        let txHash = utils.soliditySha3(tx);
+        let tx = createUTXO(slot, 1000, bob, charlie);
+        let txHash = utils.soliditySha3(tx[0]);
 
         let leaves = {};
         leaves[slot] = txHash;
@@ -136,29 +143,25 @@ contract("Plasma ERC721 WIP", async function(accounts) {
     });
 
     it("Transfers Coin 2 from Alice to Bob and then to Charlie who tries to exit it", async function() {
-        // We submit 2 precomputed block roots which represent:
+        let leaves = {};
+        let utxo_slot = 2;
+
         // Block 1000: Transaction from Alice to Bob
         // Block 2000: Transaction from Bob to Charlie
-        // These were precomputed from the Python client for a Sparse Merkle Tree of Depth 32.
         
-        let utxo_slot = 2;
-        // Tx to Bob from Alice referencing Alice's UTXO at block 3
         let to_bob = createUTXO(utxo_slot, 3, alice, bob);
-        let block_1000_root = '0x20d4251cbfd45b0f2c708e63f9c96ddd8cd832d087bacfa241716e41ddbe136b';
-        // plasma.submitBlock(block_1000_root, {'from': authority});
+        // submits tree root frmo authority
+        let tree_bob = await submitUTXO(utxo_slot, to_bob[0]);
 
         // Tx to Charlie from Bob referencing Bob's UTXO at block 1000
         let to_charlie = createUTXO(utxo_slot, 1000, bob, charlie);
-        let block_2000_root = '0xe9ac5d9bc7cb7cc7c00d06b80a4e2f0a40a3803d3a84968f403aa312474e1ca6';
-
-        plasma.submitBlock(block_2000_root, {'from': authority});
+        let tree_charlie = await submitUTXO(utxo_slot, to_charlie[0]);
        
         // Concatenate the 2 signatures
         let sigs = to_bob[1] + to_charlie[1].substr(2, 132);
 
-        // Merkle branches -> TODO
-        let prev_tx_proof = '0x';
-        let exiting_tx_proof = '0x'; // To add the valid proofs of inclusion
+        let prev_tx_proof = tree_bob.createMerkleProof(utxo_slot)
+        let exiting_tx_proof = tree_charlie.createMerkleProof(utxo_slot)
 
         let prev_tx = to_bob[0];
         let exiting_tx = to_charlie[0];
