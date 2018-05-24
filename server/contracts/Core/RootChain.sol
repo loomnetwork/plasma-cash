@@ -181,7 +181,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
     }
 
     function getSig(bytes sigs, uint i) public pure returns(bytes) {
-        return ByteUtils.slice(sigs, 65 * i,  65);
+        return ByteUtils.slice(sigs, 66 * i,  66);
     }
 
     function checkDepositBlockInclusion(

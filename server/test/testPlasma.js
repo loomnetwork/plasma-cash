@@ -9,6 +9,7 @@ const SparseMerkleTree = require('./SparseMerkleTree.js');
 import {increaseTimeTo, duration} from './helpers/increaseTime'
 import assertRevert from './helpers/assertRevert.js';
 const utils = require('web3-utils');
+const ethutil = require('ethereumjs-util');
 
 const Promisify = (inner) =>
 new Promise((resolve, reject) =>
@@ -36,33 +37,6 @@ contract("Plasma ERC721", async function(accounts) {
     let data;
     let rawdata;
 
-    function signPrefixed(from, hash) {
-        let prefix = "\u0019Ethereum Signed Message:\n32";
-        let prefixedHash = utils.soliditySha3(prefix, hash);
-        // BUG! Recovering the sender from the signing does not work for some reason. WIP
-        let sig = web3.eth.sign(from, prefixedHash);
-        return sig
-    }
-
-    function createUTXO(slot, prevBlock, from, to) {
-        let data = [ slot, prevBlock, 1, to ];
-        data = '0x' + RLP.encode(data).toString('hex');
-        let txHash = utils.soliditySha3(data);
-        let sig = signPrefixed(from, txHash); // prefixed signature on the hash
-        return [data, sig];
-    }
-    //
-    async function submitUTXO(slot, tx) {
-        // Create merkle Tree from A SINGLE UTXO and submit it.
-        // Returns merkle tree that was created
-        let leaves = {}
-        leaves[slot] = utils.soliditySha3(tx);
-
-        let tree = new SparseMerkleTree(64, leaves);
-        await plasma.submitBlock(tree.root, {'from': authority});
-
-        return tree;
-    }
 
 
     beforeEach("Deploys the contracts, Registers Alice and deposits her coins", async function() {
@@ -179,7 +153,7 @@ contract("Plasma ERC721", async function(accounts) {
                 utxo_slot,
                 prev_tx, exiting_tx, // rlp encoded
                 prev_tx_proof, exiting_tx_proof, // proofs from the tree
-                sigs, // concatenated signatures
+                sigs, // c6ncatenated signatures
                 1000, 2000, // 1000 is when alice->bob got included, 2000 for bob->charlie
                 {'from': charlie }
         );
@@ -197,5 +171,35 @@ contract("Plasma ERC721", async function(accounts) {
         assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 2);
     });
 
+    function signHash(from, hash) {
+        let sig = (web3.eth.sign(from, hash)).slice(2);
 
+        let r = ethutil.toBuffer('0x' + sig.substring(0, 64));
+        let s = ethutil.toBuffer('0x' + sig.substring(64, 128));
+        let v = ethutil.toBuffer(parseInt(sig.substring(128, 130), 16) + 27);
+        let mode = ethutil.toBuffer(1); // mode = geth
+
+        let signature = '0x' + Buffer.concat([mode, v, r, s]).toString('hex');
+        return signature;
+    }
+
+    function createUTXO(slot, prevBlock, from, to) {
+        let data = [ slot, prevBlock, 1, to ];
+        data = '0x' + RLP.encode(data).toString('hex');
+        let txHash = utils.soliditySha3(data);
+        let sig = signHash(from, txHash); // prefixed signature on the hash
+        return [data, sig];
+    }
+    //
+    async function submitUTXO(slot, tx) {
+        // Create merkle Tree from A SINGLE UTXO and submit it.
+        // Returns merkle tree that was created
+        let leaves = {}
+        leaves[slot] = utils.soliditySha3(tx);
+
+        let tree = new SparseMerkleTree(64, leaves);
+        await plasma.submitBlock(tree.root, {'from': authority});
+
+        return tree;
+    }
 });
