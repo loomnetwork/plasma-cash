@@ -40,6 +40,6 @@ class Transaction(rlp.Serializable):
         return get_sender(self.hash, self.sig)
 
     def sign(self, key):
-        self.sig = sign(self.hash, key).signature
+        self.sig = sign(self.hash, key)
 
 UnsignedTransaction = Transaction.exclude(['sig'])

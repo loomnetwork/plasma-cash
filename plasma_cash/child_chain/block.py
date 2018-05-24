@@ -51,6 +51,6 @@ class Block(rlp.Serializable):
 
 
     def sign(self, key):
-        self.sig = sign(self.hash, key).signature
+        self.sig = sign(self.hash, key)
 
 UnsignedBlock = Block.exclude(['sig'])

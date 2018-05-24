@@ -179,7 +179,7 @@ contract("Plasma ERC721", async function(accounts) {
         let v = ethutil.toBuffer(parseInt(sig.substring(128, 130), 16) + 27);
         let mode = ethutil.toBuffer(1); // mode = geth
 
-        let signature = '0x' + Buffer.concat([mode, v, r, s]).toString('hex');
+        let signature = '0x' + Buffer.concat([mode, r, s, v]).toString('hex');
         return signature;
     }
 
