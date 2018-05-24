@@ -73,8 +73,11 @@ class SparseMerkleTree(object):
             else:
                 proofbits += b'0'
 
+        # Reverse string, reading from right to left
+        proofbits = proofbits[::-1]
+
         # Need to convert the binary string to bytes for solidity to understand.
-        proof_bytes = to_bytes(proofbits[::-1])
+        proof_bytes = to_bytes(proofbits)
         return proof_bytes + proof
 
     def verify(self, uid, proof):
@@ -100,15 +103,6 @@ class SparseMerkleTree(object):
             proofbits = proofbits // 2
             index = index // 2
         return computed_hash == self.root
-
-        
-
-
-
-
-
-
-
 
     class TreeSizeExceededException(Exception):
         """there are too many leaves for the tree to build"""

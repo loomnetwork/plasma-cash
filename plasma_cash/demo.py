@@ -57,15 +57,15 @@ uid = utxo_id
 utxo_id = 2
 prev_tx_blk_num = 1000
 exiting_tx_blk_num = 2000
-charlie.start_exit(utxo_id, prev_tx_blk_num, exiting_tx_blk_num)
-
-# # After 7 days pass, charlie's exit should be finalizable
-authority.finalize_exits()
-
-# Charlie should now be able to withdraw the utxo which included token 2 to his wallet.
-charlie.withdraw(2)
-print('Alice has {} tokens'.format(alice.token_contract.balanceOf()))
-print('Bob has {} tokens'.format(bob.token_contract.balanceOf()))
-print('Charlie has {} tokens'.format(charlie.token_contract.balanceOf()))
-
-# Plasma Cash with ERC721 tokens success :) 
+# charlie.start_exit(utxo_id, prev_tx_blk_num, exiting_tx_blk_num)
+# 
+# # # After 7 days pass, charlie's exit should be finalizable
+# authority.finalize_exits()
+# 
+# # Charlie should now be able to withdraw the utxo which included token 2 to his wallet.
+# charlie.withdraw(2)
+# print('Alice has {} tokens'.format(alice.token_contract.balanceOf()))
+# print('Bob has {} tokens'.format(bob.token_contract.balanceOf()))
+# print('Charlie has {} tokens'.format(charlie.token_contract.balanceOf()))
+# 
+# # Plasma Cash with ERC721 tokens success :) 

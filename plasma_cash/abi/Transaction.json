@@ -1,0 +1,2303 @@
+{
+  "contractName": "Transaction",
+  "abi": [],
+  "bytecode": "0x604c602c600b82828239805160001a60731460008114601c57601e565bfe5b5030600052607381538281f30073000000000000000000000000000000000000000030146080604052600080fd00a165627a7a7230582040d45477fb793b5ffba209889f5b1920de596e5b2d774d1a2bcb1a77e620aab90029",
+  "deployedBytecode": "0x73000000000000000000000000000000000000000030146080604052600080fd00a165627a7a7230582040d45477fb793b5ffba209889f5b1920de596e5b2d774d1a2bcb1a77e620aab90029",
+  "sourceMap": "47:735:6:-;;132:2:-1;166:7;155:9;146:7;137:37;252:7;246:14;243:1;238:23;232:4;229:33;270:1;265:20;;;;222:63;;265:20;274:9;222:63;;298:9;295:1;288:20;328:4;319:7;311:22;352:7;343;336:24",
+  "deployedSourceMap": "47:735:6:-;;;;;;;;",
+  "source": "pragma solidity ^0.4.23;\n\nimport './RLP.sol';\n\nlibrary Transaction {\n\n    using RLP for bytes;\n    using RLP for RLP.RLPItem;\n    \n    struct TX {\n        uint64 slot;\n        uint32 denomination; // 2**32 more than enough for NFTs, helps pack in 1 slot\n        address owner;\n        uint256 prevBlock;\n    }\n     \n    function getTx(bytes memory txBytes) internal view returns (TX memory) {\n        RLP.RLPItem[] memory rlpTx = txBytes.toRLPItem().toList(4);\n        TX memory transaction;\n\n        transaction.slot         =  uint64(rlpTx[0].toUint());\n        transaction.prevBlock    =  uint64(rlpTx[1].toUint());\n        transaction.denomination =  uint32(rlpTx[2].toUint());\n        transaction.owner        =  rlpTx[3].toAddress();\n\n        return transaction;\n    }     \n\n}\n",
+  "sourcePath": "/home/opsec/loom/PLASMA-RESEARCH/cash-erc721/server/contracts/Libraries/Transaction/Transaction.sol",
+  "ast": {
+    "absolutePath": "/home/opsec/loom/PLASMA-RESEARCH/cash-erc721/server/contracts/Libraries/Transaction/Transaction.sol",
+    "exportedSymbols": {
+      "Transaction": [
+        1688
+      ]
+    },
+    "id": 1689,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 1600,
+        "literals": [
+          "solidity",
+          "^",
+          "0.4",
+          ".23"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:24:6"
+      },
+      {
+        "absolutePath": "/home/opsec/loom/PLASMA-RESEARCH/cash-erc721/server/contracts/Libraries/Transaction/RLP.sol",
+        "file": "./RLP.sol",
+        "id": 1601,
+        "nodeType": "ImportDirective",
+        "scope": 1689,
+        "sourceUnit": 1599,
+        "src": "26:19:6",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "baseContracts": [],
+        "contractDependencies": [],
+        "contractKind": "library",
+        "documentation": null,
+        "fullyImplemented": true,
+        "id": 1688,
+        "linearizedBaseContracts": [
+          1688
+        ],
+        "name": "Transaction",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "id": 1604,
+            "libraryName": {
+              "contractScope": null,
+              "id": 1602,
+              "name": "RLP",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 1598,
+              "src": "80:3:6",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_RLP_$1598",
+                "typeString": "library RLP"
+              }
+            },
+            "nodeType": "UsingForDirective",
+            "src": "74:20:6",
+            "typeName": {
+              "id": 1603,
+              "name": "bytes",
+              "nodeType": "ElementaryTypeName",
+              "src": "88:5:6",
+              "typeDescriptions": {
+                "typeIdentifier": "t_bytes_storage_ptr",
+                "typeString": "bytes"
+              }
+            }
+          },
+          {
+            "id": 1607,
+            "libraryName": {
+              "contractScope": null,
+              "id": 1605,
+              "name": "RLP",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 1598,
+              "src": "105:3:6",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_RLP_$1598",
+                "typeString": "library RLP"
+              }
+            },
+            "nodeType": "UsingForDirective",
+            "src": "99:26:6",
+            "typeName": {
+              "contractScope": null,
+              "id": 1606,
+              "name": "RLP.RLPItem",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 1168,
+              "src": "113:11:6",
+              "typeDescriptions": {
+                "typeIdentifier": "t_struct$_RLPItem_$1168_storage_ptr",
+                "typeString": "struct RLP.RLPItem"
+              }
+            }
+          },
+          {
+            "canonicalName": "Transaction.TX",
+            "id": 1616,
+            "members": [
+              {
+                "constant": false,
+                "id": 1609,
+                "name": "slot",
+                "nodeType": "VariableDeclaration",
+                "scope": 1616,
+                "src": "155:11:6",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint64",
+                  "typeString": "uint64"
+                },
+                "typeName": {
+                  "id": 1608,
+                  "name": "uint64",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "155:6:6",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint64",
+                    "typeString": "uint64"
+                  }
+                },
+                "value": null,
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 1611,
+                "name": "denomination",
+                "nodeType": "VariableDeclaration",
+                "scope": 1616,
+                "src": "176:19:6",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint32",
+                  "typeString": "uint32"
+                },
+                "typeName": {
+                  "id": 1610,
+                  "name": "uint32",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "176:6:6",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint32",
+                    "typeString": "uint32"
+                  }
+                },
+                "value": null,
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 1613,
+                "name": "owner",
+                "nodeType": "VariableDeclaration",
+                "scope": 1616,
+                "src": "262:13:6",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_address",
+                  "typeString": "address"
+                },
+                "typeName": {
+                  "id": 1612,
+                  "name": "address",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "262:7:6",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                },
+                "value": null,
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 1615,
+                "name": "prevBlock",
+                "nodeType": "VariableDeclaration",
+                "scope": 1616,
+                "src": "285:17:6",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 1614,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "285:7:6",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "value": null,
+                "visibility": "internal"
+              }
+            ],
+            "name": "TX",
+            "nodeType": "StructDefinition",
+            "scope": 1688,
+            "src": "135:174:6",
+            "visibility": "public"
+          },
+          {
+            "body": {
+              "id": 1686,
+              "nodeType": "Block",
+              "src": "391:383:6",
+              "statements": [
+                {
+                  "assignments": [
+                    1627
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 1627,
+                      "name": "rlpTx",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 1687,
+                      "src": "401:26:6",
+                      "stateVariable": false,
+                      "storageLocation": "memory",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_struct$_RLPItem_$1168_memory_$dyn_memory_ptr",
+                        "typeString": "struct RLP.RLPItem[]"
+                      },
+                      "typeName": {
+                        "baseType": {
+                          "contractScope": null,
+                          "id": 1625,
+                          "name": "RLP.RLPItem",
+                          "nodeType": "UserDefinedTypeName",
+                          "referencedDeclaration": 1168,
+                          "src": "401:11:6",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_RLPItem_$1168_storage_ptr",
+                            "typeString": "struct RLP.RLPItem"
+                          }
+                        },
+                        "id": 1626,
+                        "length": null,
+                        "nodeType": "ArrayTypeName",
+                        "src": "401:13:6",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_struct$_RLPItem_$1168_storage_$dyn_storage_ptr",
+                          "typeString": "struct RLP.RLPItem[]"
+                        }
+                      },
+                      "value": null,
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 1634,
+                  "initialValue": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "hexValue": "34",
+                        "id": 1632,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "number",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "457:1:6",
+                        "subdenomination": null,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_rational_4_by_1",
+                          "typeString": "int_const 4"
+                        },
+                        "value": "4"
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_rational_4_by_1",
+                          "typeString": "int_const 4"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "arguments": [],
+                        "expression": {
+                          "argumentTypes": [],
+                          "expression": {
+                            "argumentTypes": null,
+                            "id": 1628,
+                            "name": "txBytes",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 1618,
+                            "src": "430:7:6",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_bytes_memory_ptr",
+                              "typeString": "bytes memory"
+                            }
+                          },
+                          "id": 1629,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "memberName": "toRLPItem",
+                          "nodeType": "MemberAccess",
+                          "referencedDeclaration": 1195,
+                          "src": "430:17:6",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_function_internal_pure$_t_bytes_memory_ptr_$returns$_t_struct$_RLPItem_$1168_memory_ptr_$bound_to$_t_bytes_memory_ptr_$",
+                            "typeString": "function (bytes memory) pure returns (struct RLP.RLPItem memory)"
+                          }
+                        },
+                        "id": 1630,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "kind": "functionCall",
+                        "lValueRequested": false,
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": "430:19:6",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_RLPItem_$1168_memory_ptr",
+                          "typeString": "struct RLP.RLPItem memory"
+                        }
+                      },
+                      "id": 1631,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "toList",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 1239,
+                      "src": "430:26:6",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_pure$_t_struct$_RLPItem_$1168_memory_ptr_$_t_uint256_$returns$_t_array$_t_struct$_RLPItem_$1168_memory_$dyn_memory_ptr_$bound_to$_t_struct$_RLPItem_$1168_memory_ptr_$",
+                        "typeString": "function (struct RLP.RLPItem memory,uint256) pure returns (struct RLP.RLPItem memory[] memory)"
+                      }
+                    },
+                    "id": 1633,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "430:29:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_RLPItem_$1168_memory_$dyn_memory_ptr",
+                      "typeString": "struct RLP.RLPItem memory[] memory"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "401:58:6"
+                },
+                {
+                  "assignments": [],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 1636,
+                      "name": "transaction",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 1687,
+                      "src": "469:21:6",
+                      "stateVariable": false,
+                      "storageLocation": "memory",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_TX_$1616_memory_ptr",
+                        "typeString": "struct Transaction.TX"
+                      },
+                      "typeName": {
+                        "contractScope": null,
+                        "id": 1635,
+                        "name": "TX",
+                        "nodeType": "UserDefinedTypeName",
+                        "referencedDeclaration": 1616,
+                        "src": "469:2:6",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_TX_$1616_storage_ptr",
+                          "typeString": "struct Transaction.TX"
+                        }
+                      },
+                      "value": null,
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 1637,
+                  "initialValue": null,
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "469:21:6"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 1648,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 1638,
+                        "name": "transaction",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 1636,
+                        "src": "501:11:6",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_TX_$1616_memory_ptr",
+                          "typeString": "struct Transaction.TX memory"
+                        }
+                      },
+                      "id": 1640,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "memberName": "slot",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 1609,
+                      "src": "501:16:6",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint64",
+                        "typeString": "uint64"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "arguments": [
+                        {
+                          "argumentTypes": null,
+                          "arguments": [],
+                          "expression": {
+                            "argumentTypes": [],
+                            "expression": {
+                              "argumentTypes": null,
+                              "baseExpression": {
+                                "argumentTypes": null,
+                                "id": 1642,
+                                "name": "rlpTx",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 1627,
+                                "src": "536:5:6",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_array$_t_struct$_RLPItem_$1168_memory_$dyn_memory_ptr",
+                                  "typeString": "struct RLP.RLPItem memory[] memory"
+                                }
+                              },
+                              "id": 1644,
+                              "indexExpression": {
+                                "argumentTypes": null,
+                                "hexValue": "30",
+                                "id": 1643,
+                                "isConstant": false,
+                                "isLValue": false,
+                                "isPure": true,
+                                "kind": "number",
+                                "lValueRequested": false,
+                                "nodeType": "Literal",
+                                "src": "542:1:6",
+                                "subdenomination": null,
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_rational_0_by_1",
+                                  "typeString": "int_const 0"
+                                },
+                                "value": "0"
+                              },
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "nodeType": "IndexAccess",
+                              "src": "536:8:6",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_struct$_RLPItem_$1168_memory",
+                                "typeString": "struct RLP.RLPItem memory"
+                              }
+                            },
+                            "id": 1645,
+                            "isConstant": false,
+                            "isLValue": true,
+                            "isPure": false,
+                            "lValueRequested": false,
+                            "memberName": "toUint",
+                            "nodeType": "MemberAccess",
+                            "referencedDeclaration": 1262,
+                            "src": "536:15:6",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_internal_pure$_t_struct$_RLPItem_$1168_memory_ptr_$returns$_t_uint256_$bound_to$_t_struct$_RLPItem_$1168_memory_ptr_$",
+                              "typeString": "function (struct RLP.RLPItem memory) pure returns (uint256)"
+                            }
+                          },
+                          "id": 1646,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "536:17:6",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        ],
+                        "id": 1641,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "nodeType": "ElementaryTypeNameExpression",
+                        "src": "529:6:6",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_type$_t_uint64_$",
+                          "typeString": "type(uint64)"
+                        },
+                        "typeName": "uint64"
+                      },
+                      "id": 1647,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "kind": "typeConversion",
+                      "lValueRequested": false,
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "529:25:6",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint64",
+                        "typeString": "uint64"
+                      }
+                    },
+                    "src": "501:53:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint64",
+                      "typeString": "uint64"
+                    }
+                  },
+                  "id": 1649,
+                  "nodeType": "ExpressionStatement",
+                  "src": "501:53:6"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 1660,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 1650,
+                        "name": "transaction",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 1636,
+                        "src": "564:11:6",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_TX_$1616_memory_ptr",
+                          "typeString": "struct Transaction.TX memory"
+                        }
+                      },
+                      "id": 1652,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "memberName": "prevBlock",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 1615,
+                      "src": "564:21:6",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "arguments": [
+                        {
+                          "argumentTypes": null,
+                          "arguments": [],
+                          "expression": {
+                            "argumentTypes": [],
+                            "expression": {
+                              "argumentTypes": null,
+                              "baseExpression": {
+                                "argumentTypes": null,
+                                "id": 1654,
+                                "name": "rlpTx",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 1627,
+                                "src": "599:5:6",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_array$_t_struct$_RLPItem_$1168_memory_$dyn_memory_ptr",
+                                  "typeString": "struct RLP.RLPItem memory[] memory"
+                                }
+                              },
+                              "id": 1656,
+                              "indexExpression": {
+                                "argumentTypes": null,
+                                "hexValue": "31",
+                                "id": 1655,
+                                "isConstant": false,
+                                "isLValue": false,
+                                "isPure": true,
+                                "kind": "number",
+                                "lValueRequested": false,
+                                "nodeType": "Literal",
+                                "src": "605:1:6",
+                                "subdenomination": null,
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_rational_1_by_1",
+                                  "typeString": "int_const 1"
+                                },
+                                "value": "1"
+                              },
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "nodeType": "IndexAccess",
+                              "src": "599:8:6",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_struct$_RLPItem_$1168_memory",
+                                "typeString": "struct RLP.RLPItem memory"
+                              }
+                            },
+                            "id": 1657,
+                            "isConstant": false,
+                            "isLValue": true,
+                            "isPure": false,
+                            "lValueRequested": false,
+                            "memberName": "toUint",
+                            "nodeType": "MemberAccess",
+                            "referencedDeclaration": 1262,
+                            "src": "599:15:6",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_internal_pure$_t_struct$_RLPItem_$1168_memory_ptr_$returns$_t_uint256_$bound_to$_t_struct$_RLPItem_$1168_memory_ptr_$",
+                              "typeString": "function (struct RLP.RLPItem memory) pure returns (uint256)"
+                            }
+                          },
+                          "id": 1658,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "599:17:6",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        ],
+                        "id": 1653,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "nodeType": "ElementaryTypeNameExpression",
+                        "src": "592:6:6",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_type$_t_uint64_$",
+                          "typeString": "type(uint64)"
+                        },
+                        "typeName": "uint64"
+                      },
+                      "id": 1659,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "kind": "typeConversion",
+                      "lValueRequested": false,
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "592:25:6",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint64",
+                        "typeString": "uint64"
+                      }
+                    },
+                    "src": "564:53:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "id": 1661,
+                  "nodeType": "ExpressionStatement",
+                  "src": "564:53:6"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 1672,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 1662,
+                        "name": "transaction",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 1636,
+                        "src": "627:11:6",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_TX_$1616_memory_ptr",
+                          "typeString": "struct Transaction.TX memory"
+                        }
+                      },
+                      "id": 1664,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "memberName": "denomination",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 1611,
+                      "src": "627:24:6",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint32",
+                        "typeString": "uint32"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "arguments": [
+                        {
+                          "argumentTypes": null,
+                          "arguments": [],
+                          "expression": {
+                            "argumentTypes": [],
+                            "expression": {
+                              "argumentTypes": null,
+                              "baseExpression": {
+                                "argumentTypes": null,
+                                "id": 1666,
+                                "name": "rlpTx",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 1627,
+                                "src": "662:5:6",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_array$_t_struct$_RLPItem_$1168_memory_$dyn_memory_ptr",
+                                  "typeString": "struct RLP.RLPItem memory[] memory"
+                                }
+                              },
+                              "id": 1668,
+                              "indexExpression": {
+                                "argumentTypes": null,
+                                "hexValue": "32",
+                                "id": 1667,
+                                "isConstant": false,
+                                "isLValue": false,
+                                "isPure": true,
+                                "kind": "number",
+                                "lValueRequested": false,
+                                "nodeType": "Literal",
+                                "src": "668:1:6",
+                                "subdenomination": null,
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_rational_2_by_1",
+                                  "typeString": "int_const 2"
+                                },
+                                "value": "2"
+                              },
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "nodeType": "IndexAccess",
+                              "src": "662:8:6",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_struct$_RLPItem_$1168_memory",
+                                "typeString": "struct RLP.RLPItem memory"
+                              }
+                            },
+                            "id": 1669,
+                            "isConstant": false,
+                            "isLValue": true,
+                            "isPure": false,
+                            "lValueRequested": false,
+                            "memberName": "toUint",
+                            "nodeType": "MemberAccess",
+                            "referencedDeclaration": 1262,
+                            "src": "662:15:6",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_internal_pure$_t_struct$_RLPItem_$1168_memory_ptr_$returns$_t_uint256_$bound_to$_t_struct$_RLPItem_$1168_memory_ptr_$",
+                              "typeString": "function (struct RLP.RLPItem memory) pure returns (uint256)"
+                            }
+                          },
+                          "id": 1670,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "662:17:6",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        ],
+                        "id": 1665,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "nodeType": "ElementaryTypeNameExpression",
+                        "src": "655:6:6",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_type$_t_uint32_$",
+                          "typeString": "type(uint32)"
+                        },
+                        "typeName": "uint32"
+                      },
+                      "id": 1671,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "kind": "typeConversion",
+                      "lValueRequested": false,
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "655:25:6",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint32",
+                        "typeString": "uint32"
+                      }
+                    },
+                    "src": "627:53:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint32",
+                      "typeString": "uint32"
+                    }
+                  },
+                  "id": 1673,
+                  "nodeType": "ExpressionStatement",
+                  "src": "627:53:6"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 1682,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 1674,
+                        "name": "transaction",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 1636,
+                        "src": "690:11:6",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_TX_$1616_memory_ptr",
+                          "typeString": "struct Transaction.TX memory"
+                        }
+                      },
+                      "id": 1676,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "memberName": "owner",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 1613,
+                      "src": "690:17:6",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "arguments": [],
+                      "expression": {
+                        "argumentTypes": [],
+                        "expression": {
+                          "argumentTypes": null,
+                          "baseExpression": {
+                            "argumentTypes": null,
+                            "id": 1677,
+                            "name": "rlpTx",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 1627,
+                            "src": "718:5:6",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_array$_t_struct$_RLPItem_$1168_memory_$dyn_memory_ptr",
+                              "typeString": "struct RLP.RLPItem memory[] memory"
+                            }
+                          },
+                          "id": 1679,
+                          "indexExpression": {
+                            "argumentTypes": null,
+                            "hexValue": "33",
+                            "id": 1678,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": true,
+                            "kind": "number",
+                            "lValueRequested": false,
+                            "nodeType": "Literal",
+                            "src": "724:1:6",
+                            "subdenomination": null,
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_rational_3_by_1",
+                              "typeString": "int_const 3"
+                            },
+                            "value": "3"
+                          },
+                          "isConstant": false,
+                          "isLValue": true,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "nodeType": "IndexAccess",
+                          "src": "718:8:6",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_RLPItem_$1168_memory",
+                            "typeString": "struct RLP.RLPItem memory"
+                          }
+                        },
+                        "id": 1680,
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberName": "toAddress",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": 1285,
+                        "src": "718:18:6",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_function_internal_pure$_t_struct$_RLPItem_$1168_memory_ptr_$returns$_t_address_$bound_to$_t_struct$_RLPItem_$1168_memory_ptr_$",
+                          "typeString": "function (struct RLP.RLPItem memory) pure returns (address)"
+                        }
+                      },
+                      "id": 1681,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "kind": "functionCall",
+                      "lValueRequested": false,
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "718:20:6",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "src": "690:48:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "id": 1683,
+                  "nodeType": "ExpressionStatement",
+                  "src": "690:48:6"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 1684,
+                    "name": "transaction",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 1636,
+                    "src": "756:11:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_TX_$1616_memory_ptr",
+                      "typeString": "struct Transaction.TX memory"
+                    }
+                  },
+                  "functionReturnParameters": 1622,
+                  "id": 1685,
+                  "nodeType": "Return",
+                  "src": "749:18:6"
+                }
+              ]
+            },
+            "documentation": null,
+            "id": 1687,
+            "implemented": true,
+            "isConstructor": false,
+            "isDeclaredConst": true,
+            "modifiers": [],
+            "name": "getTx",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 1619,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 1618,
+                  "name": "txBytes",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1687,
+                  "src": "335:20:6",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes_memory_ptr",
+                    "typeString": "bytes"
+                  },
+                  "typeName": {
+                    "id": 1617,
+                    "name": "bytes",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "335:5:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_storage_ptr",
+                      "typeString": "bytes"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "334:22:6"
+            },
+            "payable": false,
+            "returnParameters": {
+              "id": 1622,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 1621,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1687,
+                  "src": "380:2:6",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_TX_$1616_memory_ptr",
+                    "typeString": "struct Transaction.TX"
+                  },
+                  "typeName": {
+                    "contractScope": null,
+                    "id": 1620,
+                    "name": "TX",
+                    "nodeType": "UserDefinedTypeName",
+                    "referencedDeclaration": 1616,
+                    "src": "380:2:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_TX_$1616_storage_ptr",
+                      "typeString": "struct Transaction.TX"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "379:11:6"
+            },
+            "scope": 1688,
+            "src": "320:454:6",
+            "stateMutability": "view",
+            "superFunction": null,
+            "visibility": "internal"
+          }
+        ],
+        "scope": 1689,
+        "src": "47:735:6"
+      }
+    ],
+    "src": "0:783:6"
+  },
+  "legacyAST": {
+    "absolutePath": "/home/opsec/loom/PLASMA-RESEARCH/cash-erc721/server/contracts/Libraries/Transaction/Transaction.sol",
+    "exportedSymbols": {
+      "Transaction": [
+        1688
+      ]
+    },
+    "id": 1689,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 1600,
+        "literals": [
+          "solidity",
+          "^",
+          "0.4",
+          ".23"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:24:6"
+      },
+      {
+        "absolutePath": "/home/opsec/loom/PLASMA-RESEARCH/cash-erc721/server/contracts/Libraries/Transaction/RLP.sol",
+        "file": "./RLP.sol",
+        "id": 1601,
+        "nodeType": "ImportDirective",
+        "scope": 1689,
+        "sourceUnit": 1599,
+        "src": "26:19:6",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "baseContracts": [],
+        "contractDependencies": [],
+        "contractKind": "library",
+        "documentation": null,
+        "fullyImplemented": true,
+        "id": 1688,
+        "linearizedBaseContracts": [
+          1688
+        ],
+        "name": "Transaction",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "id": 1604,
+            "libraryName": {
+              "contractScope": null,
+              "id": 1602,
+              "name": "RLP",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 1598,
+              "src": "80:3:6",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_RLP_$1598",
+                "typeString": "library RLP"
+              }
+            },
+            "nodeType": "UsingForDirective",
+            "src": "74:20:6",
+            "typeName": {
+              "id": 1603,
+              "name": "bytes",
+              "nodeType": "ElementaryTypeName",
+              "src": "88:5:6",
+              "typeDescriptions": {
+                "typeIdentifier": "t_bytes_storage_ptr",
+                "typeString": "bytes"
+              }
+            }
+          },
+          {
+            "id": 1607,
+            "libraryName": {
+              "contractScope": null,
+              "id": 1605,
+              "name": "RLP",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 1598,
+              "src": "105:3:6",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_RLP_$1598",
+                "typeString": "library RLP"
+              }
+            },
+            "nodeType": "UsingForDirective",
+            "src": "99:26:6",
+            "typeName": {
+              "contractScope": null,
+              "id": 1606,
+              "name": "RLP.RLPItem",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 1168,
+              "src": "113:11:6",
+              "typeDescriptions": {
+                "typeIdentifier": "t_struct$_RLPItem_$1168_storage_ptr",
+                "typeString": "struct RLP.RLPItem"
+              }
+            }
+          },
+          {
+            "canonicalName": "Transaction.TX",
+            "id": 1616,
+            "members": [
+              {
+                "constant": false,
+                "id": 1609,
+                "name": "slot",
+                "nodeType": "VariableDeclaration",
+                "scope": 1616,
+                "src": "155:11:6",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint64",
+                  "typeString": "uint64"
+                },
+                "typeName": {
+                  "id": 1608,
+                  "name": "uint64",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "155:6:6",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint64",
+                    "typeString": "uint64"
+                  }
+                },
+                "value": null,
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 1611,
+                "name": "denomination",
+                "nodeType": "VariableDeclaration",
+                "scope": 1616,
+                "src": "176:19:6",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint32",
+                  "typeString": "uint32"
+                },
+                "typeName": {
+                  "id": 1610,
+                  "name": "uint32",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "176:6:6",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint32",
+                    "typeString": "uint32"
+                  }
+                },
+                "value": null,
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 1613,
+                "name": "owner",
+                "nodeType": "VariableDeclaration",
+                "scope": 1616,
+                "src": "262:13:6",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_address",
+                  "typeString": "address"
+                },
+                "typeName": {
+                  "id": 1612,
+                  "name": "address",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "262:7:6",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                },
+                "value": null,
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 1615,
+                "name": "prevBlock",
+                "nodeType": "VariableDeclaration",
+                "scope": 1616,
+                "src": "285:17:6",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 1614,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "285:7:6",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "value": null,
+                "visibility": "internal"
+              }
+            ],
+            "name": "TX",
+            "nodeType": "StructDefinition",
+            "scope": 1688,
+            "src": "135:174:6",
+            "visibility": "public"
+          },
+          {
+            "body": {
+              "id": 1686,
+              "nodeType": "Block",
+              "src": "391:383:6",
+              "statements": [
+                {
+                  "assignments": [
+                    1627
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 1627,
+                      "name": "rlpTx",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 1687,
+                      "src": "401:26:6",
+                      "stateVariable": false,
+                      "storageLocation": "memory",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_struct$_RLPItem_$1168_memory_$dyn_memory_ptr",
+                        "typeString": "struct RLP.RLPItem[]"
+                      },
+                      "typeName": {
+                        "baseType": {
+                          "contractScope": null,
+                          "id": 1625,
+                          "name": "RLP.RLPItem",
+                          "nodeType": "UserDefinedTypeName",
+                          "referencedDeclaration": 1168,
+                          "src": "401:11:6",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_RLPItem_$1168_storage_ptr",
+                            "typeString": "struct RLP.RLPItem"
+                          }
+                        },
+                        "id": 1626,
+                        "length": null,
+                        "nodeType": "ArrayTypeName",
+                        "src": "401:13:6",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_struct$_RLPItem_$1168_storage_$dyn_storage_ptr",
+                          "typeString": "struct RLP.RLPItem[]"
+                        }
+                      },
+                      "value": null,
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 1634,
+                  "initialValue": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "hexValue": "34",
+                        "id": 1632,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "number",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "457:1:6",
+                        "subdenomination": null,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_rational_4_by_1",
+                          "typeString": "int_const 4"
+                        },
+                        "value": "4"
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_rational_4_by_1",
+                          "typeString": "int_const 4"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "arguments": [],
+                        "expression": {
+                          "argumentTypes": [],
+                          "expression": {
+                            "argumentTypes": null,
+                            "id": 1628,
+                            "name": "txBytes",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 1618,
+                            "src": "430:7:6",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_bytes_memory_ptr",
+                              "typeString": "bytes memory"
+                            }
+                          },
+                          "id": 1629,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "memberName": "toRLPItem",
+                          "nodeType": "MemberAccess",
+                          "referencedDeclaration": 1195,
+                          "src": "430:17:6",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_function_internal_pure$_t_bytes_memory_ptr_$returns$_t_struct$_RLPItem_$1168_memory_ptr_$bound_to$_t_bytes_memory_ptr_$",
+                            "typeString": "function (bytes memory) pure returns (struct RLP.RLPItem memory)"
+                          }
+                        },
+                        "id": 1630,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "kind": "functionCall",
+                        "lValueRequested": false,
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": "430:19:6",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_RLPItem_$1168_memory_ptr",
+                          "typeString": "struct RLP.RLPItem memory"
+                        }
+                      },
+                      "id": 1631,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "toList",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 1239,
+                      "src": "430:26:6",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_pure$_t_struct$_RLPItem_$1168_memory_ptr_$_t_uint256_$returns$_t_array$_t_struct$_RLPItem_$1168_memory_$dyn_memory_ptr_$bound_to$_t_struct$_RLPItem_$1168_memory_ptr_$",
+                        "typeString": "function (struct RLP.RLPItem memory,uint256) pure returns (struct RLP.RLPItem memory[] memory)"
+                      }
+                    },
+                    "id": 1633,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "430:29:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_RLPItem_$1168_memory_$dyn_memory_ptr",
+                      "typeString": "struct RLP.RLPItem memory[] memory"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "401:58:6"
+                },
+                {
+                  "assignments": [],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 1636,
+                      "name": "transaction",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 1687,
+                      "src": "469:21:6",
+                      "stateVariable": false,
+                      "storageLocation": "memory",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_TX_$1616_memory_ptr",
+                        "typeString": "struct Transaction.TX"
+                      },
+                      "typeName": {
+                        "contractScope": null,
+                        "id": 1635,
+                        "name": "TX",
+                        "nodeType": "UserDefinedTypeName",
+                        "referencedDeclaration": 1616,
+                        "src": "469:2:6",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_TX_$1616_storage_ptr",
+                          "typeString": "struct Transaction.TX"
+                        }
+                      },
+                      "value": null,
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 1637,
+                  "initialValue": null,
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "469:21:6"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 1648,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 1638,
+                        "name": "transaction",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 1636,
+                        "src": "501:11:6",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_TX_$1616_memory_ptr",
+                          "typeString": "struct Transaction.TX memory"
+                        }
+                      },
+                      "id": 1640,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "memberName": "slot",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 1609,
+                      "src": "501:16:6",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint64",
+                        "typeString": "uint64"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "arguments": [
+                        {
+                          "argumentTypes": null,
+                          "arguments": [],
+                          "expression": {
+                            "argumentTypes": [],
+                            "expression": {
+                              "argumentTypes": null,
+                              "baseExpression": {
+                                "argumentTypes": null,
+                                "id": 1642,
+                                "name": "rlpTx",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 1627,
+                                "src": "536:5:6",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_array$_t_struct$_RLPItem_$1168_memory_$dyn_memory_ptr",
+                                  "typeString": "struct RLP.RLPItem memory[] memory"
+                                }
+                              },
+                              "id": 1644,
+                              "indexExpression": {
+                                "argumentTypes": null,
+                                "hexValue": "30",
+                                "id": 1643,
+                                "isConstant": false,
+                                "isLValue": false,
+                                "isPure": true,
+                                "kind": "number",
+                                "lValueRequested": false,
+                                "nodeType": "Literal",
+                                "src": "542:1:6",
+                                "subdenomination": null,
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_rational_0_by_1",
+                                  "typeString": "int_const 0"
+                                },
+                                "value": "0"
+                              },
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "nodeType": "IndexAccess",
+                              "src": "536:8:6",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_struct$_RLPItem_$1168_memory",
+                                "typeString": "struct RLP.RLPItem memory"
+                              }
+                            },
+                            "id": 1645,
+                            "isConstant": false,
+                            "isLValue": true,
+                            "isPure": false,
+                            "lValueRequested": false,
+                            "memberName": "toUint",
+                            "nodeType": "MemberAccess",
+                            "referencedDeclaration": 1262,
+                            "src": "536:15:6",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_internal_pure$_t_struct$_RLPItem_$1168_memory_ptr_$returns$_t_uint256_$bound_to$_t_struct$_RLPItem_$1168_memory_ptr_$",
+                              "typeString": "function (struct RLP.RLPItem memory) pure returns (uint256)"
+                            }
+                          },
+                          "id": 1646,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "536:17:6",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        ],
+                        "id": 1641,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "nodeType": "ElementaryTypeNameExpression",
+                        "src": "529:6:6",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_type$_t_uint64_$",
+                          "typeString": "type(uint64)"
+                        },
+                        "typeName": "uint64"
+                      },
+                      "id": 1647,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "kind": "typeConversion",
+                      "lValueRequested": false,
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "529:25:6",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint64",
+                        "typeString": "uint64"
+                      }
+                    },
+                    "src": "501:53:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint64",
+                      "typeString": "uint64"
+                    }
+                  },
+                  "id": 1649,
+                  "nodeType": "ExpressionStatement",
+                  "src": "501:53:6"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 1660,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 1650,
+                        "name": "transaction",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 1636,
+                        "src": "564:11:6",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_TX_$1616_memory_ptr",
+                          "typeString": "struct Transaction.TX memory"
+                        }
+                      },
+                      "id": 1652,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "memberName": "prevBlock",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 1615,
+                      "src": "564:21:6",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "arguments": [
+                        {
+                          "argumentTypes": null,
+                          "arguments": [],
+                          "expression": {
+                            "argumentTypes": [],
+                            "expression": {
+                              "argumentTypes": null,
+                              "baseExpression": {
+                                "argumentTypes": null,
+                                "id": 1654,
+                                "name": "rlpTx",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 1627,
+                                "src": "599:5:6",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_array$_t_struct$_RLPItem_$1168_memory_$dyn_memory_ptr",
+                                  "typeString": "struct RLP.RLPItem memory[] memory"
+                                }
+                              },
+                              "id": 1656,
+                              "indexExpression": {
+                                "argumentTypes": null,
+                                "hexValue": "31",
+                                "id": 1655,
+                                "isConstant": false,
+                                "isLValue": false,
+                                "isPure": true,
+                                "kind": "number",
+                                "lValueRequested": false,
+                                "nodeType": "Literal",
+                                "src": "605:1:6",
+                                "subdenomination": null,
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_rational_1_by_1",
+                                  "typeString": "int_const 1"
+                                },
+                                "value": "1"
+                              },
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "nodeType": "IndexAccess",
+                              "src": "599:8:6",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_struct$_RLPItem_$1168_memory",
+                                "typeString": "struct RLP.RLPItem memory"
+                              }
+                            },
+                            "id": 1657,
+                            "isConstant": false,
+                            "isLValue": true,
+                            "isPure": false,
+                            "lValueRequested": false,
+                            "memberName": "toUint",
+                            "nodeType": "MemberAccess",
+                            "referencedDeclaration": 1262,
+                            "src": "599:15:6",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_internal_pure$_t_struct$_RLPItem_$1168_memory_ptr_$returns$_t_uint256_$bound_to$_t_struct$_RLPItem_$1168_memory_ptr_$",
+                              "typeString": "function (struct RLP.RLPItem memory) pure returns (uint256)"
+                            }
+                          },
+                          "id": 1658,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "599:17:6",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        ],
+                        "id": 1653,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "nodeType": "ElementaryTypeNameExpression",
+                        "src": "592:6:6",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_type$_t_uint64_$",
+                          "typeString": "type(uint64)"
+                        },
+                        "typeName": "uint64"
+                      },
+                      "id": 1659,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "kind": "typeConversion",
+                      "lValueRequested": false,
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "592:25:6",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint64",
+                        "typeString": "uint64"
+                      }
+                    },
+                    "src": "564:53:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "id": 1661,
+                  "nodeType": "ExpressionStatement",
+                  "src": "564:53:6"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 1672,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 1662,
+                        "name": "transaction",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 1636,
+                        "src": "627:11:6",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_TX_$1616_memory_ptr",
+                          "typeString": "struct Transaction.TX memory"
+                        }
+                      },
+                      "id": 1664,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "memberName": "denomination",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 1611,
+                      "src": "627:24:6",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint32",
+                        "typeString": "uint32"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "arguments": [
+                        {
+                          "argumentTypes": null,
+                          "arguments": [],
+                          "expression": {
+                            "argumentTypes": [],
+                            "expression": {
+                              "argumentTypes": null,
+                              "baseExpression": {
+                                "argumentTypes": null,
+                                "id": 1666,
+                                "name": "rlpTx",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 1627,
+                                "src": "662:5:6",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_array$_t_struct$_RLPItem_$1168_memory_$dyn_memory_ptr",
+                                  "typeString": "struct RLP.RLPItem memory[] memory"
+                                }
+                              },
+                              "id": 1668,
+                              "indexExpression": {
+                                "argumentTypes": null,
+                                "hexValue": "32",
+                                "id": 1667,
+                                "isConstant": false,
+                                "isLValue": false,
+                                "isPure": true,
+                                "kind": "number",
+                                "lValueRequested": false,
+                                "nodeType": "Literal",
+                                "src": "668:1:6",
+                                "subdenomination": null,
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_rational_2_by_1",
+                                  "typeString": "int_const 2"
+                                },
+                                "value": "2"
+                              },
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "nodeType": "IndexAccess",
+                              "src": "662:8:6",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_struct$_RLPItem_$1168_memory",
+                                "typeString": "struct RLP.RLPItem memory"
+                              }
+                            },
+                            "id": 1669,
+                            "isConstant": false,
+                            "isLValue": true,
+                            "isPure": false,
+                            "lValueRequested": false,
+                            "memberName": "toUint",
+                            "nodeType": "MemberAccess",
+                            "referencedDeclaration": 1262,
+                            "src": "662:15:6",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_internal_pure$_t_struct$_RLPItem_$1168_memory_ptr_$returns$_t_uint256_$bound_to$_t_struct$_RLPItem_$1168_memory_ptr_$",
+                              "typeString": "function (struct RLP.RLPItem memory) pure returns (uint256)"
+                            }
+                          },
+                          "id": 1670,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "662:17:6",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        ],
+                        "id": 1665,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "nodeType": "ElementaryTypeNameExpression",
+                        "src": "655:6:6",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_type$_t_uint32_$",
+                          "typeString": "type(uint32)"
+                        },
+                        "typeName": "uint32"
+                      },
+                      "id": 1671,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "kind": "typeConversion",
+                      "lValueRequested": false,
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "655:25:6",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint32",
+                        "typeString": "uint32"
+                      }
+                    },
+                    "src": "627:53:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint32",
+                      "typeString": "uint32"
+                    }
+                  },
+                  "id": 1673,
+                  "nodeType": "ExpressionStatement",
+                  "src": "627:53:6"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 1682,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 1674,
+                        "name": "transaction",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 1636,
+                        "src": "690:11:6",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_TX_$1616_memory_ptr",
+                          "typeString": "struct Transaction.TX memory"
+                        }
+                      },
+                      "id": 1676,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "memberName": "owner",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 1613,
+                      "src": "690:17:6",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "arguments": [],
+                      "expression": {
+                        "argumentTypes": [],
+                        "expression": {
+                          "argumentTypes": null,
+                          "baseExpression": {
+                            "argumentTypes": null,
+                            "id": 1677,
+                            "name": "rlpTx",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 1627,
+                            "src": "718:5:6",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_array$_t_struct$_RLPItem_$1168_memory_$dyn_memory_ptr",
+                              "typeString": "struct RLP.RLPItem memory[] memory"
+                            }
+                          },
+                          "id": 1679,
+                          "indexExpression": {
+                            "argumentTypes": null,
+                            "hexValue": "33",
+                            "id": 1678,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": true,
+                            "kind": "number",
+                            "lValueRequested": false,
+                            "nodeType": "Literal",
+                            "src": "724:1:6",
+                            "subdenomination": null,
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_rational_3_by_1",
+                              "typeString": "int_const 3"
+                            },
+                            "value": "3"
+                          },
+                          "isConstant": false,
+                          "isLValue": true,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "nodeType": "IndexAccess",
+                          "src": "718:8:6",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_RLPItem_$1168_memory",
+                            "typeString": "struct RLP.RLPItem memory"
+                          }
+                        },
+                        "id": 1680,
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberName": "toAddress",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": 1285,
+                        "src": "718:18:6",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_function_internal_pure$_t_struct$_RLPItem_$1168_memory_ptr_$returns$_t_address_$bound_to$_t_struct$_RLPItem_$1168_memory_ptr_$",
+                          "typeString": "function (struct RLP.RLPItem memory) pure returns (address)"
+                        }
+                      },
+                      "id": 1681,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "kind": "functionCall",
+                      "lValueRequested": false,
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "718:20:6",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "src": "690:48:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "id": 1683,
+                  "nodeType": "ExpressionStatement",
+                  "src": "690:48:6"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 1684,
+                    "name": "transaction",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 1636,
+                    "src": "756:11:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_TX_$1616_memory_ptr",
+                      "typeString": "struct Transaction.TX memory"
+                    }
+                  },
+                  "functionReturnParameters": 1622,
+                  "id": 1685,
+                  "nodeType": "Return",
+                  "src": "749:18:6"
+                }
+              ]
+            },
+            "documentation": null,
+            "id": 1687,
+            "implemented": true,
+            "isConstructor": false,
+            "isDeclaredConst": true,
+            "modifiers": [],
+            "name": "getTx",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 1619,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 1618,
+                  "name": "txBytes",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1687,
+                  "src": "335:20:6",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes_memory_ptr",
+                    "typeString": "bytes"
+                  },
+                  "typeName": {
+                    "id": 1617,
+                    "name": "bytes",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "335:5:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_storage_ptr",
+                      "typeString": "bytes"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "334:22:6"
+            },
+            "payable": false,
+            "returnParameters": {
+              "id": 1622,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 1621,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1687,
+                  "src": "380:2:6",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_TX_$1616_memory_ptr",
+                    "typeString": "struct Transaction.TX"
+                  },
+                  "typeName": {
+                    "contractScope": null,
+                    "id": 1620,
+                    "name": "TX",
+                    "nodeType": "UserDefinedTypeName",
+                    "referencedDeclaration": 1616,
+                    "src": "380:2:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_TX_$1616_storage_ptr",
+                      "typeString": "struct Transaction.TX"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "379:11:6"
+            },
+            "scope": 1688,
+            "src": "320:454:6",
+            "stateMutability": "view",
+            "superFunction": null,
+            "visibility": "internal"
+          }
+        ],
+        "scope": 1689,
+        "src": "47:735:6"
+      }
+    ],
+    "src": "0:783:6"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.4.23+commit.124ca40d.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "2.0.0",
+  "updatedAt": "2018-05-24T12:52:35.632Z"
+}
