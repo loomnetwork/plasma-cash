@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from hexbytes import HexBytes
-from utils import keccak256, to_bytes
+from .utils import keccak256, to_bytes
 
 
 class SparseMerkleTree(object):
