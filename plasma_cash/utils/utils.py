@@ -10,3 +10,8 @@ def get_sender(hash, sig):
     if sig == None:
         raise InvalidTxSignatureException('Tx not signed')
     return w3.eth.account.recoverHash(hash, signature=sig[1:])
+
+def increaseTime(w3, time):
+    start = w3.eth.getBlock('latest').timestamp
+    # provider.make_request(method='evm_increaseTime', params=start+time)
+    w3.manager.request_blocking(method='evm_increaseTime', params=[start+time])

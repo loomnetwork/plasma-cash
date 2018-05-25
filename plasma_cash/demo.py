@@ -2,6 +2,7 @@ from client.authority_client import Client
 from dependency_config import container
 
 from child_chain.transaction import UnsignedTransaction, Transaction
+from utils.utils import increaseTime
 import rlp
 
 alice = Client(container.get_root('alice'), container.get_token('alice'))
@@ -62,7 +63,10 @@ exiting_tx_blk_num = 2000
 
 charlie.start_exit(utxo_id, prev_tx_blk_num, exiting_tx_blk_num)
 # 
-# # # After 7 days pass, charlie's exit should be finalizable
+# # # After 8 days pass, charlie's exit should be finalizable
+
+w3 = charlie.root_chain.w3 # get w3 instance
+increaseTime(w3, 8 * 24 * 3600)
 authority.finalize_exits()
 # 
 # # Charlie should now be able to withdraw the utxo which included token 2 to his wallet.
