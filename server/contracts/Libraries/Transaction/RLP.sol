@@ -1,4 +1,4 @@
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 
 /**
  * @title RLPReader
@@ -58,8 +58,7 @@ library RLP {
     /// @param self The RLPItem.
     /// @return The decoded string.
     function toUint(RLPItem memory self) internal pure returns (uint data) {
-        uint rStartPos; uint len;
-        (rStartPos, len) = _decode(self);
+        (uint rStartPos, uint len) = _decode(self);
         assembly {
             data := div(mload(rStartPos), exp(256, sub(32, len)))
         }
@@ -74,29 +73,11 @@ library RLP {
         pure
         returns (address data)
     {
-        uint rStartPos; uint len;
-        (rStartPos, len) = _decode(self);
+        (uint rStartPos,) = _decode(self);
         assembly {
             data := div(mload(rStartPos), exp(256, 12))
         }
     }
-
-    /// @dev Decode an RLPItem into bytes. This will not work if the
-    /// RLPItem is a list.
-    /// @param self The RLPItem.
-    /// @return The decoded string.
-    function toData(RLPItem memory self)
-        internal
-        pure
-        returns (bytes memory bts)
-    {
-        // require(isData(self));
-        uint rStartPos; uint len;
-        (rStartPos, len) = _decode(self);
-        bts = new bytes(len);
-        _copyToBytes(rStartPos, bts, len);
-    }
-
 
     /// @dev Create an iterator.
     /// @param self The RLP item.

@@ -1,4 +1,4 @@
-pragma solidity ^0.4.22;
+pragma solidity ^0.4.24;
 
 // Linked contract for withdrawals, import only safeTransferFrom interface for gas efficiency in the future
 import './Cards.sol';
