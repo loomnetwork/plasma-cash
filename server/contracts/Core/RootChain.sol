@@ -42,6 +42,13 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
         uint256 created_at;
     }
 
+    enum CoinState {
+        INIT,
+        EXITING,
+        EXITED,
+        CHALLENGED
+    }
+
     // tracking of NFTs deposited in each slot
     uint64 public NUM_COINS;
     mapping (uint64 => NFT_UTXO) public coins; 
@@ -49,7 +56,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
         uint64 uid; // there are up to 2^256 cards, can probably make it less
         uint32 denomination; // an owner cannot own more than 256 of a card. Currently set to 1 always, subject to change once the token changes
         address owner; // who owns that nft
-        bool canExit;
+        CoinState state;
     }
 
     // child chain
@@ -124,7 +131,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
                 uid: uid, 
                 denomination: denomination,
                 owner: from, 
-                canExit: false 
+                state: CoinState.INIT 
         });
 
         bytes32 txHash = keccak256(txBytes);
@@ -176,6 +183,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
             owner: msg.sender, 
             created_at: block.timestamp
         });
+        coins[slot].state = CoinState.EXITING;
 
         emit ExitStarted(slot, msg.sender, block.timestamp);
     }
@@ -254,26 +262,28 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
         return true;
     }
 
+    function finalizeExit(uint64 slot) private returns (bool exited) {
+         Exit memory currentExit = exits[slot];
+         if ((block.timestamp - currentExit.created_at) > 7 days) {
+            coins[slot].owner = currentExit.owner;
+            coins[slot].state = CoinState.EXITED;
+            emit FinalizedExit(currentExit.owner, slot);
+            return true;
+         } else {
+             return false;
+         }
+    }
+
     function finalizeExits() external {
-        Exit memory currentExit;
         uint exitSlotsLength = exitSlots.length;
         uint64 slot;
         for (uint i = 0; i < exitSlotsLength; i++) { 
             slot = exitSlots[i];
-            currentExit = exits[slot];
-
-            // Process an exit only if it has matured and hasn't been challenged. Only checking date since a challenged exit will dissapear. < Commented out during Development > 
-            // if ((block.timestamp - currentExit.created_at) > 7 days ) {
-                // Change owner of coin at exit.slot and allow that coin to be exited
-                coins[slot].owner = currentExit.owner;
-                coins[slot].canExit = true;
-                
-                // delete the finalized exit
+            if (finalizeExit(slot)) {
                 delete exits[slot];
                 delete exitSlots[i];
-
-                emit FinalizedExit(currentExit.owner, slot);
-            // }
+            
+            }
         }
     }
 
@@ -286,7 +296,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
     // Withdraw a UTXO that has been exited
     function withdraw(uint64 slot) external {
         require(coins[slot].owner == msg.sender, "You do not own that UTXO");
-        require(coins[slot].canExit, "You cannot exit that coin!");
+        require(coins[slot].state == CoinState.EXITED, "You cannot exit that coin!");
         cryptoCards.safeTransferFrom(address(this), msg.sender, uint256(coins[slot].uid));
     }
 

@@ -14,7 +14,7 @@ library Transaction {
         uint256 prevBlock;
     }
      
-    function getTx(bytes memory txBytes) internal view returns (TX memory) {
+    function getTx(bytes memory txBytes) internal pure returns (TX memory) {
         RLP.RLPItem[] memory rlpTx = txBytes.toRLPItem().toList(4);
         TX memory transaction;
 

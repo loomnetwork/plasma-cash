@@ -14,7 +14,7 @@ contract SparseMerkleTree {
 
     function setDefaultHashes(uint8 startIndex, uint8 endIndex) private {
         for (uint8 i = startIndex; i < endIndex ; i ++) {
-            defaultHashes[i] = keccak256(defaultHashes[i-1], defaultHashes[i-1]);
+            defaultHashes[i] = keccak256(abi.encodePacked(defaultHashes[i-1], defaultHashes[i-1]));
         }
     }
 
@@ -41,9 +41,9 @@ contract SparseMerkleTree {
                 assembly { proofElement := mload(add(proof, p)) }
             }
             if (index % 2 == 0) {
-                computedHash = keccak256(computedHash, proofElement);
+                computedHash = keccak256(abi.encodePacked(computedHash, proofElement));
             }else{
-                computedHash = keccak256(proofElement, computedHash);
+                computedHash = keccak256(abi.encodePacked(proofElement, computedHash));
             }
             proofBits = proofBits / 2; // shift it right for next bit
             index = index / 2;
