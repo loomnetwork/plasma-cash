@@ -163,7 +163,10 @@ contract("Plasma ERC721", async function(accounts) {
         // TODO: Implement proof validation
         let challengeTx ='0x0';
         let proof = '0x0';
-        await plasma.challengeBetween(utxo_slot, challengeTx, proof, {from: challenger});
+        await plasma.challengeBetween(
+                utxo_slot, challengeTx, proof, 
+                {'from': challenger, 'value': web3.toWei(0.1, 'ether')}
+        );
 
 
         await increaseTimeTo(expire);
@@ -198,7 +201,47 @@ contract("Plasma ERC721", async function(accounts) {
         // TODO: Implement proof validation
         let challengeTx ='0x0';
         let proof = '0x0';
-        await plasma.challengeAfter(utxo_slot, challengeTx, proof, {from: challenger});
+        await plasma.challengeAfter(
+                utxo_slot, challengeTx, proof, 
+                {'from': challenger, 'value': web3.toWei(0.1, 'ether')}
+        );
+
+        await increaseTimeTo(expire);
+        await plasma.finalizeExits({from: random_guy2 });
+        let c = web3.eth.getBalance(charlie)
+
+        // Charlie shouldn't be able to withdraw the coin.
+        assertRevert( plasma.withdraw(utxo_slot, {from : charlie }));
+
+        assert.equal((await cards.balanceOf.call(alice)).toNumber(), 2);
+        assert.equal((await cards.balanceOf.call(bob)).toNumber(), 0);
+        assert.equal((await cards.balanceOf.call(charlie)).toNumber(), 0);
+        assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 3);
+
+        // On the contrary, his bond must be slashed, and `challenger` must be able to claim it
+        await plasma.withdrawBonds({from: challenger });
+        
+        let withdrawedBonds = plasma.WithdrawedBonds({}, {fromBlock: 0, toBlock: 'latest'});
+        let e = await Promisify(cb => withdrawedBonds.get(cb));
+        let withdraw = e[0].args;
+        assert.equal(withdraw.from, challenger);
+        assert.equal(withdraw.amount, web3.toWei(0.1, 'ether'));
+    });
+
+    it("Challenges Charlie's exit with challengeBefore. Charlies does NOT respond", async function() {
+        let utxo_slot = 2;
+        await charlieExitAfterTwoTransfers();
+
+        start = (await web3.eth.getBlock('latest')).timestamp;
+        let expire = start + 3600 * 24 * 8; // 8 days pass, can finalize exit
+
+        // TODO: Implement proof validation
+        let challengeTx ='0x0';
+        let proof = '0x0';
+        await plasma.challengeBefore(
+                utxo_slot, challengeTx, proof, 
+                {'from': challenger, 'value': web3.toWei(0.1, 'ether')}
+        );
 
 
         await increaseTimeTo(expire);
@@ -222,6 +265,50 @@ contract("Plasma ERC721", async function(accounts) {
         assert.equal(withdraw.from, challenger);
         assert.equal(withdraw.amount, web3.toWei(0.1, 'ether'));
     });
+
+    it("Challenges Charlie's exit with challengeBefore. Charlies responds in time", async function() {
+        let utxo_slot = 2;
+        await charlieExitAfterTwoTransfers();
+
+        start = (await web3.eth.getBlock('latest')).timestamp;
+        let expire = start + 3600 * 24 * 8; // 8 days pass, can finalize exit
+
+        // TODO: Implement proof validation
+        let challengeTx ='0x0';
+        let proof = '0x0';
+        await plasma.challengeBefore(
+                utxo_slot, challengeTx, proof, 
+                {'from': challenger, 'value': web3.toWei(0.1, 'ether')}
+        );
+
+        await plasma.respondChallengeBefore(
+                utxo_slot, challengeTx, proof, 
+                {'from': charlie }
+        );
+
+
+        await increaseTimeTo(expire);
+        await plasma.finalizeExits({from: random_guy2 });
+        let c = web3.eth.getBalance(charlie)
+
+        await plasma.withdraw(utxo_slot, {from : charlie });
+
+        assert.equal((await cards.balanceOf.call(alice)).toNumber(), 2);
+        assert.equal((await cards.balanceOf.call(bob)).toNumber(), 0);
+        assert.equal((await cards.balanceOf.call(charlie)).toNumber(), 1);
+        assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 2);
+
+        // On the contrary, his bond must be slashed, and `challenger` must be able to claim it
+        await plasma.withdrawBonds({from: charlie });
+        
+        let withdrawedBonds = plasma.WithdrawedBonds({}, {fromBlock: 0, toBlock: 'latest'});
+        let e = await Promisify(cb => withdrawedBonds.get(cb));
+        let withdraw = e[0].args;
+        assert.equal(withdraw.from, charlie);
+        assert.equal(withdraw.amount, web3.toWei(0.2, 'ether'));
+    });
+
+    /********** UTILS ********/
 
     function signHash(from, hash) {
         let sig = (web3.eth.sign(from, hash)).slice(2);
