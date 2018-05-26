@@ -31,7 +31,7 @@ contract("Plasma ERC721", async function(accounts) {
 
     const UTXO_ID = 2
 
-    let [authority, alice, bob, charlie, random_guy, random_guy2] = accounts;
+    let [authority, alice, bob, charlie, random_guy, random_guy2, challenger] = accounts;
 
     let exit_coin;
     let data;
@@ -111,7 +111,7 @@ contract("Plasma ERC721", async function(accounts) {
                 '0x0', '0x0', // inclusion proofs
                  sig,
                  0, includedBlock, 
-                 {'from': alice, 'value': web3.toWei(0.01, 'ether')}
+                 {'from': alice, 'value': web3.toWei(0.1, 'ether')}
         );
 
         start = (await web3.eth.getBlock('latest')).timestamp;
@@ -125,7 +125,117 @@ contract("Plasma ERC721", async function(accounts) {
         assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 2);
     });
 
-    it("Transfers Coin 2 from Alice to Bob and then to Charlie who tries to exit it", async function() {
+    it("Cooperative Exit case after 2 Plasma-Chain transfers", async function() {
+        let utxo_slot = 2;
+        await charlieExitAfterTwoTransfers();
+
+        let afterExit = web3.eth.getBalance(charlie)
+
+        start = (await web3.eth.getBlock('latest')).timestamp;
+        let expire = start + 3600 * 24 * 8; // 8 days pass, can finalize exit
+        await increaseTimeTo(expire);
+
+        await plasma.finalizeExits({from: random_guy2 });
+        let c = web3.eth.getBalance(charlie)
+
+        await plasma.withdraw(utxo_slot, {from : charlie });
+        assert.equal((await cards.balanceOf.call(alice)).toNumber(), 2);
+        assert.equal((await cards.balanceOf.call(bob)).toNumber(), 0);
+        assert.equal((await cards.balanceOf.call(charlie)).toNumber(), 1);
+        assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 2);
+
+        await plasma.withdrawBonds({from: charlie });
+        
+        let withdrawedBonds = plasma.WithdrawedBonds({}, {fromBlock: 0, toBlock: 'latest'});
+        let e = await Promisify(cb => withdrawedBonds.get(cb));
+        let withdraw = e[0].args;
+        assert.equal(withdraw.from, charlie);
+        assert.equal(withdraw.amount, web3.toWei(0.1, 'ether'));
+    });
+
+    it("Challenges Charlie's exit with challengeBetween", async function() {
+        let utxo_slot = 2;
+        await charlieExitAfterTwoTransfers();
+
+        start = (await web3.eth.getBlock('latest')).timestamp;
+        let expire = start + 3600 * 24 * 8; // 8 days pass, can finalize exit
+
+        // TODO: Implement proof validation
+        let challengeTx ='0x0';
+        let proof = '0x0';
+        await plasma.challengeBetween(utxo_slot, challengeTx, proof, {from: challenger});
+
+
+        await increaseTimeTo(expire);
+        await plasma.finalizeExits({from: random_guy2 });
+        let c = web3.eth.getBalance(charlie)
+
+        // Charlie shouldn't be able to withdraw the coin.
+        assertRevert( plasma.withdraw(utxo_slot, {from : charlie }));
+
+        assert.equal((await cards.balanceOf.call(alice)).toNumber(), 2);
+        assert.equal((await cards.balanceOf.call(bob)).toNumber(), 0);
+        assert.equal((await cards.balanceOf.call(charlie)).toNumber(), 0);
+        assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 3);
+
+        // On the contrary, his bond must be slashed, and `challenger` must be able to claim it
+        await plasma.withdrawBonds({from: challenger });
+        
+        let withdrawedBonds = plasma.WithdrawedBonds({}, {fromBlock: 0, toBlock: 'latest'});
+        let e = await Promisify(cb => withdrawedBonds.get(cb));
+        let withdraw = e[0].args;
+        assert.equal(withdraw.from, challenger);
+        assert.equal(withdraw.amount, web3.toWei(0.1, 'ether'));
+    });
+
+    it("Challenges Charlie's exit with challengeAfter", async function() {
+        let utxo_slot = 2;
+        await charlieExitAfterTwoTransfers();
+
+        start = (await web3.eth.getBlock('latest')).timestamp;
+        let expire = start + 3600 * 24 * 8; // 8 days pass, can finalize exit
+
+        // TODO: Implement proof validation
+        let challengeTx ='0x0';
+        let proof = '0x0';
+        await plasma.challengeAfter(utxo_slot, challengeTx, proof, {from: challenger});
+
+
+        await increaseTimeTo(expire);
+        await plasma.finalizeExits({from: random_guy2 });
+        let c = web3.eth.getBalance(charlie)
+
+        // Charlie shouldn't be able to withdraw the coin.
+        assertRevert( plasma.withdraw(utxo_slot, {from : charlie }));
+
+        assert.equal((await cards.balanceOf.call(alice)).toNumber(), 2);
+        assert.equal((await cards.balanceOf.call(bob)).toNumber(), 0);
+        assert.equal((await cards.balanceOf.call(charlie)).toNumber(), 0);
+        assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 3);
+
+        // On the contrary, his bond must be slashed, and `challenger` must be able to claim it
+        await plasma.withdrawBonds({from: challenger });
+        
+        let withdrawedBonds = plasma.WithdrawedBonds({}, {fromBlock: 0, toBlock: 'latest'});
+        let e = await Promisify(cb => withdrawedBonds.get(cb));
+        let withdraw = e[0].args;
+        assert.equal(withdraw.from, challenger);
+        assert.equal(withdraw.amount, web3.toWei(0.1, 'ether'));
+    });
+
+    function signHash(from, hash) {
+        let sig = (web3.eth.sign(from, hash)).slice(2);
+
+        let r = ethutil.toBuffer('0x' + sig.substring(0, 64));
+        let s = ethutil.toBuffer('0x' + sig.substring(64, 128));
+        let v = ethutil.toBuffer(parseInt(sig.substring(128, 130), 16) + 27);
+        let mode = ethutil.toBuffer(1); // mode = geth
+
+        let signature = '0x' + Buffer.concat([mode, r, s, v]).toString('hex');
+        return signature;
+    }
+
+    async function charlieExitAfterTwoTransfers() {
         let leaves = {};
         let utxo_slot = 2;
 
@@ -155,32 +265,8 @@ contract("Plasma ERC721", async function(accounts) {
                 prev_tx_proof, exiting_tx_proof, // proofs from the tree
                 sigs, // c6ncatenated signatures
                 1000, 2000, // 1000 is when alice->bob got included, 2000 for bob->charlie
-                 {'from': charlie, 'value': web3.toWei(0.01, 'ether')}
+                 {'from': charlie, 'value': web3.toWei(0.1, 'ether')}
         );
-
-        start = (await web3.eth.getBlock('latest')).timestamp;
-        let expire = start + 3600 * 24 * 8; // 8 days pass, can finalize exit
-        await increaseTimeTo(expire);
-
-        await plasma.finalizeExits({from: random_guy2 });
-
-        plasma.withdraw(utxo_slot, {from : charlie });
-        assert.equal((await cards.balanceOf.call(alice)).toNumber(), 2);
-        assert.equal((await cards.balanceOf.call(bob)).toNumber(), 0);
-        assert.equal((await cards.balanceOf.call(charlie)).toNumber(), 1);
-        assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 2);
-    });
-
-    function signHash(from, hash) {
-        let sig = (web3.eth.sign(from, hash)).slice(2);
-
-        let r = ethutil.toBuffer('0x' + sig.substring(0, 64));
-        let s = ethutil.toBuffer('0x' + sig.substring(64, 128));
-        let v = ethutil.toBuffer(parseInt(sig.substring(128, 130), 16) + 27);
-        let mode = ethutil.toBuffer(1); // mode = geth
-
-        let signature = '0x' + Buffer.concat([mode, r, s, v]).toString('hex');
-        return signature;
     }
 
     function createUTXO(slot, prevBlock, from, to) {
