@@ -23,6 +23,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
     event StartedExit(uint64 indexed slot, address indexed owner, uint created_at);
     event ChallengedExit(uint64 indexed slot);
     event FinalizedExit(uint64  indexed slot, address owner);
+    event SlashedBond(uint64 indexed slot, address indexed from, address indexed to, uint amount);
 
     using SafeMath for uint256; // if few operations consider removing and doing asserts inline for less gas costs
     using Transaction for bytes;
@@ -34,21 +35,35 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
 
     address public authority;
 
+    uint constant BOND_AMOUNT = 0.01 ether;
+    modifier isBonded() { 
+        require ( msg.value == BOND_AMOUNT ); 
+        _;
+    }
+
+    // bond[bob][coinA] = X ether
+    struct Balance {
+        uint bonded; // staked as a bond
+        uint withdrawable;
+    }
+    mapping (address => Balance ) balances;
+
     // exits
     uint64[] public exitSlots;
-    mapping(uint64 => Exit) public exits;
 
+    mapping (uint64 => address) challengers;
     struct Exit {
         address owner;
         uint256 created_at;
+        uint256 bond;
     }
 
     enum State {
-        INIT,
+        DEPOSITED,
         EXITING,
-        EXITED,
         CHALLENGED,
-        RESPONDED
+        RESPONDED,
+        EXITED
     }
 
     // tracking of NFTs deposited in each slot
@@ -59,6 +74,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
         uint32 denomination; // an owner cannot own more than 256 of a card. Currently set to 1 always, subject to change once the token changes
         address owner; // who owns that nft
         State state;
+        Exit exit;
     }
 
     // child chain
@@ -128,13 +144,13 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
         require(txData.owner == from);
         require(txData.prevBlock == 0);
 
-        // Update state "tree"
-        coins[NUM_COINS] = NFT_UTXO({
-                uid: uid, 
-                denomination: denomination,
-                owner: from, 
-                state: State.INIT 
-        });
+        // Update state. Leave `exit` empty
+        NFT_UTXO memory coin;
+        coin.uid = uid;
+        coin.denomination = denomination;
+        coin.owner = from;
+        coin.state = State.DEPOSITED;
+        coins[NUM_COINS] = coin;
 
         bytes32 txHash = keccak256(txBytes);
         uint256 depositBlockNumber = getDepositBlock();
@@ -156,6 +172,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
         bytes prevTxInclusionProof, bytes exitingTxInclusionProof, 
         bytes sigs,
         uint prevTxIncBlock, uint exitingTxIncBlock) 
+        payable isBonded
         external
     {
         // Different inclusion check depending on if we're exiting a deposit transaction or not
@@ -181,11 +198,15 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
         }
 
         exitSlots.push(slot);
-        exits[slot] = Exit({
+
+        // Update Coin's storage
+        NFT_UTXO storage c = coins[slot];
+        c.exit = Exit({
             owner: msg.sender, 
-            created_at: block.timestamp
+            created_at: block.timestamp,
+            bond: msg.value
         });
-        coins[slot].state = State.EXITING;
+        c.state = State.EXITING;
 
         emit StartedExit(slot, msg.sender, block.timestamp);
     }
@@ -265,11 +286,16 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
     }
 
     function finalizeExit(uint64 slot) private returns (bool exited) {
-         Exit memory currentExit = exits[slot];
-         if ((block.timestamp - currentExit.created_at) > 7 days) {
-            coins[slot].owner = currentExit.owner;
-            coins[slot].state = State.EXITED;
-            emit FinalizedExit(slot, currentExit.owner);
+        NFT_UTXO storage coin = coins[slot];
+         if ((block.timestamp - coin.exit.created_at) > 7 days) {
+             if (coin.state == State.CHALLENGED) {
+                // If a coin's state is CHALLENGED, it needs to be responded. If not responded, the exit was invalid and thus the exitor's deposit must be slashed. 
+             } 
+             else { // If responded or exiting, proceed with the exit
+                coin.owner = coin.exit.owner;
+                coin.state = State.EXITED;
+             }
+            emit FinalizedExit(slot, coin.owner);
             return true;
          } else {
              return false;
@@ -281,10 +307,10 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
         uint64 slot;
         for (uint i = 0; i < exitSlotsLength; i++) { 
             slot = exitSlots[i];
-
-            if (coins[slot].state == State.CHALLENGED) continue; // If a coin has been challenged, do not exit it.
+            NFT_UTXO storage coin = coins[slot];
+            if (coin.state == State.DEPOSITED || coin.state == State.EXITED) continue; // If a coin is not under exit/challenge, then ignore it
             if (finalizeExit(slot)) {
-                delete exits[slot];
+                delete coin.exit;
                 delete exitSlots[i];
             }
         }
@@ -294,37 +320,14 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
     // CHALLENGES Require bonds in order to avoid griefing! 
 
     // Submit proof of a transaction before prevTx 
-    // Exitor has to call respondChallengeBefore and submit a transaction before prevTx or prevTx itself.'''
+    // Exitor has to call respondChallengeBefore and submit a transaction before prevTx or prevTx itself.
     function challengeBefore(uint64 slot, bytes challengingTransaction, bytes proof) external {
         require(coins[slot].state == State.EXITING, "Coin not being exited");
         challengingTransaction;
         proof;
 
-        delete exits[slot];    
-        delete exitSlots[slot];
-        coins[slot].state = State.CHALLENGED;
-        emit ChallengedExit(slot);
-    }
-
-
-    function challengeBetween(uint64 slot, bytes challengingTransaction, bytes proof) external {
-        require(coins[slot].state == State.EXITING, "Coin not being exited");
-        challengingTransaction;
-        proof;
-
-        delete exits[slot];    
-        delete exitSlots[slot];
-        coins[slot].state = State.CHALLENGED;
-        emit ChallengedExit(slot);
-    }
-
-    function challengeAfter(uint64 slot, bytes challengingTransaction, bytes proof) external {
-        require(coins[slot].state == State.EXITING, "Coin not being exited");
-        challengingTransaction;
-        proof;
-
-        delete exits[slot];    
-        delete exitSlots[slot];
+        // Do not delete exit yet. Set its state as challenged and wait for the exitor's response
+        challengers[slot] = msg.sender; 
         coins[slot].state = State.CHALLENGED;
         emit ChallengedExit(slot);
     }
@@ -336,6 +339,54 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
         proof;
         coins[slot].state = State.RESPONDED;
     }
+
+
+    function challengeBetween(uint64 slot, bytes challengingTransaction, bytes proof) external {
+        require(coins[slot].state == State.EXITING, "Coin not being exited");
+
+        // Validate proofs: TODO
+        challengingTransaction;
+        proof;
+
+        // Apply penalties and delete the exit
+        slashBond(slot, coins[slot].exit.owner, msg.sender);
+        delete coins[slot].exit;    
+        delete exitSlots[slot];
+
+        // Reset coin state
+        coins[slot].state = State.DEPOSITED;
+    }
+
+    function challengeAfter(uint64 slot, bytes challengingTransaction, bytes proof) external {
+        require(coins[slot].state == State.EXITING, "Coin not being exited");
+
+        // Validate proofs: TODO
+        challengingTransaction;
+        proof;
+
+        // Apply penalties and delete the exit
+        slashBond(slot, coins[slot].exit.owner, msg.sender);
+        delete coins[slot].exit;    
+        delete exitSlots[slot];
+
+        // Reset coin state
+        coins[slot].state = State.DEPOSITED;
+    }
+
+    function slashBond(uint64 slot, address from, address to) {
+        balances[from].bonded = balances[from].bonded.sub(BOND_AMOUNT);
+        balances[to].withdrawable = balances[to].withdrawable.add(BOND_AMOUNT);
+        emit SlashedBond(slot, from, to, BOND_AMOUNT);
+    
+    }
+
+    function withdrawBalance() external {
+        // Can only withdraw bond if the msg.sender 
+        uint amount = balances[msg.sender].withdrawable;
+        balances[msg.sender].withdrawable = 0; // no reentrancy:
+        msg.sender.transfer(amount);
+    }
+
 
     // Withdraw a UTXO that has been exited
     function withdraw(uint64 slot) external {

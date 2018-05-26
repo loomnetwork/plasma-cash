@@ -111,7 +111,7 @@ contract("Plasma ERC721", async function(accounts) {
                 '0x0', '0x0', // inclusion proofs
                  sig,
                  0, includedBlock, 
-                 {'from': alice}
+                 {'from': alice, 'value': web3.toWei(0.01, 'ether')}
         );
 
         start = (await web3.eth.getBlock('latest')).timestamp;
@@ -155,7 +155,7 @@ contract("Plasma ERC721", async function(accounts) {
                 prev_tx_proof, exiting_tx_proof, // proofs from the tree
                 sigs, // c6ncatenated signatures
                 1000, 2000, // 1000 is when alice->bob got included, 2000 for bob->charlie
-                {'from': charlie }
+                 {'from': charlie, 'value': web3.toWei(0.01, 'ether')}
         );
 
         start = (await web3.eth.getBlock('latest')).timestamp;
