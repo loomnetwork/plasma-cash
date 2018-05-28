@@ -73,6 +73,8 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         address owner;
         uint256 created_at;
         uint256 bond;
+        uint256 prevBlock;
+        uint256 exitBlock;
     }
     enum State {
 
@@ -222,7 +224,10 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         c.exit = Exit({
             owner: msg.sender, 
             created_at: block.timestamp,
-            bond: msg.value
+            bond: msg.value,
+            prevBlock: prevTxIncBlock,
+            exitBlock: exitingTxIncBlock
+
         });
 
         // Update coin state
@@ -314,18 +319,34 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
     }
 
 
-    function challengeBetween(uint64 slot, bytes challengingTransaction, bytes proof) 
+    function challengeBetween(uint64 slot, uint challengingBlockNumber, bytes challengingTransaction, bytes proof) 
         external 
         payable isBonded
         isState(slot, State.EXITING) 
         cleanupExit(slot)
     {
-        // Validate proofs: TODO
-        challengingTransaction;
-        proof;
+        // Must challenge with a tx in between
+        require( 
+                coins[slot].exit.exitBlock > challengingBlockNumber && 
+                coins[slot].exit.prevBlock < challengingBlockNumber,
+                "Challenging transaction must have happened AFTER the attested exit's timestamp"
+       );
+
+        bytes32 txHash = keccak256(challengingTransaction); 
+        bytes32 root = childChain[challengingBlockNumber].root;
+        require(
+            checkMembership(
+                txHash,
+                root, 
+                slot, 
+                proof
+            ),
+            "Exiting tx not included in claimed block"
+        );
 
         // Apply penalties and change state
         slashBond(coins[slot].exit.owner, msg.sender);
+        freeBond(msg.sender);
         coins[slot].state = State.DEPOSITED;
     }
 
@@ -335,7 +356,8 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         isState(slot, State.EXITING) 
         cleanupExit(slot)
     {
-        // Validate proofs: TODO
+        // Must challenge with a later transaction
+        require(challengingBlockNumber > coins[slot].exit.exitBlock);
         bytes32 txHash = keccak256(challengingTransaction); 
         bytes32 root = childChain[challengingBlockNumber].root;
         require(
@@ -415,7 +437,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         bytes32 txHash = keccak256(exitingTxBytes);
         bytes32 root = childChain[exitingTxIncBlock].root;
 
-        require(txHash.ecverify(getSig(sigs, 1), prevTxData.owner), "Invalid sig");
+        // require(txHash.ecverify(getSig(sigs, 1), prevTxData.owner), "Invalid sig");
         require(exitingTxData.owner == msg.sender, "Invalid sender");
         
         require(
