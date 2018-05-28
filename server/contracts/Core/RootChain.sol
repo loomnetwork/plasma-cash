@@ -329,18 +329,27 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         coins[slot].state = State.DEPOSITED;
     }
 
-    function challengeAfter(uint64 slot, bytes challengingTransaction, bytes proof) 
+    function challengeAfter(uint64 slot, uint challengingBlockNumber, bytes challengingTransaction, bytes proof) 
         external 
         payable isBonded
         isState(slot, State.EXITING) 
         cleanupExit(slot)
     {
         // Validate proofs: TODO
-        challengingTransaction;
-        proof;
-
+        bytes32 txHash = keccak256(challengingTransaction); 
+        bytes32 root = childChain[challengingBlockNumber].root;
+        require(
+            checkMembership(
+                txHash,
+                root, 
+                slot, 
+                proof
+            ),
+            "Exiting tx not included in claimed block"
+        );
         // Apply penalties and delete the exit
         slashBond(coins[slot].exit.owner, msg.sender);
+        freeBond(msg.sender);
         // Reset coin state
         coins[slot].state = State.DEPOSITED;
     }
