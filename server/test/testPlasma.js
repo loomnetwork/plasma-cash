@@ -153,33 +153,52 @@ contract("Plasma ERC721", async function(accounts) {
         assert.equal(withdraw.amount, web3.toWei(0.1, 'ether'));
     });
 
-    it("Challenges Charlie's exit with challengeBetween", async function() {
+    it("Bob/Dylan tries to double spend a coin that was supposed to be given to Charlie. Gets Challenged and charlie exits that coin", async function() {
         let utxo_slot = 2;
-        await charlieExitAfterTwoTransfers();
+        let data = await bobDoubleSpend();
+        let to_bob = data[0];
+        let tree_bob = data[1];
+        let to_charlie = data[2];
+        let tree_charlie = data[3];
 
-        start = (await web3.eth.getBlock('latest')).timestamp;
-        let expire = start + 3600 * 24 * 8; // 8 days pass, can finalize exit
+        let challengeTx = to_charlie[0];
+        let proof = tree_charlie.createMerkleProof(utxo_slot);
+        let block_number = 2000;
 
-        // TODO: Implement proof validation
-        let challengeTx ='0x0';
-        let proof = '0x0';
         await plasma.challengeBetween(
-                utxo_slot, challengeTx, proof, 
+                utxo_slot, block_number, challengeTx, proof, 
                 {'from': challenger, 'value': web3.toWei(0.1, 'ether')}
         );
 
+        let prev_tx = to_bob[0];
+        let exiting_tx = to_charlie[0]; 
+        let prev_tx_proof = tree_bob.createMerkleProof(utxo_slot);
+        let exiting_tx_proof = tree_charlie.createMerkleProof(utxo_slot);
+        let sigs = to_bob[1] + to_charlie[1].substr(2, 132);
 
+        plasma.startExit(
+                utxo_slot,
+                prev_tx, exiting_tx, // rlp encoded
+                prev_tx_proof, exiting_tx_proof, // proofs from the tree
+                sigs, // concatenated signatures
+                1000, 2000, // 1000 is when alice->bob got included, 2000 for bob->charlie
+                 {'from': charlie, 'value': web3.toWei(0.1, 'ether')}
+        );
+
+        start = (await web3.eth.getBlock('latest')).timestamp;
+        let expire = start + 3600 * 24 * 8; // 8 days pass, can finalize exit
         await increaseTimeTo(expire);
         await plasma.finalizeExits({from: random_guy2 });
-        let c = web3.eth.getBalance(charlie)
 
-        // Charlie shouldn't be able to withdraw the coin.
-        assertRevert( plasma.withdraw(utxo_slot, {from : charlie }));
+        // Dylan shouldn't be able to withdraw the coin.
+        assertRevert( plasma.withdraw(utxo_slot, {from : dylan }));
+        plasma.withdraw(utxo_slot, {from : charlie });
 
         assert.equal((await cards.balanceOf.call(alice)).toNumber(), 2);
         assert.equal((await cards.balanceOf.call(bob)).toNumber(), 0);
-        assert.equal((await cards.balanceOf.call(charlie)).toNumber(), 0);
-        assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 3);
+        assert.equal((await cards.balanceOf.call(charlie)).toNumber(), 1);
+        assert.equal((await cards.balanceOf.call(dylan)).toNumber(), 0);
+        assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 2);
 
         // On the contrary, his bond must be slashed, and `challenger` must be able to claim it
         await plasma.withdrawBonds({from: challenger });
@@ -188,15 +207,51 @@ contract("Plasma ERC721", async function(accounts) {
         let e = await Promisify(cb => withdrawedBonds.get(cb));
         let withdraw = e[0].args;
         assert.equal(withdraw.from, challenger);
+        assert.equal(withdraw.amount, web3.toWei(0.2, 'ether'));
+    });
+
+    it("Bob/Dylan double spend a coin that was supposed to be given to Charlie since nobody challenged", async function() {
+        let utxo_slot = 2;
+        let data = await bobDoubleSpend();
+        let to_bob = data[0];
+        let tree_bob = data[1];
+        let to_charlie = data[2];
+        let tree_charlie = data[3];
+
+        let challengeTx = to_charlie[0];
+        let proof = tree_charlie.createMerkleProof(utxo_slot);
+        let block_number = 2000;
+
+        start = (await web3.eth.getBlock('latest')).timestamp;
+        let expire = start + 3600 * 24 * 8; // 8 days pass, can finalize exit
+        await increaseTimeTo(expire);
+        await plasma.finalizeExits({from: random_guy2 });
+
+        // Dylan shouldn't be able to withdraw the coin.
+        plasma.withdraw(utxo_slot, {from : dylan });
+
+        assert.equal((await cards.balanceOf.call(alice)).toNumber(), 2);
+        assert.equal((await cards.balanceOf.call(bob)).toNumber(), 0);
+        assert.equal((await cards.balanceOf.call(charlie)).toNumber(), 0);
+        assert.equal((await cards.balanceOf.call(dylan)).toNumber(), 1);
+        assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 2);
+
+        // On the contrary, his bond must be slashed, and `challenger` must be able to claim it
+        await plasma.withdrawBonds({from: dylan });
+        
+        let withdrawedBonds = plasma.WithdrawedBonds({}, {fromBlock: 0, toBlock: 'latest'});
+        let e = await Promisify(cb => withdrawedBonds.get(cb));
+        let withdraw = e[0].args;
+        assert.equal(withdraw.from, dylan);
         assert.equal(withdraw.amount, web3.toWei(0.1, 'ether'));
     });
 
-    it("Charlie tries to double spend. Dylan challenges in time", async function() {
+    it("Charlie tries to exit a spent coin. Dylan challenges in time", async function() {
         let utxo_slot = 2;
 
         // Charlie receives the coin from Bob as before, but now he sends it to Dylan and tries to exit right after that, ignoring dylan's transaction
         // // Dylan sees this and he challengesj
-        let dylanTx = await charlieDoublespend();
+        let dylanTx = await charlieExitSpentCoin();
 
         let to_dylan = dylanTx[0];
         let dylan_tree = dylanTx[1];
@@ -226,7 +281,7 @@ contract("Plasma ERC721", async function(accounts) {
                 utxo_slot,
                 prev_tx, exiting_tx, // rlp encoded
                 prev_tx_proof, proof, // proofs from the tree
-                sigs, // c6ncatenated signatures
+                sigs, // concatenated signatures
                 2000, 3000, // 1000 is when alice->bob got included, 2000 for bob->charlie
                  {'from': dylan, 'value': web3.toWei(0.1, 'ether')}
         );
@@ -258,12 +313,12 @@ contract("Plasma ERC721", async function(accounts) {
         assert.equal(withdraw.amount, web3.toWei(0.2, 'ether'));
     });
 
-    it("Charlie tries to double spend. Dylan does not challenge in time", async function() {
+    it("Charlie tries to exit a spent coin. Dylan does not challenge in time", async function() {
         let utxo_slot = 2;
 
         // Charlie receives the coin from Bob as before, but now he sends it to Dylan and tries to exit right after that, ignoring dylan's transaction
         // // Dylan does NOT challenge
-        let dylanTx = await charlieDoublespend();
+        let dylanTx = await charlieExitSpentCoin();
 
         start = (await web3.eth.getBlock('latest')).timestamp;
         let expire = start + 3600 * 24 * 8; // 8 days pass, can finalize exit
@@ -413,13 +468,13 @@ contract("Plasma ERC721", async function(accounts) {
                 utxo_slot,
                 prev_tx, exiting_tx, // rlp encoded
                 prev_tx_proof, exiting_tx_proof, // proofs from the tree
-                sigs, // c6ncatenated signatures
+                sigs, // concatenated signatures
                 1000, 2000, // 1000 is when alice->bob got included, 2000 for bob->charlie
                  {'from': charlie, 'value': web3.toWei(0.1, 'ether')}
         );
     }
 
-    async function charlieDoublespend() {
+    async function charlieExitSpentCoin() {
         let leaves = {};
         let utxo_slot = 2;
 
@@ -451,12 +506,54 @@ contract("Plasma ERC721", async function(accounts) {
                 utxo_slot,
                 prev_tx, exiting_tx, // rlp encoded
                 prev_tx_proof, exiting_tx_proof, // proofs from the tree
-                sigs, // c6ncatenated signatures
+                sigs, // concatenated signatures
                 1000, 2000, // 1000 is when alice->bob got included, 2000 for bob->charlie
                  {'from': charlie, 'value': web3.toWei(0.1, 'ether')}
         );
 
         return [to_dylan, tree_dylan, to_charlie, tree_charlie];
+    }
+
+    async function bobDoubleSpend() {
+        let leaves = {};
+        let utxo_slot = 2;
+
+        // Block 1000: Transaction from Alice to Bob
+        // Block 2000: Transaction from Bob to Charlie
+        // Block 3000: Transaction from Charlie to Dylan
+        
+        let to_bob = createUTXO(utxo_slot, 3, alice, bob);
+        // submits tree root frmo authority
+        let tree_bob = await submitUTXO(utxo_slot, to_bob[0]);
+
+        // Tx to Charlie from Bob referencing Bob's UTXO at block 1000
+        let to_charlie = createUTXO(utxo_slot, 1000, bob, charlie);
+        let tree_charlie = await submitUTXO(utxo_slot, to_charlie[0]);
+
+        // Tx to Dylan from Bob referencing Charlie's UTXO at block 2000
+        // Dylan is an address which is controlled by Bob or colludes by Bob to steal Charlie's coin
+        let to_dylan = createUTXO(utxo_slot, 1000, bob, dylan);
+        let tree_dylan = await submitUTXO(utxo_slot, to_dylan[0]);
+
+        // Dylan-Bob now tries to exit the coin.
+        let sigs = to_bob[1] + to_dylan[1].substr(2, 132);
+
+        let prev_tx_proof = tree_bob.createMerkleProof(utxo_slot)
+        let exiting_tx_proof = tree_dylan.createMerkleProof(utxo_slot)
+
+        let prev_tx = to_bob[0];
+        let exiting_tx = to_dylan[0]; 
+
+        plasma.startExit(
+                utxo_slot,
+                prev_tx, exiting_tx, // rlp encoded
+                prev_tx_proof, exiting_tx_proof, // proofs from the tree
+                sigs, // concatenated signatures
+                1000, 3000, // 1000 is when alice->bob got included, 2000 for bob->charlie
+                 {'from': dylan, 'value': web3.toWei(0.1, 'ether')}
+        );
+
+        return [to_bob, tree_bob, to_charlie, tree_charlie];
     }
 
     function createUTXO(slot, prevBlock, from, to) {
