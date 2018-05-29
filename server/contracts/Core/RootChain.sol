@@ -437,7 +437,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         bytes32 txHash = keccak256(exitingTxBytes);
         bytes32 root = childChain[exitingTxIncBlock].root;
 
-        // require(txHash.ecverify(getSig(sigs, 1), prevTxData.owner), "Invalid sig");
+        require(txHash.ecverify(getSig(sigs, 1), prevTxData.owner), "Invalid sig");
         require(exitingTxData.owner == msg.sender, "Invalid sender");
         
         require(
