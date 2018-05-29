@@ -39,6 +39,15 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
 
     address public authority;
 
+    /*
+     * Modifiers
+     */
+    modifier isAuthority() {
+        require(msg.sender == authority);
+        _;
+    }
+
+
     modifier isBonded() { 
         require ( msg.value == BOND_AMOUNT ); 
 
@@ -110,18 +119,9 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
     mapping(uint => childBlock) public childChain;
     CryptoCards cryptoCards;
 
-    /*
-     * Modifiers
-     */
-    modifier isAuthority() {
-        require(msg.sender == authority);
-        _;
-    }
-
     constructor () public{
         authority = msg.sender;
-
-		childBlockInterval = 1000;
+        childBlockInterval = 1000;
         currentChildBlock = childBlockInterval;
         currentDepositBlock = 1;
         lastParentBlock = block.number; // to ensure no chain reorgs
@@ -255,7 +255,6 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         else {
             // If the exit was actually challenged and responded, penalize the challenger
             if (coin.state == State.RESPONDED) {
-                // this;
                 slashBond(challengers[slot], coin.exit.owner);
             }
 
@@ -282,8 +281,6 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         require(coins[slot].owner == msg.sender, "You do not own that UTXO");
         cryptoCards.safeTransferFrom(address(this), msg.sender, uint256(coins[slot].uid));
     }
-
-
 
     /******************** CHALLENGES ********************/
 
@@ -494,11 +491,11 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         return 0;
     }
 
-    function getDepositBlock() public view returns (uint256) {
+    function getDepositBlock() private view returns (uint256) {
         return currentChildBlock.sub(childBlockInterval).add(currentDepositBlock);
     }
 
-    function getSig(bytes sigs, uint i) public pure returns(bytes) {
+    function getSig(bytes sigs, uint i) private pure returns(bytes) {
         return ByteUtils.slice(sigs, 66 * i,  66);
     }
 
