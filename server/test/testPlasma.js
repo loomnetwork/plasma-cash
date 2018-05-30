@@ -31,13 +31,14 @@ contract("Plasma ERC721", async function(accounts) {
 
     const UTXO_ID = 2
 
-    let [authority, alice, bob, charlie, dylan, random_guy, random_guy2, challenger] = accounts;
+    let [authority, alice, bob, charlie, dylan, elliot, random_guy, random_guy2, challenger] = accounts;
 
     let exit_coin;
     let data;
     let rawdata;
 
 
+    let to_alice;
 
     beforeEach("Deploys the contracts, Registers Alice and deposits her coins", async function() {
         plasma = await RootChain.new({from: authority});
@@ -55,6 +56,8 @@ contract("Plasma ERC721", async function(accounts) {
 
         ret = createUTXO(2, 0, alice, alice); data = ret[0];
         await cards.depositToPlasmaWithData(3, data, {from: alice});
+
+        to_alice = ret;
 
         assert.equal((await cards.balanceOf.call(alice)).toNumber(), 2);
         assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 3);
@@ -123,6 +126,32 @@ contract("Plasma ERC721", async function(accounts) {
         plasma.withdraw(utxo_slot, {from : alice });
         assert.equal((await cards.balanceOf.call(alice)).toNumber(), 3);
         assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 2);
+    });
+
+    it("Cooperative Exit case after 1 Plasma-Chain transfers", async function() {
+        let utxo_slot = 2;
+        await bobExitAfterOneTransfer();
+
+        let afterExit = web3.eth.getBalance(charlie)
+        start = (await web3.eth.getBlock('latest')).timestamp;
+        let expire = start + 3600 * 24 * 8; // 8 days pass, can finalize exit
+        await increaseTimeTo(expire);
+
+        await plasma.finalizeExits({from: random_guy2 });
+        let c = web3.eth.getBalance(charlie)
+
+        await plasma.withdraw(utxo_slot, {from : bob });
+        assert.equal((await cards.balanceOf.call(alice)).toNumber(), 2);
+        assert.equal((await cards.balanceOf.call(bob)).toNumber(), 1);
+        assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 2);
+
+        await plasma.withdrawBonds({from: bob });
+        
+        let withdrawedBonds = plasma.WithdrawedBonds({}, {fromBlock: 0, toBlock: 'latest'});
+        let e = await Promisify(cb => withdrawedBonds.get(cb));
+        let withdraw = e[0].args;
+        assert.equal(withdraw.from, bob);
+        assert.equal(withdraw.amount, web3.toWei(0.1, 'ether'));
     });
 
     it("Cooperative Exit case after 2 Plasma-Chain transfers", async function() {
@@ -440,6 +469,38 @@ contract("Plasma ERC721", async function(accounts) {
         return signature;
     }
 
+    // Scenarios!
+
+    async function bobExitAfterOneTransfer() {
+        let leaves = {};
+        let utxo_slot = 2;
+
+        // Block 3: Transaction from Alice root -> Alice 
+        // Block 1000: Transaction from Alice to Bob
+        
+        let to_bob = createUTXO(utxo_slot, 3, alice, bob);
+        let tree_bob = await submitUTXO(utxo_slot, to_bob[0]);
+       
+        // Concatenate the 2 signatures
+        let sigs = to_alice[1] + to_bob[1].substr(2,132);
+        let exiting_tx_proof = tree_bob.createMerkleProof(utxo_slot)
+
+        let prev_tx = to_alice[0];
+        let exiting_tx = to_bob[0];
+
+        plasma.startExit(
+                utxo_slot,
+                prev_tx , exiting_tx, // rlp encoded
+                '0x0', exiting_tx_proof, // proofs from the tree
+                sigs, // concatenated signatures
+                3, 1000, // alice_deposit->alice 3, alice-> bob 1000
+                 {'from': bob, 'value': web3.toWei(0.1, 'ether')}
+        );
+    }
+
+
+
+
     async function charlieExitAfterTwoTransfers() {
         let leaves = {};
         let utxo_slot = 2;
@@ -555,7 +616,7 @@ contract("Plasma ERC721", async function(accounts) {
 
         return [to_bob, tree_bob, to_charlie, tree_charlie];
     }
-
+    
     function createUTXO(slot, prevBlock, from, to) {
         let data = [ slot, prevBlock, 1, to ];
         data = '0x' + RLP.encode(data).toString('hex');
