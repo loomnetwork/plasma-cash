@@ -434,7 +434,7 @@ contract("Plasma ERC721", async function(accounts) {
 
         // Concatenate the 2 signatures
         let sigs = to_alice[1] + to_bob[1].substr(2,132);
-        let tx_proof = tree_bob.createMerkleProof(utxo_slot)
+        let proof = tree_bob.createMerkleProof(utxo_slot)
 
         let prev_tx = to_alice[0];
         let tx = to_bob[0];
@@ -443,15 +443,15 @@ contract("Plasma ERC721", async function(accounts) {
         await plasma.challengeBefore(
                 utxo_slot,
                 prev_tx , tx, // rlp encoded
-                '0x0', tx_proof, // proofs from the tree
+                '0x0', proof, // proofs from the tree
                 sigs, // concatenated signatures
                 3, 1000,
                 {'from': challenger, 'value': web3.toWei(0.1, 'ether')}
         );
 
         await plasma.respondChallengeBefore(
-                utxo_slot, challengeTx, proof,
-                {'from': charlie }
+                utxo_slot, 3000, '0x0', proof,
+                {'from': elliot }
         );
 
 
@@ -459,11 +459,13 @@ contract("Plasma ERC721", async function(accounts) {
         await plasma.finalizeExits({from: random_guy2 });
         let c = web3.eth.getBalance(charlie)
 
-        await plasma.withdraw(utxo_slot, {from : charlie });
+        await plasma.withdraw(utxo_slot, {from : elliot });
 
         assert.equal((await cards.balanceOf.call(alice)).toNumber(), 2);
         assert.equal((await cards.balanceOf.call(bob)).toNumber(), 0);
-        assert.equal((await cards.balanceOf.call(charlie)).toNumber(), 1);
+        assert.equal((await cards.balanceOf.call(charlie)).toNumber(), 0);
+        assert.equal((await cards.balanceOf.call(dylan)).toNumber(), 0);
+        assert.equal((await cards.balanceOf.call(elliot)).toNumber(), 1);
         assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 2);
 
         // On the contrary, his bond must be slashed, and `challenger` must be able to claim it
@@ -472,7 +474,7 @@ contract("Plasma ERC721", async function(accounts) {
         let withdrewBonds = plasma.WithdrewBonds({}, {fromBlock: 0, toBlock: 'latest'});
         let e = await Promisify(cb => withdrewBonds.get(cb));
         let withdraw = e[0].args;
-        assert.equal(withdraw.from, charlie);
+        assert.equal(withdraw.from, elliot);
         assert.equal(withdraw.amount, web3.toWei(0.2, 'ether'));
     });
 
