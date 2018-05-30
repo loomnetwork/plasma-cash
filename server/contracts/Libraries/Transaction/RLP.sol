@@ -165,7 +165,7 @@ library RLP {
         }
         return;
     }
-    
+
     /// @dev Return the RLP encoded bytes.
     /// @param self The RLPItem.
     /// @return The bytes.
@@ -206,6 +206,6 @@ library RLP {
             }
         }
 
-	}
+    }
 
 }

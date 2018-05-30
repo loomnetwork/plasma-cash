@@ -1,7 +1,7 @@
-pragma solidity ^0.4.22;
+pragma solidity ^0.4.24;
 
 library ECVerify {
-    
+
     enum SignatureMode {
         EIP712,
         GETH,
@@ -21,11 +21,11 @@ library ECVerify {
             v := and(mload(add(signature, 66)), 255)
         }
 
-		if (mode == SignatureMode.GETH) {
-			hash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
-		} else if (mode == SignatureMode.TREZOR) {
-			hash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n\x20", hash));
-		}
+        if (mode == SignatureMode.GETH) {
+            hash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
+        } else if (mode == SignatureMode.TREZOR) {
+            hash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n\x20", hash));
+        }
 
         return ecrecover(hash, v, r, s);
     }
