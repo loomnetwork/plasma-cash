@@ -154,6 +154,7 @@ contract("Plasma ERC721", async function(accounts) {
         assert.equal(withdraw.amount, web3.toWei(0.1, 'ether'));
     });
 
+
     it("Cooperative Exit case after 2 Plasma-Chain transfers", async function() {
         let utxo_slot = 2;
         await charlieExitAfterTwoTransfers();
@@ -616,7 +617,7 @@ contract("Plasma ERC721", async function(accounts) {
 
         return [to_bob, tree_bob, to_charlie, tree_charlie];
     }
-
+    
     function createUTXO(slot, prevBlock, from, to) {
         let data = [ slot, prevBlock, 1, to ];
         data = '0x' + RLP.encode(data).toString('hex');
