@@ -22,16 +22,16 @@
   },
   "devDependencies": {},
   "scripts": {
-    "console": "node_modules/.bin/truffle console --network rpc",
-    "compile": "node_modules/.bin/truffle compile",
-    "test": "npm run ganache-cli:dev && node_modules/.bin/truffle test --network rpc",
+    "console": "truffle console --network rpc",
+    "compile": "truffle compile",
+    "test": "npm run ganache-cli:dev && truffle test --network rpc",
     "test:gas": "GAS_REPORTER=true npm test",
-    "lint": "node_modules/.bin/solium --dir ./contracts",
+    "lint": "solium --dir ./contracts",
     "ganache-cli:dev": "scripts/ganache-cli.sh",
     "migrate:dev": "rm -rf build && npm run ganache-cli:dev && npm run migrate:dev:contracts",
-    "migrate:dev:contracts": "node_modules/.bin/truffle migrate --all --network rpc",
-    "migrate:prod": "node_modules/.bin/truffle migrate --all --network prod",
-    "prepublishOnly": "node_modules/.bin/truffle compile --all"
+    "migrate:dev:contracts": "truffle migrate --all --network rpc",
+    "migrate:prod": "truffle migrate --all --network prod",
+    "prepublishOnly": "truffle compile --all"
   },
   "author": "",
   "license": "ISC"
