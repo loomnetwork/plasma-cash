@@ -25,11 +25,12 @@ class Contract(object):
         return account
         
 
-    def sign_and_send(self, func, args, gas=1000000):
+    def sign_and_send(self, func, args, value=0, gas=1000000):
         ''' Expecting all arguments in 1 array '''
         signed_tx = self._sign_function_call(
                 func, 
                 args,
+                value,
                 gas # may need to change gas
             )
         self.nonce += 1 # Increment nonce after signing a tx
@@ -73,7 +74,7 @@ class Contract(object):
 
         return signed_tx
 
-    def _sign_function_call(self, func, args, gas):
+    def _sign_function_call(self, func, args, value, gas):
         """
             Takes reading and timestamp and creates a 
             raw transaction call to `ping` at the target contract
@@ -85,6 +86,7 @@ class Contract(object):
 
         raw_tx = func(*args).buildTransaction({
             'gas': gas,
+            'value': value,
             # 'gasPrice': self.w3.toWei('10', 'gwei'),
             # 'nonce': self.nonce
             'nonce': self.w3.eth.getTransactionCount(self.account.address)

@@ -9,6 +9,7 @@ import rlp
 class PlasmaCash(Contract):
     def __init__(self, private_key, abi_file, address, endpoint):
         super().__init__(private_key, address, abi_file, endpoint)
+        self.BOND = self.w3.toWei(0.1, 'ether')
 
     def challenge(self, slot):
         args = [slot]
@@ -28,7 +29,7 @@ class PlasmaCash(Contract):
                 sigs, 
                 prev_tx_blk_num, tx_blk_num
             ]
-        self.sign_and_send(self.contract.functions.startExit, args)
+        self.sign_and_send(self.contract.functions.startExit, args, value=self.BOND)
         return self
 
     def finalize_exits(self):

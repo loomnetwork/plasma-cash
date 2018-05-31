@@ -73,19 +73,19 @@ contract("Plasma ERC721", async function(accounts) {
     });
 
     it('Tests that Merkle Proofs work', async function() {
+        let leaves = {};
+
         let slot = 1500;
         let tx = createUTXO(slot, 1000, alice, bob);
         let txHash = utils.soliditySha3(tx[0]);
 
-        let leaves = {};
         leaves[slot] = txHash;
 
-        // BUG! proofbits are not properly returned. WIP
-        // slot = 63;
-        // data = [slot, 2000, bob, charlie];
-        // tx = '0x' + RLP.encode(data).toString('hex');
-        // txHash = utils.soliditySha3(tx);
-        // leaves[slot] = txHash;
+        slot = 63;
+        tx = createUTXO(slot, 1000, alice, charlie);
+        txHash = utils.soliditySha3(tx[0]);
+
+        leaves[slot] = txHash;
 
         // This will be happening on the Plasma Cash client
         // The root will be submitted by the authority
@@ -95,7 +95,7 @@ contract("Plasma ERC721", async function(accounts) {
         let ret = await plasma.checkMembership(txHash, tree.root, slot, proof);
         assert.equal(ret, true);
 
-    
+
     });
 
     it("Submits an exit for the UTXO of Coin 3 (utxo id 2)  directly after depositing it", async function() {
@@ -104,7 +104,7 @@ contract("Plasma ERC721", async function(accounts) {
         let denom = exit_coin.denomination.toNumber();
         let from  = exit_coin.from;
 
-        let ret = createUTXO(2, 0, alice, alice); 
+        let ret = createUTXO(2, 0, alice, alice);
         let utxo = ret[0];
         let sig = ret[1];
 
@@ -113,7 +113,7 @@ contract("Plasma ERC721", async function(accounts) {
                 '0x', utxo,  // prevTx, exitingTx
                 '0x0', '0x0', // inclusion proofs
                  sig,
-                 0, includedBlock, 
+                 0, includedBlock,
                  {'from': alice, 'value': web3.toWei(0.1, 'ether')}
         );
 
@@ -146,9 +146,9 @@ contract("Plasma ERC721", async function(accounts) {
         assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 2);
 
         await plasma.withdrawBonds({from: bob });
-        
-        let withdrawedBonds = plasma.WithdrawedBonds({}, {fromBlock: 0, toBlock: 'latest'});
-        let e = await Promisify(cb => withdrawedBonds.get(cb));
+
+        let withdrewBonds = plasma.WithdrewBonds({}, {fromBlock: 0, toBlock: 'latest'});
+        let e = await Promisify(cb => withdrewBonds.get(cb));
         let withdraw = e[0].args;
         assert.equal(withdraw.from, bob);
         assert.equal(withdraw.amount, web3.toWei(0.1, 'ether'));
@@ -174,9 +174,9 @@ contract("Plasma ERC721", async function(accounts) {
         assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 2);
 
         await plasma.withdrawBonds({from: charlie });
-        
-        let withdrawedBonds = plasma.WithdrawedBonds({}, {fromBlock: 0, toBlock: 'latest'});
-        let e = await Promisify(cb => withdrawedBonds.get(cb));
+
+        let withdrewBonds = plasma.WithdrewBonds({}, {fromBlock: 0, toBlock: 'latest'});
+        let e = await Promisify(cb => withdrewBonds.get(cb));
         let withdraw = e[0].args;
         assert.equal(withdraw.from, charlie);
         assert.equal(withdraw.amount, web3.toWei(0.1, 'ether'));
@@ -195,12 +195,12 @@ contract("Plasma ERC721", async function(accounts) {
         let block_number = 2000;
 
         await plasma.challengeBetween(
-                utxo_slot, block_number, challengeTx, proof, 
+                utxo_slot, block_number, challengeTx, proof,
                 {'from': challenger, 'value': web3.toWei(0.1, 'ether')}
         );
 
         let prev_tx = to_bob[0];
-        let exiting_tx = to_charlie[0]; 
+        let exiting_tx = to_charlie[0];
         let prev_tx_proof = tree_bob.createMerkleProof(utxo_slot);
         let exiting_tx_proof = tree_charlie.createMerkleProof(utxo_slot);
         let sigs = to_bob[1] + to_charlie[1].substr(2, 132);
@@ -231,9 +231,9 @@ contract("Plasma ERC721", async function(accounts) {
 
         // On the contrary, his bond must be slashed, and `challenger` must be able to claim it
         await plasma.withdrawBonds({from: challenger });
-        
-        let withdrawedBonds = plasma.WithdrawedBonds({}, {fromBlock: 0, toBlock: 'latest'});
-        let e = await Promisify(cb => withdrawedBonds.get(cb));
+
+        let withdrewBonds = plasma.WithdrewBonds({}, {fromBlock: 0, toBlock: 'latest'});
+        let e = await Promisify(cb => withdrewBonds.get(cb));
         let withdraw = e[0].args;
         assert.equal(withdraw.from, challenger);
         assert.equal(withdraw.amount, web3.toWei(0.2, 'ether'));
@@ -267,9 +267,9 @@ contract("Plasma ERC721", async function(accounts) {
 
         // On the contrary, his bond must be slashed, and `challenger` must be able to claim it
         await plasma.withdrawBonds({from: dylan });
-        
-        let withdrawedBonds = plasma.WithdrawedBonds({}, {fromBlock: 0, toBlock: 'latest'});
-        let e = await Promisify(cb => withdrawedBonds.get(cb));
+
+        let withdrewBonds = plasma.WithdrewBonds({}, {fromBlock: 0, toBlock: 'latest'});
+        let e = await Promisify(cb => withdrewBonds.get(cb));
         let withdraw = e[0].args;
         assert.equal(withdraw.from, dylan);
         assert.equal(withdraw.amount, web3.toWei(0.1, 'ether'));
@@ -334,9 +334,9 @@ contract("Plasma ERC721", async function(accounts) {
 
         // On the contrary, his bond must be slashed, and `challenger` must be able to claim it
         await plasma.withdrawBonds({from: challenger });
-        
-        let withdrawedBonds = plasma.WithdrawedBonds({}, {fromBlock: 0, toBlock: 'latest'});
-        let e = await Promisify(cb => withdrawedBonds.get(cb));
+
+        let withdrewBonds = plasma.WithdrewBonds({}, {fromBlock: 0, toBlock: 'latest'});
+        let e = await Promisify(cb => withdrewBonds.get(cb));
         let withdraw = e[0].args;
         assert.equal(withdraw.from, challenger);
         assert.equal(withdraw.amount, web3.toWei(0.2, 'ether'));
@@ -367,9 +367,9 @@ contract("Plasma ERC721", async function(accounts) {
 
         // On the contrary, his bond must be slashed, and `challenger` must be able to claim it
         await plasma.withdrawBonds({from: charlie });
-        
-        let withdrawedBonds = plasma.WithdrawedBonds({}, {fromBlock: 0, toBlock: 'latest'});
-        let e = await Promisify(cb => withdrawedBonds.get(cb));
+
+        let withdrewBonds = plasma.WithdrewBonds({}, {fromBlock: 0, toBlock: 'latest'});
+        let e = await Promisify(cb => withdrewBonds.get(cb));
         let withdraw = e[0].args;
         assert.equal(withdraw.from, charlie);
         assert.equal(withdraw.amount, web3.toWei(0.1, 'ether'));
@@ -386,7 +386,7 @@ contract("Plasma ERC721", async function(accounts) {
         let challengeTx ='0x0';
         let proof = '0x0';
         await plasma.challengeBefore(
-                utxo_slot, challengeTx, proof, 
+                utxo_slot, challengeTx, proof,
                 {'from': challenger, 'value': web3.toWei(0.1, 'ether')}
         );
 
@@ -405,9 +405,9 @@ contract("Plasma ERC721", async function(accounts) {
 
         // On the contrary, his bond must be slashed, and `challenger` must be able to claim it
         await plasma.withdrawBonds({from: challenger });
-        
-        let withdrawedBonds = plasma.WithdrawedBonds({}, {fromBlock: 0, toBlock: 'latest'});
-        let e = await Promisify(cb => withdrawedBonds.get(cb));
+
+        let withdrewBonds = plasma.WithdrewBonds({}, {fromBlock: 0, toBlock: 'latest'});
+        let e = await Promisify(cb => withdrewBonds.get(cb));
         let withdraw = e[0].args;
         assert.equal(withdraw.from, challenger);
         assert.equal(withdraw.amount, web3.toWei(0.1, 'ether'));
@@ -424,12 +424,12 @@ contract("Plasma ERC721", async function(accounts) {
         let challengeTx ='0x0';
         let proof = '0x0';
         await plasma.challengeBefore(
-                utxo_slot, challengeTx, proof, 
+                utxo_slot, challengeTx, proof,
                 {'from': challenger, 'value': web3.toWei(0.1, 'ether')}
         );
 
         await plasma.respondChallengeBefore(
-                utxo_slot, challengeTx, proof, 
+                utxo_slot, challengeTx, proof,
                 {'from': charlie }
         );
 
@@ -447,9 +447,9 @@ contract("Plasma ERC721", async function(accounts) {
 
         // On the contrary, his bond must be slashed, and `challenger` must be able to claim it
         await plasma.withdrawBonds({from: charlie });
-        
-        let withdrawedBonds = plasma.WithdrawedBonds({}, {fromBlock: 0, toBlock: 'latest'});
-        let e = await Promisify(cb => withdrawedBonds.get(cb));
+
+        let withdrewBonds = plasma.WithdrewBonds({}, {fromBlock: 0, toBlock: 'latest'});
+        let e = await Promisify(cb => withdrewBonds.get(cb));
         let withdraw = e[0].args;
         assert.equal(withdraw.from, charlie);
         assert.equal(withdraw.amount, web3.toWei(0.2, 'ether'));
@@ -475,12 +475,12 @@ contract("Plasma ERC721", async function(accounts) {
         let leaves = {};
         let utxo_slot = 2;
 
-        // Block 3: Transaction from Alice root -> Alice 
+        // Block 3: Transaction from Alice root -> Alice
         // Block 1000: Transaction from Alice to Bob
-        
+
         let to_bob = createUTXO(utxo_slot, 3, alice, bob);
         let tree_bob = await submitUTXO(utxo_slot, to_bob[0]);
-       
+
         // Concatenate the 2 signatures
         let sigs = to_alice[1] + to_bob[1].substr(2,132);
         let exiting_tx_proof = tree_bob.createMerkleProof(utxo_slot)
@@ -507,7 +507,7 @@ contract("Plasma ERC721", async function(accounts) {
 
         // Block 1000: Transaction from Alice to Bob
         // Block 2000: Transaction from Bob to Charlie
-        
+
         let to_bob = createUTXO(utxo_slot, 3, alice, bob);
         // submits tree root frmo authority
         let tree_bob = await submitUTXO(utxo_slot, to_bob[0]);
@@ -515,7 +515,7 @@ contract("Plasma ERC721", async function(accounts) {
         // Tx to Charlie from Bob referencing Bob's UTXO at block 1000
         let to_charlie = createUTXO(utxo_slot, 1000, bob, charlie);
         let tree_charlie = await submitUTXO(utxo_slot, to_charlie[0]);
-       
+
         // Concatenate the 2 signatures
         let sigs = to_bob[1] + to_charlie[1].substr(2, 132);
 
@@ -541,7 +541,7 @@ contract("Plasma ERC721", async function(accounts) {
 
         // Block 1000: Transaction from Alice to Bob
         // Block 2000: Transaction from Bob to Charlie
-        
+
         let to_bob = createUTXO(utxo_slot, 3, alice, bob);
         // submits tree root frmo authority
         let tree_bob = await submitUTXO(utxo_slot, to_bob[0]);
@@ -582,7 +582,7 @@ contract("Plasma ERC721", async function(accounts) {
         // Block 1000: Transaction from Alice to Bob
         // Block 2000: Transaction from Bob to Charlie
         // Block 3000: Transaction from Charlie to Dylan
-        
+
         let to_bob = createUTXO(utxo_slot, 3, alice, bob);
         // submits tree root frmo authority
         let tree_bob = await submitUTXO(utxo_slot, to_bob[0]);
@@ -603,7 +603,7 @@ contract("Plasma ERC721", async function(accounts) {
         let exiting_tx_proof = tree_dylan.createMerkleProof(utxo_slot)
 
         let prev_tx = to_bob[0];
-        let exiting_tx = to_dylan[0]; 
+        let exiting_tx = to_dylan[0];
 
         plasma.startExit(
                 utxo_slot,
@@ -616,7 +616,7 @@ contract("Plasma ERC721", async function(accounts) {
 
         return [to_bob, tree_bob, to_charlie, tree_charlie];
     }
-    
+
     function createUTXO(slot, prevBlock, from, to) {
         let data = [ slot, prevBlock, 1, to ];
         data = '0x' + RLP.encode(data).toString('hex');
