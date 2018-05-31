@@ -463,10 +463,10 @@ contract("Plasma ERC721", async function(accounts) {
 
 
         await increaseTimeTo(expire);
-        await plasma.finalizeExits({from: random_guy2 });
+        await plasma.finalizeExits({from: random_guy2});
         let c = web3.eth.getBalance(charlie)
 
-        await plasma.withdraw(utxo_slot, {from : elliot });
+        await plasma.withdraw(utxo_slot, {from : elliot});
 
         assert.equal((await cards.balanceOf.call(alice)).toNumber(), 2);
         assert.equal((await cards.balanceOf.call(bob)).toNumber(), 0);
@@ -476,7 +476,7 @@ contract("Plasma ERC721", async function(accounts) {
         assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 2);
 
         // On the contrary, his bond must be slashed, and `challenger` must be able to claim it
-        await plasma.withdrawBonds({from: charlie });
+        await plasma.withdrawBonds({from: elliot});
 
         let withdrewBonds = plasma.WithdrewBonds({}, {fromBlock: 0, toBlock: 'latest'});
         let e = await Promisify(cb => withdrewBonds.get(cb));

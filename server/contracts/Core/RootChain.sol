@@ -310,15 +310,6 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         setChallenged(slot);
     }
 
-    function setChallenged(uint64 slot) private {
-        // Do not delete exit yet. Set its state as challenged and wait for the exitor's response
-        coins[slot].state = State.CHALLENGED;
-        // Save the challenger's address, for applying penalties
-        challengers[slot] = msg.sender;
-
-        emit ChallengedExit(slot);
-    }
-
     // If `challengeBefore` was successfully challenged, then set state to RESPONDED and allow the coin to be exited. No need to actually attach a bond when responding to a challenge
     function respondChallengeBefore(uint64 slot, uint challengingBlockNumber, bytes challengingTransaction, bytes proof)
         external
@@ -389,7 +380,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         // Do not delete exit yet. Set its state as challenged and wait for the exitor's response
         coins[slot].state = State.CHALLENGED;
         // Save the challenger's address, for applying penalties
-        challengers[slot] = msg.sender; 
+        challengers[slot] = msg.sender;
         emit ChallengedExit(slot);
     }
 
