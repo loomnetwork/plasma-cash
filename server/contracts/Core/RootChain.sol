@@ -298,34 +298,6 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         payable isBonded
         isState(slot, State.EXITING)
     {
-<<<<<<< HEAD
-        require(
-                coins[slot].exit.prevBlock > exitingTxIncBlock,
-                "Challenging transaction must have happened BEFORE the attested exit's timestamp"
-       );
-        // If we're exiting a deposit UTXO, we do a different inclusion check
-        if (exitingTxIncBlock % childBlockInterval != 0 ) {
-           require(
-                checkDepositBlockInclusion(
-                    exitingTxBytes,
-                    sigs, // for deposit blocks this is just a single sig
-                    exitingTxIncBlock,
-                    false
-                ),
-                "Not included in deposit block"
-            );
-        } else {
-            require(
-                checkBlockInclusion(
-                    prevTxBytes, exitingTxBytes,
-                    prevTxInclusionProof, exitingTxInclusionProof,
-                    sigs,
-                    prevTxIncBlock, exitingTxIncBlock,
-                    false
-                ),
-                "Not included in blocks"
-            );
-=======
         // If we're exiting a deposit UTXO directly, we do a different inclusion check
         if (exitingTxIncBlock % childBlockInterval != 0 ) { 
             checkDepositBlockInclusion(exitingTxBytes, sigs, exitingTxIncBlock, false);
@@ -334,12 +306,10 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
                 prevTxBytes, exitingTxBytes,prevTxInclusionProof, 
                 exitingTxInclusionProof, sigs, 
                 prevTxIncBlock, exitingTxIncBlock, false);
->>>>>>> 49d280f... Some more refactoring and mock respondChallengeBefore
         }
         setChallenged(slot);
     }
 
-<<<<<<< HEAD
     function setChallenged(uint64 slot) private {
         // Do not delete exit yet. Set its state as challenged and wait for the exitor's response
         coins[slot].state = State.CHALLENGED;
@@ -349,8 +319,6 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         emit ChallengedExit(slot);
     }
 
-=======
->>>>>>> 49d280f... Some more refactoring and mock respondChallengeBefore
     // If `challengeBefore` was successfully challenged, then set state to RESPONDED and allow the coin to be exited. No need to actually attach a bond when responding to a challenge
     function respondChallengeBefore(uint64 slot, uint challengingBlockNumber, bytes challengingTransaction, bytes proof)
         external
