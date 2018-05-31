@@ -7,17 +7,14 @@ mkvirtualenv erc721plasma --python=/usr/bin/python3.6
 pip install -r requirements.txt
 ```
 
-## Run demo.py
+## Launch Plasma Chain
 
-This is not complete, I'm still figuring it out.
+1. Make sure the contracts are deployed at the correct addresses (`npm run migrate:dev` in `server` directory)
+2. Run `FLASK_APP=plasma_cash/child_chain FLASK_ENV=develment flask run --port=8546` in one terminal. This will start a Plasma Chain instance which listens at `localhost:8546` and is also connected to the deployed contracts
+3. Run `python demo.py`
 
-TOOD George can you please describe this process in detail?
+TODO Should probably bundle these into makefiles, i.e. `make server` should launch the plasma chain.
 
-```
-{run ganache}
-python main.py &
-python demo.py
-```
 
 ## Testing
 
