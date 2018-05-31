@@ -7,8 +7,8 @@ from contract_binds.erc721 import ERC721
 class DependencyContainer(object):
     def __init__(self):
         self._child_chain = None
-        self.root_chain_abi = './abi/RootChain.json'
-        self.token_contract_abi = './abi/CryptoCards.json'
+        self.root_chain_abi = '../server/build/contracts/RootChain.json'
+        self.token_contract_abi = '../server/build/contracts/CryptoCards.json'
         self.endpoint = 'http://localhost:8545'
         self.root_chain = PlasmaCash(plasma_config['authority'], self.root_chain_abi, plasma_config['root_chain'], self.endpoint)
 
