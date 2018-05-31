@@ -4,8 +4,7 @@ A patched version of web3.py is used because otherwise it does not work with Gan
 
 ```
 mkvirtualenv erc721plasma --python=/usr/bin/python3.6
-pip install flask ethereum rlp==0.6.0
-pip install git+https://github.com/gakonst/web3.py
+pip install -r requirements.txt
 ```
 
 ## Run demo.py
