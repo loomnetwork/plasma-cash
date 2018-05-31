@@ -37,18 +37,18 @@ module.exports = class SparseMerkleTree {
       nextLevel = {};
       prevIndex = -1;
       for (var index in treeLevel) {
-        var value = treeLevel[index];
-        if (index % 2 === 0) {
-          nextLevel[ Math.floor(index/2) ] =
+        var value = treeLevel[parseInt(index)];
+        if (parseInt(index) % 2 === 0) {
+          nextLevel[ Math.floor(parseInt(index)/2) ] =
                   utils.soliditySha3(value, defaultNodes[level]);
         } else {
-          if (index === prevIndex + 1) {
-            nextLevel[Math.floor(index/2)] = utils.soliditySha3(treeLevel[prevIndex], value);
+          if (parseInt(index) === prevIndex + 1) {
+            nextLevel[Math.floor(parseInt(index)/2)] = utils.soliditySha3(treeLevel[prevIndex], value);
           } else {
-            nextLevel[Math.floor(index/2)] = utils.soliditySha3(defaultNodes[level], value);
+            nextLevel[Math.floor(parseInt(index)/2)] = utils.soliditySha3(defaultNodes[level], value);
           }
         }
-        prevIndex = index;
+        prevIndex = parseInt(index);
       }
       treeLevel = nextLevel;
       tree.push(treeLevel);
@@ -73,11 +73,9 @@ module.exports = class SparseMerkleTree {
       }
     }
 
-    // Must convert the BN to '\x12\x34' hexstring. Currently buggy. Uncomment the second transaction in testPlasma.js to test this
-    let buf = proofbits.toBuffer('be', 8)
-    console.log(buf);
-    console.log(buf + proof);
-    return buf + proof;
+    let buf = proofbits.toBuffer('be', 8);
+    let total = Buffer.concat([buf, Buffer.from(proof, 'hex')]);
+    return '0x' + total.toString('hex');
   }
 
 }

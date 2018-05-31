@@ -73,18 +73,18 @@ contract("Plasma ERC721", async function(accounts) {
     });
 
     it('Tests that Merkle Proofs work', async function() {
+        let leaves = {};
+
         let slot = 1500;
         let tx = createUTXO(slot, 1000, alice, bob);
         let txHash = utils.soliditySha3(tx[0]);
 
-        let leaves = {};
         leaves[slot] = txHash;
 
-        // BUG! proofbits are not properly returned. WIP
         slot = 63;
-        data = [slot, 2000, bob, charlie];
-        tx = '0x' + RLP.encode(data).toString('hex');
-        txHash = utils.soliditySha3(tx);
+        tx = createUTXO(slot, 1000, alice, charlie);
+        txHash = utils.soliditySha3(tx[0]);
+
         leaves[slot] = txHash;
 
         // This will be happening on the Plasma Cash client
