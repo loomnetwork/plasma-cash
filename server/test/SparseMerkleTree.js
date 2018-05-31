@@ -59,26 +59,24 @@ module.exports = class SparseMerkleTree {
   createMerkleProof(uid) {
     let index = uid;
     let proof = '';
-    let proofbits = '';
+    let proofbits = new BN(0);
     let siblingIndex;
     let siblingHash;
-    for (let level=0; level < this.depth -1; level++) {
+    for (let level=0; level < this.depth - 1; level++) {
       siblingIndex = index % 2 === 0 ? index + 1 : index -1;
       index = Math.floor(index / 2);
 
       siblingHash = this.tree[level][siblingIndex];
       if (siblingHash) {
-        proof += siblingHash.replace('0x', '')
-        proofbits += '1'
-      } else {
-        proofbits += '0';
+        proof += siblingHash.replace('0x', '');
+        proofbits = proofbits.bincn(level);
       }
     }
 
-    let reversed = proofbits.split("").reverse().join("");
-    let bits = new BN(reversed, 2);
     // Must convert the BN to '\x12\x34' hexstring. Currently buggy. Uncomment the second transaction in testPlasma.js to test this
-    let buf = bits.toBuffer().toString().padStart(8, '\x00')
+    let buf = proofbits.toBuffer('be', 8)
+    console.log(buf);
+    console.log(buf + proof);
     return buf + proof;
   }
 

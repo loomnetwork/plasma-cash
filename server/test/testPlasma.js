@@ -81,11 +81,11 @@ contract("Plasma ERC721", async function(accounts) {
         leaves[slot] = txHash;
 
         // BUG! proofbits are not properly returned. WIP
-        // slot = 63;
-        // data = [slot, 2000, bob, charlie];
-        // tx = '0x' + RLP.encode(data).toString('hex');
-        // txHash = utils.soliditySha3(tx);
-        // leaves[slot] = txHash;
+        slot = 63;
+        data = [slot, 2000, bob, charlie];
+        tx = '0x' + RLP.encode(data).toString('hex');
+        txHash = utils.soliditySha3(tx);
+        leaves[slot] = txHash;
 
         // This will be happening on the Plasma Cash client
         // The root will be submitted by the authority
