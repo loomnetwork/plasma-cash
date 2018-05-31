@@ -7,7 +7,7 @@ module.exports = class SparseMerkleTree {
     // Initialize defaults
     this.defaultNodes = this.setdefaultNodes(depth);
     this.leaves = leaves; // Leaves must be a dictionary with key as the leaf's slot and value the leaf's hash
-    
+
     if (leaves) {
       this.tree = this.createTree(this.leaves, this.depth, this.defaultNodes)
       this.root = this.tree[this.depth-1][0]
@@ -37,9 +37,9 @@ module.exports = class SparseMerkleTree {
       nextLevel = {};
       prevIndex = -1;
       for (var index in treeLevel) {
-        var value = treeLevel[index]; 
+        var value = treeLevel[index];
         if (index % 2 === 0) {
-          nextLevel[ Math.floor(index/2) ] = 
+          nextLevel[ Math.floor(index/2) ] =
                   utils.soliditySha3(value, defaultNodes[level]);
         } else {
           if (index === prevIndex + 1) {
