@@ -6,5 +6,8 @@ ethereum==2.3.1
 # web3 fork
 -e git+https://github.com/gakonst/web3.py#egg=web3
 
-# test
+# linting
+flake8==3.5.0
+
+# testing
 pytest==3.6.0
