@@ -10,7 +10,7 @@ pip install -r requirements.txt
 ## Launch Plasma Chain
 
 1. Make sure the contracts are deployed at the correct addresses (`npm run migrate:dev` in `server` directory)
-2. Run `FLASK_APP=./child_chain FLASK_ENV=develment flask run --port=8546` in one terminal. This will start a Plasma Chain instance which listens at `localhost:8546` and is also connected to the deployed contracts
+2. Run `FLASK_APP=./child_chain FLASK_ENV=development flask run --port=8546` in one terminal. This will start a Plasma Chain instance which listens at `localhost:8546` and is also connected to the deployed contracts
 3. Run `python demo.py`
 
 TODO Should probably bundle these into makefiles, i.e. `make server` should launch the plasma chain.
