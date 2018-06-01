@@ -3,7 +3,7 @@ from .utils.formatters import normalize
 import rlp
 from child_chain.transaction import Transaction, UnsignedTransaction
 
-'''Plasma Cash bindings for python ''' 
+'''Plasma Cash bindings for python '''
 
 class ERC721(Contract):
     def __init__(self, private_key, abi_file, address, endpoint):
@@ -21,7 +21,7 @@ class ERC721(Contract):
         # We are minting so its OK
         transaction = Transaction(slot, 0, 1, sender)
         tx = rlp.encode(transaction, UnsignedTransaction)
-        
+
         args = [tokenId, tx]
         self.sign_and_send(
                 self.contract.functions.depositToPlasmaWithData,
