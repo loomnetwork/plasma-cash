@@ -1,7 +1,6 @@
 #!/bin/bash
 
 function cleanup {
-    # kill -9 $ganache_pid
     kill -9 $flask_pid
 }
 

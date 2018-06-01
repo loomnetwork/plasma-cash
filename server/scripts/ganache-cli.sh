@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
 
-# Exit script as soon as a command fails.
-set -o errexit
+function cleanup {
+    kill -9 $ganache_pid
+}
 
-if [ "$SOLIDITY_COVERAGE" = true ]; then
-  testrpc_port=8555
-else
-  testrpc_port=8545
-fi
+trap cleanup exit
+
+testrpc_port=8545
 
 testrpc_running() {
   nc -z localhost "$testrpc_port"
 }
 
 start_testrpc() {
-  scripts/start_ganache.sh
-  testrpc_pid=$!
+  ganache-cli -a 15 -i 15 --blocktime 15 --gasLimit 50000000 -e 10000000000000000000000 -m gravity top burden flip student usage spell purchase hundred improve check genre > /dev/null 2>&1 &
+  ganache_pid=$!
+  echo "ganache-cli started with pid $ganache_pid"
 }
 
 if testrpc_running; then
