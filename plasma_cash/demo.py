@@ -1,4 +1,4 @@
-from client.authority_client import Client
+from client.client import Client
 from dependency_config import container
 
 from child_chain.transaction import UnsignedTransaction, Transaction
