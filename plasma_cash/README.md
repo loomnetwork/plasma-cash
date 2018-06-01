@@ -21,3 +21,9 @@ TODO Should probably bundle these into makefiles, i.e. `make server` should laun
 ```
 make test
 ```
+
+## Linting
+
+```
+make lint
+```
