@@ -238,7 +238,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         emit StartedExit(slot, msg.sender, block.timestamp);
     }
 
-    function finalizeExit(uint64 slot) public cleanupExit(slot) {
+    function finalizeExit(uint64 slot) public {
         Coin storage coin = coins[slot];
 
         // If a coin is not under exit/challenge, then ignore it
@@ -269,6 +269,8 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
 
             emit FinalizedExit(slot, coin.owner);
         }
+        delete coins[slot].exit;
+        delete exitSlots[getIndex(slot)];
     }
 
     function finalizeExits() external {
@@ -437,7 +439,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         return true;
     }
 
-    function checkTxIncluded(bytes txBytes, uint blockNumber, bytes proof) private {
+    function checkTxIncluded(bytes txBytes, uint blockNumber, bytes proof) private view {
         Transaction.TX memory txData = txBytes.getTx();
         bytes32 txHash = keccak256(txBytes);
         bytes32 root = childChain[blockNumber].root;
