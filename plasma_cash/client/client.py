@@ -44,7 +44,7 @@ class Client(object):
         exiting_tx_proof = self.get_proof(tx_blk_num, uid)
         sigs = exiting_tx.sig
 
-        # If the referenced transaction is a deposit transaction then no need 
+        # If the referenced transaction is a deposit transaction then no need
         prev_tx = '0x0'
         prev_tx_proof = '0x0'
         if prev_tx_blk_num % self.child_block_interval == 0:
@@ -70,7 +70,7 @@ class Client(object):
     def finalize_exits(self):
         self.root_chain.finalize_exits()
         return self
-    
+
     def withdraw(self, slot):
         self.root_chain.withdraw(slot)
         return self
@@ -79,7 +79,7 @@ class Client(object):
 
     def submit_block(self):
         block = self.get_current_block()
-        block.make_mutable() # mutex for mutability? 
+        block.make_mutable() # mutex for mutability?
         block.sign(self.key)
         block.make_immutable()
         return self.child_chain.submit_block(rlp.encode(block, Block).hex())
@@ -103,5 +103,3 @@ class Client(object):
 
     def get_proof(self, blknum, uid):
         return base64.b64decode(self.child_chain.get_proof(blknum, uid))
-
-
