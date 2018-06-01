@@ -58,7 +58,7 @@ class SparseMerkleTree(object):
 
     def create_merkle_proof(self, uid):
         # Generate a merkle proof for a leaf with provided index.
-        # First `depth/8` bytes of the proof are necessary for checking if 
+        # First `depth/8` bytes of the proof are necessary for checking if
         # we are at a default-node
         index = uid
         proof = b''
