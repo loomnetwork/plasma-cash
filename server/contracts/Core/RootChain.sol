@@ -439,7 +439,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         return true;
     }
 
-    function checkTxIncluded(bytes txBytes, uint blockNumber, bytes proof) private {
+    function checkTxIncluded(bytes txBytes, uint blockNumber, bytes proof) private view {
         Transaction.TX memory txData = txBytes.getTx();
         bytes32 txHash = keccak256(txBytes);
         bytes32 root = childChain[blockNumber].root;
