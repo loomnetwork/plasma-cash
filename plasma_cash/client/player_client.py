@@ -21,12 +21,12 @@ class Client(object):
         self.root_chain = PlasmaCash(private_key, abi_file, address, endpoint)
         self.child_chain = child_chain
 
-    def deposit(self, depositor=None, tokenId, amount=1:
+    def deposit(self, depositor, tokenId, amount=1):
         ''' Deposit to plasma chain. If no depositor is given -> from self '''
         self.root_chain.deposit(tokenId, depositor);
 
     def send_transaction(self, prev_block, uid, amount, new_owner):
-    ''' UTXO format, we sign a transaction with our private key, and then we submit it to the chain'''
+        ''' UTXO format, we sign a transaction with our private key, and then we submit it to the chain'''
         tx = Transaction(prev_block, uid, amount, new_owner)
         tx.sign(key) # sign with rootchain privatekey
         self.child_chain.send_transaction(rlp.encode(tx, Transaction).hex())
