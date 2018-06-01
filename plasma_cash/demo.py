@@ -17,7 +17,7 @@ print('Alice has {} tokens'.format(alice.token_contract.balanceOf()))
 print('Bob has {} tokens'.format(bob.token_contract.balanceOf()))
 print('Charlie has {} tokens'.format(bob.token_contract.balanceOf()))
 
-# Alice deposits 3 of her coins to the plasma contract and gets 3 plasma nft utxos in return 
+# Alice deposits 3 of her coins to the plasma contract and gets 3 plasma nft utxos in return
 tokenId = 1
 alice.deposit(tokenId)
 alice.deposit(tokenId+1)
@@ -28,14 +28,14 @@ utxo_id = 2
 blk_num = 3
 tx1 = alice.send_transaction(utxo_id, blk_num, 1, bob.token_contract.account.address)
 random_tx = alice.send_transaction(utxo_id-1, blk_num-1, 1, charlie.token_contract.account.address)
-authority.submit_block() 
+authority.submit_block()
 
 # Bob to Charlie
 blk_num = 1000 # the prev transaction was included in block 1000
 tx2 = bob.send_transaction(utxo_id, blk_num, 1, charlie.token_contract.account.address)
 authority.submit_block()
 
-# Charlie should be able to submit an exit by referencing blocks 0 and 1 which included his transaction. 
+# Charlie should be able to submit an exit by referencing blocks 0 and 1 which included his transaction.
 utxo_id = 2
 prev_tx_blk_num = 1000
 exiting_tx_blk_num = 2000
