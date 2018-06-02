@@ -439,7 +439,65 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
 
         });
 
-        it('Alice gives Bob and Charlie 1 coin, they exit each one', async function() {
+        it('Alice gives Bob and Charlie 1 coin, they both exit them', async function() {
+            let txs = [];
+            let to_bob = UTXO.createUTXO(1, 2, alice, bob);
+            let to_charlie = UTXO.createUTXO(2, 3, alice, charlie);
+            txs = [ to_bob[2], to_charlie[2] ]; // push leaf
+            let tree = await UTXO.submitTransactions(authority, plasma, txs);
+
+            let sigs = to_alice[1][1] + to_bob[1].replace('0x','');
+            let exiting_tx_proof = tree.createMerkleProof(1)
+            let prev_tx = to_alice[2][0];
+            let exiting_tx = to_bob[0];
+
+            plasma.startExit(
+                    1,
+                    prev_tx , exiting_tx,
+                    '0x0', exiting_tx_proof,
+                    sigs,
+                    3, 1000,
+                     {'from': bob, 'value': web3.toWei(0.1, 'ether')}
+            );
+            t0 = (await web3.eth.getBlock('latest')).timestamp;
+
+            sigs = to_alice[1][1] + to_charlie[1].replace('0x','');
+            exiting_tx_proof = tree.createMerkleProof(2)
+            prev_tx = to_alice[2][0];
+            exiting_tx = to_charlie[0];
+
+            plasma.startExit(
+                    2,
+                    prev_tx , exiting_tx,
+                    '0x0', exiting_tx_proof,
+                    sigs,
+                    3, 1000,
+                     {'from': charlie, 'value': web3.toWei(0.1, 'ether')}
+            );
+            t0 = (await web3.eth.getBlock('latest')).timestamp;
+
+            await increaseTimeTo(t0 + t1 + t2);
+            await plasma.finalizeExits({from: random_guy2 });
+
+            await plasma.withdraw(1, {from : bob });
+            await plasma.withdraw(2, {from : charlie });
+
+            assert.equal((await cards.balanceOf.call(alice)).toNumber(), 2);
+            assert.equal((await cards.balanceOf.call(bob)).toNumber(), 1);
+            assert.equal((await cards.balanceOf.call(charlie)).toNumber(), 1);
+            assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 1);
+
+            // Charlie is also able to withdraw his deposit bonds of 0.2 ether for 2 exits
+            await plasma.withdrawBonds({from: bob });
+            await plasma.withdrawBonds({from: charlie });
+            let withdrewBonds = plasma.WithdrewBonds({}, {fromBlock: 0, toBlock: 'latest'});
+            let e = await Promisify(cb => withdrewBonds.get(cb));
+            let withdraw = e[0].args;
+            assert.equal(withdraw.from, bob);
+            assert.equal(withdraw.amount, web3.toWei(0.1, 'ether'));
+            withdraw = e[1].args;
+            assert.equal(withdraw.from, charlie);
+            assert.equal(withdraw.amount, web3.toWei(0.1, 'ether'));
         });
 
         it('Alice gives Bob and Charlie 1 coin, Bob gives Charlie his coin, charlie exits it', async function() {
