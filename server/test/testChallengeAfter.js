@@ -25,16 +25,18 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
     const t1 = 3600 * 24 * 3; // 3 days later
     const t2 = 3600 * 24 * 5; // 5 days later
 
+    // Alice registers and has 5 coins, and she deposits 3 of them.
+    const ALICE_INITIAL_COINS = 5;
+    const ALICE_DEPOSITED_COINS = 3;
+
     let cards;
     let plasma;
     let t0;
 
     let [authority, alice, bob, charlie, dylan, elliot, random_guy, random_guy2, challenger] = accounts;
 
-    let exit_coin;
     let data;
-    let txs;
-    let to_alice;
+    let to_alice = [];
 
     beforeEach(async function() {
         plasma = await RootChain.new({from: authority});
@@ -44,27 +46,30 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
         assert.equal(await cards.balanceOf.call(alice), 5);
 
 
-        let ret = UTXO.createUTXO(0, 0, alice, alice); data = ret[0];
-        await cards.depositToPlasmaWithData(1, data, {from: alice});
+        let ret;
+        for (let i = 0; i < ALICE_DEPOSITED_COINS; i ++) {
+            ret = UTXO.createUTXO(i, 0, alice, alice); data = ret[0];
+            await cards.depositToPlasmaWithData(i+1, data, {from: alice});
+            to_alice.push(ret);
+        }
 
-        ret = UTXO.createUTXO(1, 0, alice, alice); data = ret[0];
-        await cards.depositToPlasmaWithData(2, data, {from: alice});
 
-        ret = UTXO.createUTXO(2, 0, alice, alice); data = ret[0];
-        await cards.depositToPlasmaWithData(3, data, {from: alice});
-
-        to_alice = ret;
-
-        assert.equal((await cards.balanceOf.call(alice)).toNumber(), 2);
-        assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 3);
+        assert.equal((await cards.balanceOf.call(alice)).toNumber(), ALICE_INITIAL_COINS - ALICE_DEPOSITED_COINS);
+        assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), ALICE_DEPOSITED_COINS);
 
         const depositEvent = plasma.Deposit({}, {fromBlock: 0, toBlock: 'latest'});
         const events = await Promisify(cb => depositEvent.get(cb));
-        exit_coin = events[2].args;
-        assert.equal(exit_coin.slot.toNumber(), 2);
-        assert.equal(exit_coin.depositBlockNumber.toNumber(), 3);
-        assert.equal(exit_coin.denomination.toNumber(), 1);
-        assert.equal(exit_coin.from, alice);
+
+        // Check that events were emitted properly
+        let coin;
+        for (let i = 0; i < events.length; i++) {
+            coin = events[i].args;
+            assert.equal(coin.slot.toNumber(), i);
+            assert.equal(coin.depositBlockNumber.toNumber(), i+1);
+            assert.equal(coin.denomination.toNumber(), 1);
+            assert.equal(coin.from, alice);
+        }
+
     });
 
     describe('Invalid Exit of UTXO 2', function() {
@@ -156,33 +161,33 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
         });
 
         async function charlieExitSpentCoin() {
-            let utxo_slot = 2;
+            let UTXO_SLOT = 2;
 
-            let to_bob = UTXO.createUTXO(utxo_slot, 3, alice, bob);
-            txs = [ to_bob[2] ]
+            let to_bob = UTXO.createUTXO(UTXO_SLOT, 3, alice, bob);
+            let txs = [ to_bob[2] ]
             let tree_bob = await UTXO.submitTransactions(authority, plasma, txs);
 
             // Tx to Charlie from Bob referencing Bob's UTXO at block 1000
-            let to_charlie = UTXO.createUTXO(utxo_slot, 1000, bob, charlie);
+            let to_charlie = UTXO.createUTXO(UTXO_SLOT, 1000, bob, charlie);
             txs = [ to_charlie[2] ]
             let tree_charlie = await UTXO.submitTransactions(authority, plasma, txs);
 
             // Tx to Dylan from Charlie referencing Charlie's UTXO at block 2000
-            let to_dylan = UTXO.createUTXO(utxo_slot, 2000, charlie, dylan);
+            let to_dylan = UTXO.createUTXO(UTXO_SLOT, 2000, charlie, dylan);
             txs = [ to_dylan[2] ]
             let tree_dylan = await UTXO.submitTransactions(authority, plasma, txs);
 
             // Concatenate the 2 signatures
             let sigs = to_bob[1] + to_charlie[1].replace('0x', '');
 
-            let prev_tx_proof = tree_bob.createMerkleProof(utxo_slot)
-            let exiting_tx_proof = tree_charlie.createMerkleProof(utxo_slot)
+            let prev_tx_proof = tree_bob.createMerkleProof(UTXO_SLOT)
+            let exiting_tx_proof = tree_charlie.createMerkleProof(UTXO_SLOT)
 
             let prev_tx = to_bob[0];
             let exiting_tx = to_charlie[0];
 
             plasma.startExit(
-                    utxo_slot,
+                    UTXO_SLOT,
                     prev_tx, exiting_tx, 
                     prev_tx_proof, exiting_tx_proof, 
                     sigs, 
@@ -193,4 +198,97 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
             return [to_dylan, tree_dylan, to_charlie, tree_charlie];
         }
     })
+
+    describe('Invalid Exit of UTXO 0', function() {
+        it("Alice gives a coin to Bob and Charlie and immediately tries to exit Bob's coin. Gets Challenged.", async function() {
+            let to_bob = UTXO.createUTXO(1, 2, alice, bob);
+            let to_charlie = UTXO.createUTXO(0, 1, alice, charlie);
+            let txs = [ to_bob[2], to_charlie[2] ]
+            let tree = await UTXO.submitTransactions(authority, plasma, txs);
+
+            let ret = UTXO.createUTXO(1, 0, alice, alice);
+            let utxo = ret[0];
+            let sig = ret[1];
+
+            await plasma.startExit(
+                     1,
+                    '0x', utxo,
+                    '0x0', '0x0', 
+                     sig,
+                     0, 2,
+                     {'from': alice, 'value': web3.toWei(0.1, 'ether')}
+            );
+
+            let challengeTx = to_bob[0];
+            let proof = tree.createMerkleProof(1);
+            await plasma.challengeAfter(
+                1, 1000, challengeTx, proof,
+                {'from': challenger, 'value': web3.toWei(0.1, 'ether')}
+            );
+            t0 = (await web3.eth.getBlock('latest')).timestamp;
+            await increaseTimeTo(t0 + t1 + t2);
+            await plasma.finalizeExits({from: random_guy2 });
+            assertRevert(plasma.withdraw(1, {from : alice }));
+            assert.equal((await cards.balanceOf.call(alice)).toNumber(), 2);
+            assert.equal((await cards.balanceOf.call(bob)).toNumber(), 0);
+            assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 3);
+
+            await plasma.withdrawBonds({from: challenger });
+
+            let withdrewBonds = plasma.WithdrewBonds({}, {fromBlock: 0, toBlock: 'latest'});
+            let e = await Promisify(cb => withdrewBonds.get(cb));
+            let withdraw = e[0].args;
+            assert.equal(withdraw.from, challenger);
+            assert.equal(withdraw.amount, web3.toWei(0.2, 'ether'));
+        });
+
+        it("Alice gives a coin to Bob and Charlie. Bob gives a coin to Charlie and immediately tries to exit it. Gets Challenged", async function() {
+            let to_bob = UTXO.createUTXO(0, 1, alice, bob);
+            let alice_to_charlie = UTXO.createUTXO(1, 2, alice, charlie);
+            let txs = [ to_bob[2], alice_to_charlie[2] ]
+            let tree1 = await UTXO.submitTransactions(authority, plasma, txs);
+
+            let bob_to_charlie = UTXO.createUTXO(0, 1000, bob, charlie);
+            txs = [ bob_to_charlie[2] ];
+            let tree2 = await UTXO.submitTransactions(authority, plasma, txs);
+
+            let sigs = to_alice[0][1] + to_bob[1].replace('0x','');
+            let exiting_tx_proof = tree1.createMerkleProof(0);
+
+            let prev_tx = to_alice[0][0];
+            let exiting_tx = to_bob[0];
+            await plasma.startExit(
+                     0,
+                     prev_tx, exiting_tx,
+                     '0x0', exiting_tx_proof, 
+                     sigs,
+                     1, 1000,
+                     {'from': bob, 'value': web3.toWei(0.1, 'ether')}
+            );
+
+            let challengeTx = bob_to_charlie[0];
+            let proof = tree2.createMerkleProof(0);
+            await plasma.challengeAfter(
+                0, 2000, challengeTx, proof,
+                {'from': challenger, 'value': web3.toWei(0.1, 'ether')}
+            );
+
+            t0 = (await web3.eth.getBlock('latest')).timestamp;
+            await increaseTimeTo(t0 + t1 + t2);
+            await plasma.finalizeExits({from: random_guy2 });
+            assertRevert(plasma.withdraw(0, {from : bob }));
+
+            assert.equal((await cards.balanceOf.call(alice)).toNumber(), 2);
+            assert.equal((await cards.balanceOf.call(bob)).toNumber(), 0);
+            assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 3);
+
+            await plasma.withdrawBonds({from: challenger });
+
+            let withdrewBonds = plasma.WithdrewBonds({}, {fromBlock: 0, toBlock: 'latest'});
+            let e = await Promisify(cb => withdrewBonds.get(cb));
+            let withdraw = e[0].args;
+            assert.equal(withdraw.from, challenger);
+            assert.equal(withdraw.amount, web3.toWei(0.2, 'ether'));
+        });
+    });
 });
