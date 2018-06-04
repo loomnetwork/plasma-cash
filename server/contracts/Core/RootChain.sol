@@ -148,7 +148,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         currentDepositBlock = 1;
         lastParentBlock = block.number;
 
-	}
+    }
 
 
     /// @dev Allows anyone to deposit funds into the Plasma chain, called when contract receives ERC721

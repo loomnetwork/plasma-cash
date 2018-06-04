@@ -41,7 +41,6 @@ function createUTXO(slot, prevBlock, from, to) {
 };
 
 async function submitTransactions(from, plasma, txs) {
-    // Create merkle Tree from A SINGLE UTXO and submit it.
     let tree;
     if (txs) {
         let leaves = {}
