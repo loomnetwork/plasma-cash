@@ -102,8 +102,8 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
                 UTXO.slot,
                 prev_tx, exiting_tx,
                 prev_tx_proof, exiting_tx_proof,
-                sigs, 
-                1000, 2000, 
+                sigs,
+                1000, 2000,
                 {'from': charlie, 'value': web3.toWei(0.1, 'ether')}
             );
             t0 = (await web3.eth.getBlock('latest')).timestamp;
@@ -173,15 +173,15 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
 
             plasma.startExit(
                 UTXO.slot,
-                prev_tx, exiting_tx, 
-                prev_tx_proof, exiting_tx_proof, 
-                sigs, 
-                1000, 3000, 
+                prev_tx, exiting_tx,
+                prev_tx_proof, exiting_tx_proof,
+                sigs,
+                1000, 3000,
                 {'from': dylan, 'value': web3.toWei(0.1, 'ether')}
             );
 
             return {
-                'bob' : {'data': alice_to_bob, 'tree':  tree_bob}, 
+                'bob' : {'data': alice_to_bob, 'tree':  tree_bob},
                 'charlie' : {'data' : bob_to_charlie, 'tree': tree_charlie}
             };
         }

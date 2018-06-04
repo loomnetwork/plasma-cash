@@ -86,7 +86,7 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
 
             let prev_tx = deposit_to_alice[UTXO.slot].tx;
             let tx = alice_to_bob.tx;
-            
+
             // Challenge before is essentially a challenge where the challenger submits the proof required to exit a coin, claiming that this is the last valid state of a coin. Due to bonds the challenger will only do this when he actually knows that there was an invalid spend. If the challenger is a rational player, there should be no case where respondChallengeBefore should succeed.
             await plasma.challengeBefore(
                 UTXO.slot,
@@ -178,27 +178,27 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
             txs = [ charlie_to_dylan.leaf ]
             let tree_dylan = await txlib.submitTransactions(authority, plasma, txs);
 
-            // Dylan having received the coin, gives it to Elliot. 
+            // Dylan having received the coin, gives it to Elliot.
             let dylan_to_elliot = txlib.createUTXO(UTXO.slot, 3000, dylan, elliot);
             txs = [ dylan_to_elliot.leaf ]
             let tree_elliot = await txlib.submitTransactions(authority, plasma, txs);
 
             // Elliot normally should be always checking the coin's history and not accepting the payment if it's invalid like in this case, but it is considered that they are all colluding together to steal Bob's coin.;
-            // Elliot actually has all the info required to submit an exit, even if one of the transactions in the coin's history were invalid. 
+            // Elliot actually has all the info required to submit an exit, even if one of the transactions in the coin's history were invalid.
             let sigs = charlie_to_dylan.sig + dylan_to_elliot.sig.replace('0x', '');
 
             let prev_tx_proof = tree_dylan.createMerkleProof(UTXO.slot)
             let exiting_tx_proof = tree_elliot.createMerkleProof(UTXO.slot)
 
             let prev_tx = charlie_to_dylan.tx;
-            let exiting_tx = dylan_to_elliot.tx; 
+            let exiting_tx = dylan_to_elliot.tx;
 
             plasma.startExit(
                 UTXO.slot,
-                prev_tx, exiting_tx, 
-                prev_tx_proof, exiting_tx_proof, 
-                sigs, 
-                3000, 4000, 
+                prev_tx, exiting_tx,
+                prev_tx_proof, exiting_tx_proof,
+                sigs,
+                3000, 4000,
                 {'from': elliot, 'value': web3.toWei(0.1, 'ether')}
             );
 
@@ -221,32 +221,32 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
             txs = [ charlie_to_dylan.leaf ]
             let tree_dylan = await txlib.submitTransactions(authority, plasma, txs);
 
-            // Dylan having received the coin, gives it to Elliot. 
+            // Dylan having received the coin, gives it to Elliot.
             let dylan_to_elliot = txlib.createUTXO(UTXO.slot, 3000, dylan, elliot);
             txs = [ dylan_to_elliot.leaf ]
             let tree_elliot = await txlib.submitTransactions(authority, plasma, txs);
 
             // Elliot normally should be always checking the coin's history and not accepting the payment if it's invalid like in this case, but it is considered that they are all colluding together to steal Bob's coin.;
-            // Elliot actually has all the info required to submit an exit, even if one of the transactions in the coin's history were invalid. 
+            // Elliot actually has all the info required to submit an exit, even if one of the transactions in the coin's history were invalid.
             let sigs = charlie_to_dylan.sig + dylan_to_elliot.sig.replace('0x', '')
 
             let prev_tx_proof = tree_dylan.createMerkleProof(UTXO.slot)
             let exiting_tx_proof = tree_elliot.createMerkleProof(UTXO.slot)
 
             let prev_tx = charlie_to_dylan.tx;
-            let exiting_tx = dylan_to_elliot.tx; 
+            let exiting_tx = dylan_to_elliot.tx;
 
             plasma.startExit(
                 UTXO.slot,
-                prev_tx, exiting_tx, 
-                prev_tx_proof, exiting_tx_proof, 
-                sigs, 
-                3000, 4000, 
+                prev_tx, exiting_tx,
+                prev_tx_proof, exiting_tx_proof,
+                sigs,
+                3000, 4000,
                 {'from': elliot, 'value': web3.toWei(0.1, 'ether')}
             );
 
             return {
-                'bob': {'data' : alice_to_bob, 'tree' : tree_bob }, 
+                'bob': {'data' : alice_to_bob, 'tree' : tree_bob },
                 'charlie' : {'data' : bob_to_charlie, 'tree' : tree_charlie}
             };
 

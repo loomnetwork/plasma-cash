@@ -32,11 +32,11 @@ function createUTXO(slot, prevBlock, from, to) {
     data = '0x' + RLP.encode(data).toString('hex');
     let txHash = utils.soliditySha3(data);
     let sig = signHash(from, txHash);
-    
+
     let leaf = {};
     leaf.slot = slot
     leaf.hash = txHash;
-    
+
     return {'tx' : data, 'sig' : sig, 'leaf' : leaf};
 };
 
@@ -65,7 +65,7 @@ async function withdrawBonds(plasma, withdrawer, amount) {
     assert.equal(withdraw.from, withdrawer);
     assert.equal(withdraw.amount, web3.toWei(amount, 'ether'));
 }
-        
+
 
 module.exports = {
     signHash : signHash,

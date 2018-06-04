@@ -87,9 +87,9 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
             let challengeTx = charlie_to_dylan.tx;
             let proof = tree_dylan.createMerkleProof(UTXO.slot);
             await plasma.challengeAfter(
-                UTXO.slot, 
-                block_number, 
-                challengeTx, 
+                UTXO.slot,
+                block_number,
+                challengeTx,
                 proof,
                 {'from': challenger, 'value': web3.toWei(0.1, 'ether')}
             );
@@ -109,10 +109,10 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
 
             plasma.startExit(
                     UTXO.slot,
-                    prev_tx, exiting_tx, 
+                    prev_tx, exiting_tx,
                     prev_tx_proof, proof,
-                    sigs, 
-                    2000, 3000, 
+                    sigs,
+                    2000, 3000,
                      {'from': dylan, 'value': web3.toWei(0.1, 'ether')}
             );
             t0 = (await web3.eth.getBlock('latest')).timestamp;
@@ -179,10 +179,10 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
             // Charlie exits the coin, even though he sent the tx to Dylan.
             plasma.startExit(
                     UTXO.slot,
-                    prev_tx, exiting_tx, 
-                    prev_tx_proof, exiting_tx_proof, 
-                    sigs, 
-                    1000, 2000, 
+                    prev_tx, exiting_tx,
+                    prev_tx_proof, exiting_tx_proof,
+                    sigs,
+                    1000, 2000,
                      {'from': charlie, 'value': web3.toWei(0.1, 'ether')}
             );
 
@@ -210,7 +210,7 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
             await plasma.startExit(
                      slot,
                     '0x', utxo,
-                    '0x0', '0x0', 
+                    '0x0', '0x0',
                      sig,
                      0, UTXO[0].block,
                      {'from': alice, 'value': web3.toWei(0.1, 'ether')}
@@ -258,7 +258,7 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
             await plasma.startExit(
                      slot,
                      prev_tx, exiting_tx,
-                     '0x0', exiting_tx_proof, 
+                     '0x0', exiting_tx_proof,
                      sigs,
                      UTXO[0].block, 1000,
                      {'from': bob, 'value': web3.toWei(0.1, 'ether')}

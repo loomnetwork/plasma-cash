@@ -76,7 +76,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
         let UTXO = { 'slot' : 2, 'block' : 3 };
 
         it('Directly after its deposit', async function() {
-            // Prevblock = 0 because we're exiting a tx 
+            // Prevblock = 0 because we're exiting a tx
             // directly after being minted in the plasma chain
             let prevBlock = 0;
 
@@ -87,7 +87,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
             await plasma.startExit(
                      UTXO.slot,
                     '0x', utxo,
-                    '0x0', '0x0', 
+                    '0x0', '0x0',
                      sig,
                      prevBlock, UTXO.block,
                      {'from': alice, 'value': web3.toWei(0.1, 'ether')}
@@ -113,7 +113,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
         it('After 1 Plasma-Chain transfer', async function() {
             let prevBlock = UTXO.block;
             // Create a UTXO to Bob from Alice and sign it. Refer to Alice's deposit transaction at block 3
-            let alice_to_bob = txlib.createUTXO(UTXO.slot, prevBlock, alice, bob); 
+            let alice_to_bob = txlib.createUTXO(UTXO.slot, prevBlock, alice, bob);
             let txs = [ alice_to_bob.leaf ]
             // Authority submits a block to plasma with that transaction included
             let tree_bob = await txlib.submitTransactions(authority, plasma, txs);
@@ -186,7 +186,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
             plasma.startExit(
                     UTXO.slot,
                     prev_tx, exiting_tx,
-                    prev_tx_proof, exiting_tx_proof, 
+                    prev_tx_proof, exiting_tx_proof,
                     sigs,
                     prevBlock, exitBlock,
                      {'from': charlie, 'value': web3.toWei(0.1, 'ether')}
@@ -305,7 +305,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
             UTXO.forEach(function(aUTXO) {
                 tx = txlib.createUTXO(aUTXO.slot, aUTXO.block, alice, bob);
                 alice_to_bob[aUTXO.slot] = tx;
-                txs.push(tx.leaf); 
+                txs.push(tx.leaf);
             });
 
             // Tree contains both transactions
@@ -332,7 +332,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
                      {'from': bob, 'value': web3.toWei(0.1, 'ether')}
             );
 
-            slot = UTXO[0].slot; 
+            slot = UTXO[0].slot;
             sigs = alice_to_bob[slot].sig + bob_to_charlie.sig.replace('0x', '');
             let prev_tx_proof = tree_bob.createMerkleProof(slot)
             exiting_tx_proof = tree_charlie.createMerkleProof(slot)
@@ -381,7 +381,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
             UTXO.forEach(function(aUTXO) {
                 tx = txlib.createUTXO(aUTXO.slot, aUTXO.block, alice, bob);
                 alice_to_bob[aUTXO.slot] = tx;
-                txs.push(tx.leaf); 
+                txs.push(tx.leaf);
             });
 
             // Tree contains both transactions
@@ -392,7 +392,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
             UTXO.forEach(function(aUTXO) {
                 tx = txlib.createUTXO(aUTXO.slot, 1000, bob, charlie);
                 bob_to_charlie[aUTXO.slot] = tx;
-                txs.push(tx.leaf); 
+                txs.push(tx.leaf);
             });
 
             let tree_charlie = await txlib.submitTransactions(authority, plasma, txs);
@@ -570,5 +570,3 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
     });
 
 });
-
-
