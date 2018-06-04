@@ -30,8 +30,7 @@ class Client(object):
 
     def deposit(self, tokenId):
         ''' Deposit happens by a use calling the erc721 token contract '''
-        slot = self.root_chain.contract.functions.NUM_COINS().call()
-        self.token_contract.deposit(tokenId, slot)
+        self.token_contract.deposit(tokenId)
         return self
 
     ## Plasma Functions
@@ -42,7 +41,6 @@ class Client(object):
         block = self.get_block(tx_blk_num)
         exiting_tx = block.get_tx_by_uid(uid)
         exiting_tx_proof = self.get_proof(tx_blk_num, uid)
-        sigs = exiting_tx.sig
 
         # If the referenced transaction is a deposit transaction then no need
         prev_tx = '0x0'
@@ -52,14 +50,11 @@ class Client(object):
             prev_tx = prev_block.get_tx_by_uid(uid)
             prev_tx_proof = self.get_proof(prev_tx_blk_num, uid)
 
-            # Overwrite sigs
-            sigs = prev_tx.sig + exiting_tx.sig
-
         return self.root_chain.start_exit(
                 uid,
                 rlp.encode(prev_tx, UnsignedTransaction), rlp.encode(exiting_tx, UnsignedTransaction),
                 prev_tx_proof, exiting_tx_proof,
-                sigs.hex(),
+                exiting_tx.sig, 
                 prev_tx_blk_num, tx_blk_num
         )
 
@@ -86,12 +81,16 @@ class Client(object):
 
     def send_transaction(self, uid, prev_block, denomination, new_owner):
         new_owner = utils.normalize_address(new_owner)
-        tx = Transaction(uid, prev_block, denomination, new_owner)
-        tx.make_mutable() # ?
+        incl_block = self.get_block_number()
+        tx = Transaction(uid, prev_block, denomination, new_owner, incl_block=incl_block)
+        tx.make_mutable() 
         tx.sign(self.key)
         tx.make_immutable()
         self.child_chain.send_transaction(rlp.encode(tx, Transaction).hex())
         return tx
+
+    def get_block_number(self):
+        return self.child_chain.get_block_number()
 
     def get_current_block(self):
         block = self.child_chain.get_current_block()

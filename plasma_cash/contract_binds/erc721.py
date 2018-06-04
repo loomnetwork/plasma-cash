@@ -14,17 +14,11 @@ class ERC721(Contract):
         self.sign_and_send(self.contract.functions.register, args)
         return self
 
-    def deposit(self, tokenId, slot):
+    def deposit(self, tokenId):
         ''' Slot is providable by the user however there is a validity check performed in the contract. It always needs to be the value of `NUM_COINS` in the plasma contract'''
-        sender = self.account.address
-
-        # We are minting so its OK
-        transaction = Transaction(slot, 0, 1, sender)
-        tx = rlp.encode(transaction, UnsignedTransaction)
-
-        args = [tokenId, tx]
+        args = [tokenId]
         self.sign_and_send(
-                self.contract.functions.depositToPlasmaWithData,
+                self.contract.functions.depositToPlasma,
                 args
         )
         return self
@@ -33,4 +27,4 @@ class ERC721(Contract):
     def balanceOf(self):
         return self.contract.functions.balanceOf(
                 self.account.address
-            ).call()
+        ).call()

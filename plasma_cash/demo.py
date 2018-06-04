@@ -1,9 +1,6 @@
 from client.client import Client
 from dependency_config import container
-
-from child_chain.transaction import UnsignedTransaction, Transaction
 from utils.utils import increaseTime
-import rlp
 
 alice = Client(container.get_root('alice'), container.get_token('alice'))
 bob = Client(container.get_root('bob'), container.get_token('bob'))
@@ -32,13 +29,13 @@ alice.deposit(tokenId+2)
 # Alice to Bob, and Alice to Charlie. We care about the Alice to Bob transaction
 utxo_id = 2
 blk_num = 3
-tx1 = alice.send_transaction(utxo_id, blk_num, 1, bob.token_contract.account.address)
+alice_to_bob = alice.send_transaction(utxo_id, blk_num, 1, bob.token_contract.account.address)
 random_tx = alice.send_transaction(utxo_id-1, blk_num-1, 1, charlie.token_contract.account.address)
 authority.submit_block()
 
 # Bob to Charlie
 blk_num = 1000 # the prev transaction was included in block 1000
-tx2 = bob.send_transaction(utxo_id, blk_num, 1, charlie.token_contract.account.address)
+bob_to_charlie = bob.send_transaction(utxo_id, blk_num, 1, charlie.token_contract.account.address)
 authority.submit_block()
 
 # Charlie should be able to submit an exit by referencing blocks 0 and 1 which included his transaction.
@@ -52,7 +49,8 @@ w3 = charlie.root_chain.w3 # get w3 instance
 increaseTime(w3, 8 * 24 * 3600)
 authority.finalize_exits()
 # Charlie should now be able to withdraw the utxo which included token 2 to his wallet.
-charlie.withdraw(2)
+
+charlie.withdraw(utxo_id)
 
 aliceTokensEnd = alice.token_contract.balanceOf()
 print('Alice has {} tokens'.format(aliceTokensEnd))

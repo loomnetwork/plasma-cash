@@ -35,9 +35,6 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
 
     let [authority, alice, bob, charlie, dylan, elliot, random_guy, random_guy2, challenger] = accounts;
 
-    let data;
-    let deposit_to_alice = [];
-
     beforeEach(async function() {
         plasma = await RootChain.new({from: authority});
         cards = await CryptoCards.new(plasma.address);
@@ -47,10 +44,7 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
 
         let ret;
         for (let i = 0; i < ALICE_DEPOSITED_COINS; i ++) {
-            ret = txlib.createUTXO(i, 0, alice, alice);
-            data = ret.tx;
-            await cards.depositToPlasmaWithData(COINS[i], data, {from: alice});
-            deposit_to_alice.push(ret);
+            await cards.depositToPlasma(COINS[i], {from: alice});
         }
 
 
@@ -89,20 +83,20 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
 
             await plasma.challengeBetween(
                 UTXO.slot, block_number, challengeTx, proof,
-                {'from': challenger, 'value': web3.toWei(0.1, 'ether')}
+                {'from': challenger}
             );
 
             let prev_tx = alice_to_bob.tx;
             let exiting_tx = bob_to_charlie.tx;
             let prev_tx_proof = tree_bob.createMerkleProof(UTXO.slot);
             let exiting_tx_proof = tree_charlie.createMerkleProof(UTXO.slot);
-            let sigs = alice_to_bob.sig + bob_to_charlie.sig.replace('0x', '');
+            let sig = bob_to_charlie.sig;
 
             plasma.startExit(
                 UTXO.slot,
                 prev_tx, exiting_tx,
                 prev_tx_proof, exiting_tx_proof,
-                sigs,
+                sig,
                 1000, 2000,
                 {'from': charlie, 'value': web3.toWei(0.1, 'ether')}
             );
@@ -121,7 +115,7 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
             assert.equal(await cards.balanceOf.call(plasma.address), 2);
 
             // On the contrary, his bond must be slashed, and `challenger` must be able to claim it
-            await txlib.withdrawBonds(plasma, challenger, 0.1 * 2);
+            await txlib.withdrawBonds(plasma, challenger, 0.1 );
         });
 
         it("Bob/Dylan double spend a coin that was supposed to be given to Charlie since nobody challenged", async function() {
@@ -147,23 +141,23 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
             // Block 2000: Transaction from Bob to Charlie
             // Block 3000: Transaction from Bob to Dylan
 
-            let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, alice, bob);
+            let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, 1000, alice, bob);
             let txs = [ alice_to_bob.leaf ];
             let tree_bob = await txlib.submitTransactions(authority, plasma, txs);
 
             // Tx to Charlie from Bob referencing Bob's UTXO at block 1000
-            let bob_to_charlie = txlib.createUTXO(UTXO.slot, 1000, bob, charlie);
+            let bob_to_charlie = txlib.createUTXO(UTXO.slot, 1000, 2000, bob, charlie);
             txs = [ bob_to_charlie.leaf ];
             let tree_charlie = await txlib.submitTransactions(authority, plasma, txs);
 
             // Tx to Dylan from Bob referencing Charlie's UTXO at block 2000
             // Dylan is an address which is controlled by Bob or colludes by Bob to steal Charlie's coin
-            let bob_to_dylan = txlib.createUTXO(UTXO.slot, 1000, bob, dylan);
+            let bob_to_dylan = txlib.createUTXO(UTXO.slot, 1000, 3000, bob, dylan);
             txs = [ bob_to_dylan.leaf ];
             let tree_dylan = await txlib.submitTransactions(authority, plasma, txs);
 
             // Dylan-Bob now tries to exit the coin.
-            let sigs = alice_to_bob.sig + bob_to_dylan.sig.replace('0x', '');
+            let sig = bob_to_dylan.sig;
 
             let prev_tx_proof = tree_bob.createMerkleProof(UTXO.slot)
             let exiting_tx_proof = tree_dylan.createMerkleProof(UTXO.slot)
@@ -175,7 +169,7 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
                 UTXO.slot,
                 prev_tx, exiting_tx,
                 prev_tx_proof, exiting_tx_proof,
-                sigs,
+                sig,
                 1000, 3000,
                 {'from': dylan, 'value': web3.toWei(0.1, 'ether')}
             );
