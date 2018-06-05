@@ -33,6 +33,11 @@ class ChildChainService(object):
         response = self.request(end_point, 'GET')
         return response.text
 
+    def get_block_number(self):
+        end_point = '/blocknumber'
+        response = self.request(end_point, 'GET')
+        return int(response.text)
+
 
     def get_block(self, blknum):
         end_point = '/block/{}'.format(blknum)

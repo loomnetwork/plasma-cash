@@ -14,6 +14,10 @@ def get_block(blknum):
 def get_current_block():
     return container.get_child_chain().get_current_block()
 
+@bp.route('/blocknumber', methods=['GET'])
+def get_block_number():
+    return str(container.get_child_chain().get_block_number())
+
 
 @bp.route('/proof', methods=['GET'])
 def get_proof():
