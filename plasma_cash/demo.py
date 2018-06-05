@@ -13,9 +13,15 @@ authority = Client(container.get_root('authority'), container.get_token('authori
 # Give alice 5 tokens
 alice.token_contract.register()
 
-print('Alice has {} tokens'.format(alice.token_contract.balanceOf()))
-print('Bob has {} tokens'.format(bob.token_contract.balanceOf()))
-print('Charlie has {} tokens'.format(bob.token_contract.balanceOf()))
+aliceTokensStart = alice.token_contract.balanceOf()
+print('Alice has {} tokens'.format(aliceTokensStart))
+assert (aliceTokensStart == 5), "START: Alice has incorrect number of tokens"
+bobTokensStart = bob.token_contract.balanceOf()
+print('Bob has {} tokens'.format(bobTokensStart))
+assert (bobTokensStart == 0), "START: Bob has incorrect number of tokens"
+charlieTokensStart = charlie.token_contract.balanceOf()
+print('Charlie has {} tokens'.format(charlieTokensStart))
+assert (charlieTokensStart == 0), "START: Charlie has incorrect number of tokens"
 
 # Alice deposits 3 of her coins to the plasma contract and gets 3 plasma nft utxos in return
 tokenId = 1
@@ -47,8 +53,15 @@ increaseTime(w3, 8 * 24 * 3600)
 authority.finalize_exits()
 # Charlie should now be able to withdraw the utxo which included token 2 to his wallet.
 charlie.withdraw(2)
-print('Alice has {} tokens'.format(alice.token_contract.balanceOf()))
-print('Bob has {} tokens'.format(bob.token_contract.balanceOf()))
-print('Charlie has {} tokens'.format(charlie.token_contract.balanceOf()))
 
-# Plasma Cash with ERC721 tokens success :)
+aliceTokensEnd = alice.token_contract.balanceOf()
+print('Alice has {} tokens'.format(aliceTokensEnd))
+assert (aliceTokensEnd == 2), "END: Alice has incorrect number of tokens"
+bobTokensEnd = bob.token_contract.balanceOf()
+print('Bob has {} tokens'.format(bobTokensEnd))
+assert (bobTokensEnd == 0), "END: Bob has incorrect number of tokens"
+charlieTokensEnd = charlie.token_contract.balanceOf()
+print('Charlie has {} tokens'.format(charlieTokensEnd))
+assert (charlieTokensEnd == 1), "END: Charlie has incorrect number of tokens"
+
+print('Plasma Cash with ERC721 tokens success :)')
