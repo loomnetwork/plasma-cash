@@ -41,17 +41,17 @@ class Client(object):
         # previous owners, this is a hacky way of getting the info from the
         # operator which sould be changed in the future after the exiting
         # process is more standardized
-        block = self.get_block(tx_blk_num)
+        block = self.getBlock(tx_blk_num)
         exiting_tx = block.get_tx_by_uid(uid)
-        exiting_tx_proof = self.get_proof(tx_blk_num, uid)
+        exiting_tx_proof = self.getProof(tx_blk_num, uid)
 
         # If the referenced transaction is a deposit transaction then no need
         prev_tx = '0x0'
         prev_tx_proof = '0x0'
         if prev_tx_blk_num % self.child_block_interval == 0:
-            prev_block = self.get_block(prev_tx_blk_num)
+            prev_block = self.getBlock(prev_tx_blk_num)
             prev_tx = prev_block.get_tx_by_uid(uid)
-            prev_tx_proof = self.get_proof(prev_tx_blk_num, uid)
+            prev_tx_proof = self.getProof(prev_tx_blk_num, uid)
 
         return self.root_chain.startExit(
                 uid, rlp.encode(prev_tx, UnsignedTransaction),
@@ -97,33 +97,33 @@ class Client(object):
     # Child Chain Functions
 
     def submitBlock(self):
-        block = self.get_current_block()
+        block = self.getCurrentBlock()
         block.make_mutable()  # mutex for mutability?
         block.sign(self.key)
         block.make_immutable()
         return self.child_chain.submitBlock(rlp.encode(block, Block).hex())
 
-    def send_transaction(self, uid, prev_block, denomination, new_owner):
+    def sendTransaction(self, uid, prev_block, denomination, new_owner):
         new_owner = utils.normalize_address(new_owner)
-        incl_block = self.get_block_number()
+        incl_block = self.getBlockNumber()
         tx = Transaction(uid, prev_block, denomination, new_owner,
                          incl_block=incl_block)
         tx.make_mutable()
         tx.sign(self.key)
         tx.make_immutable()
-        self.child_chain.send_transaction(rlp.encode(tx, Transaction).hex())
+        self.child_chain.sendTransaction(rlp.encode(tx, Transaction).hex())
         return tx
 
-    def get_block_number(self):
-        return self.child_chain.get_block_number()
+    def getBlockNumber(self):
+        return self.child_chain.getBlockNumber()
 
-    def get_current_block(self):
-        block = self.child_chain.get_current_block()
+    def getCurrentBlock(self):
+        block = self.child_chain.getCurrentBlock()
         return rlp.decode(utils.decode_hex(block), Block)
 
-    def get_block(self, blknum):
-        block = self.child_chain.get_block(blknum)
+    def getBlock(self, blknum):
+        block = self.child_chain.getBlock(blknum)
         return rlp.decode(utils.decode_hex(block), Block)
 
-    def get_proof(self, blknum, uid):
-        return base64.b64decode(self.child_chain.get_proof(blknum, uid))
+    def getProof(self, blknum, uid):
+        return base64.b64decode(self.child_chain.getProof(blknum, uid))

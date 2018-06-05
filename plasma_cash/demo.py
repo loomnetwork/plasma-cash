@@ -5,7 +5,8 @@ from utils.utils import increaseTime
 alice = Client(container.get_root('alice'), container.get_token('alice'))
 bob = Client(container.get_root('bob'), container.get_token('bob'))
 charlie = Client(container.get_root('charlie'), container.get_token('charlie'))
-authority = Client(container.get_root('authority'), container.get_token('authority'))
+authority = Client(container.get_root('authority'),
+                   container.get_token('authority'))
 
 # Give alice 5 tokens
 alice.token_contract.register()
@@ -18,37 +19,45 @@ print('Bob has {} tokens'.format(bobTokensStart))
 assert (bobTokensStart == 0), "START: Bob has incorrect number of tokens"
 charlieTokensStart = charlie.token_contract.balanceOf()
 print('Charlie has {} tokens'.format(charlieTokensStart))
-assert (charlieTokensStart == 0), "START: Charlie has incorrect number of tokens"
+assert (charlieTokensStart == 0), \
+        "START: Charlie has incorrect number of tokens"
 
-# Alice deposits 3 of her coins to the plasma contract and gets 3 plasma nft utxos in return
+# Alice deposits 3 of her coins to the plasma contract and gets 3 plasma nft
+# utxos in return
 tokenId = 1
 alice.deposit(tokenId)
 alice.deposit(tokenId+1)
 alice.deposit(tokenId+2)
 
-# Alice to Bob, and Alice to Charlie. We care about the Alice to Bob transaction
+# Alice to Bob, and Alice to Charlie. We care about the Alice to Bob
+# transaction
 utxo_id = 2
 blk_num = 3
-alice_to_bob = alice.send_transaction(utxo_id, blk_num, 1, bob.token_contract.account.address)
-random_tx = alice.send_transaction(utxo_id-1, blk_num-1, 1, charlie.token_contract.account.address)
-authority.submit_block()
+alice_to_bob = alice.sendTransaction(utxo_id, blk_num, 1,
+                                     bob.token_contract.account.address)
+random_tx = alice.sendTransaction(utxo_id-1, blk_num-1, 1,
+                                  charlie.token_contract.account.address)
+authority.submitBlock()
 
 # Bob to Charlie
-blk_num = 1000 # the prev transaction was included in block 1000
-bob_to_charlie = bob.send_transaction(utxo_id, blk_num, 1, charlie.token_contract.account.address)
-authority.submit_block()
+blk_num = 1000  # the prev transaction was included in block 1000
+bob_to_charlie = bob.sendTransaction(utxo_id, blk_num, 1,
+                                     charlie.token_contract.account.address)
+authority.submitBlock()
 
-# Charlie should be able to submit an exit by referencing blocks 0 and 1 which included his transaction.
+# Charlie should be able to submit an exit by referencing blocks 0 and 1 which
+# included his transaction.
 utxo_id = 2
 prev_tx_blk_num = 1000
 exiting_tx_blk_num = 2000
-charlie.start_exit(utxo_id, prev_tx_blk_num, exiting_tx_blk_num)
+charlie.startExit(utxo_id, prev_tx_blk_num, exiting_tx_blk_num)
 
 # After 8 days pass, charlie's exit should be finalizable
-w3 = charlie.root_chain.w3 # get w3 instance
+w3 = charlie.root_chain.w3  # get w3 instance
 increaseTime(w3, 8 * 24 * 3600)
-authority.finalize_exits()
-# Charlie should now be able to withdraw the utxo which included token 2 to his wallet.
+authority.finalizeExits()
+# Charlie should now be able to withdraw the utxo which included token 2 to his
+# wallet.
 
 charlie.withdraw(utxo_id)
 
