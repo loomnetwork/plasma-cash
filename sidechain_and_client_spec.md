@@ -26,13 +26,10 @@ The Plamsa chain maintains several pieces of state during operation:
 
 #### List of Plasma Blocks
 
-For each block storing (i) the Merkle root, (ii) the time the Merkle root was
-submitted.
-
-    fields = [
-        ('transaction_set', CountableList(Transaction)),
-        ('sig', binary)
-    ]
+For each block of the Plasma chain, the `RootChain.sol` contract stores the
+Merkle root of the block's transactions and the time the Merkle root was
+submitted. The Plasma chain maintains a list of blocks each of which contains
+a set of a transactions and a signature.
 
 ### Deposits
 
@@ -65,13 +62,15 @@ def _send_deposit(self, event):
     self.blocks[blknum] = deposit_block
 ```
 
-### Transactions
+### Transactions & Non-deposit Blocks
 
-Plasma transactions are initiated by ... the sidechain client. The Plasma
-chain operator accumulates transactions submitted by clients and can decide to
-submit a block containing those transactions whenever he sees fit. Adding
+Plasma transactions are initiated by the sidechain client on behalf of any user
+of the Plasma chain. The Plasma chain operator receives transactions submitted
+by clients, submitting a block of the accumulated transactions at will. Adding
 a block to the plasma chain requires registering that block's merkle root with
-the `RootChain.sol` contract.
+the `RootChain.sol` contract by calling the `submitBlock` function.
+
+A Plasma block can contain only a single spend of a particular coin.
 
 All blocks filled with transactions are assigned a number divisible by
 `childBlockInterval` (currently 1000) in the `RootChain.sol` contract.
@@ -83,9 +82,18 @@ rootchain.
 
 ### Sidechain interactions
 
-#### 1. submit_transaction
+In the current implementation of sidechain interactions, the client calls
+functions of the Plasma sidechain via an http interface.
+
+#### 1. send_transaction
+
+A Plasma chain user submits a transaction for inclusion in a Plasma block.
+Transactions are currently limited to spends of a particular coin.
 
 #### 2. submit_block (authority only)
+
+Initiates a block submission from the Plasma Chain onto the rootchain. A block
+submission consists of only a Plasma block's transaction merkle root.
 
 #### 3. get_current_block
 
@@ -101,15 +109,31 @@ Get a merkle proof of inclusion of a particular uid in a particular block.
 
 ### Rootchain interactions
 
+For rootchain interactions, the client calls functions of the `RootChain.sol`
+contract running on the Ethereum rootchain.
+
 #### 1. challengeBefore
+
+Submit a fraud proof showing that someone is attempting to exit an
+coin with an invalid history.
 
 #### 2. challengeBetween
 
+Submit a fraud proof showing that an exited coin was double spent.
+
 #### 3. challengeAfter
+
+Submit a fraud proof showing that an exited coin was already spent.
 
 #### 4. startExit
 
+Start exiting a coin at a particular UTXO.
+
 #### 5. finalizeExits
+
+Exit all coins whose exists are older than 7 days and have not been
+successfully challenged. Any successfully challenged coins should have their
+states changed to DEPOSITED and have their owner's bonds slashed.
 
 #### 6. withdraw
 
