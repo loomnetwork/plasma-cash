@@ -26,7 +26,8 @@ class ChildChainService(object):
         if response.ok:
             return response
         else:
-            raise RequestFailedException('failed with response: {}'.format(response))
+            raise RequestFailedException(
+                        'failed with response: {}'.format(response))
 
     def get_current_block(self):
         end_point = '/block'
@@ -38,7 +39,6 @@ class ChildChainService(object):
         response = self.request(end_point, 'GET')
         return int(response.text)
 
-
     def get_block(self, blknum):
         end_point = '/block/{}'.format(blknum)
         response = self.request(end_point, 'GET')
@@ -46,10 +46,9 @@ class ChildChainService(object):
 
     def get_proof(self, blknum, uid):
         end_point = '/proof'
-        params = { 'blknum': blknum, 'uid': uid }
+        params = {'blknum': blknum, 'uid': uid}
         response = self.request(end_point, 'GET', params=params)
         return response.text
-
 
     def submit_block(self, block):
         end_point = '/submit_block'
