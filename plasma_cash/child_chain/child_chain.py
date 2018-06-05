@@ -71,7 +71,7 @@ class ChildChain(object):
             if prev_tx.spent:
                 raise TxAlreadySpentException('failed to send transaction')
             if prev_tx.prev_block % self.child_block_interval == 0: # deposit tx if prev_block is 0
-                if tx.sig == b'\x00' * 65 or tx.sender != prev_tx.new_owner:
+                if tx.sender != prev_tx.new_owner:
                     raise InvalidTxSignatureException('failed to send transaction')
             prev_tx.spent = True  # Mark the previous tx as spent
         self.current_block.add_tx(tx)
