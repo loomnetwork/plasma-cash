@@ -40,8 +40,7 @@ class ChildChain(object):
         ''' Submit the merkle root to the chain from the authority '''
         block = rlp.decode(utils.decode_hex(block), Block)
         signature = block.sig
-        if (signature == b'\x00' * 65 or # block needs to be signed by authority, empty signatures do not count
-           get_sender(block.hash, signature) != self.authority):
+        if (get_sender(block.hash, signature) != self.authority):
             raise InvalidBlockSignatureException('failed to submit a block')
 
         merkle_hash = w3.toHex(block.merklize_transaction_set())
