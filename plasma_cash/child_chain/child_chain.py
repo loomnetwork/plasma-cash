@@ -15,7 +15,7 @@ class ChildChain(object):
     ''' Operator runs child chain, watches all Deposit events and creates deposit blcoks '''
 
     def __init__(self, root_chain):
-        self.root_chain = root_chain # PlasmaCash object from plasma.py
+        self.root_chain = root_chain # PlasmaCash object from plasma_cash.py
         self.authority = self.root_chain.account.address
         self.blocks = {}
         self.current_block = Block()
