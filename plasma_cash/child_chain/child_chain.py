@@ -15,7 +15,7 @@ class ChildChain(object):
     ''' Operator runs child chain, watches all Deposit events and creates deposit blcoks '''
 
     def __init__(self, root_chain):
-        self.root_chain = root_chain # PlasmaCash object from plasma.py
+        self.root_chain = root_chain # PlasmaCash object from plasma_cash.py
         self.authority = self.root_chain.account.address
         self.blocks = {}
         self.current_block = Block()
@@ -40,8 +40,7 @@ class ChildChain(object):
         ''' Submit the merkle root to the chain from the authority '''
         block = rlp.decode(utils.decode_hex(block), Block)
         signature = block.sig
-        if (signature == b'\x00' * 65 or # block needs to be signed by authority, empty signatures do not count
-           get_sender(block.hash, signature) != self.authority):
+        if (get_sender(block.hash, signature) != self.authority):
             raise InvalidBlockSignatureException('failed to submit a block')
 
         merkle_hash = w3.toHex(block.merklize_transaction_set())
@@ -72,7 +71,7 @@ class ChildChain(object):
             if prev_tx.spent:
                 raise TxAlreadySpentException('failed to send transaction')
             if prev_tx.prev_block % self.child_block_interval == 0: # deposit tx if prev_block is 0
-                if tx.sig == b'\x00' * 65 or tx.sender != prev_tx.new_owner:
+                if tx.sender != prev_tx.new_owner:
                     raise InvalidTxSignatureException('failed to send transaction')
             prev_tx.spent = True  # Mark the previous tx as spent
         self.current_block.add_tx(tx)
