@@ -37,15 +37,15 @@ class PlasmaCash(Contract):
         self.sign_and_send(self.contract.functions.challengeAfter, args)
         return self
 
-    def start_exit(self, uid, prev_tx, exiting_tx, prev_tx_proof,
-                   exiting_tx_proof, sigs, prev_tx_blk_num, tx_blk_num):
+    def startExit(self, uid, prev_tx, exiting_tx, prev_tx_proof,
+                  exiting_tx_proof, sigs, prev_tx_blk_num, tx_blk_num):
         args = [uid, prev_tx, exiting_tx, prev_tx_proof, exiting_tx_proof,
                 sigs, prev_tx_blk_num, tx_blk_num]
         self.sign_and_send(self.contract.functions.startExit, args,
                            value=self.BOND)
         return self
 
-    def finalize_exits(self):
+    def finalizeExits(self):
         args = []
         self.sign_and_send(self.contract.functions.finalizeExits, args)
         return self
@@ -55,7 +55,7 @@ class PlasmaCash(Contract):
         self.sign_and_send(self.contract.functions.withdraw, args)
         return self
 
-    def submit_block(self, root):
+    def submitBlock(self, root):
         args = [root]
         self.sign_and_send(self.contract.functions.submitBlock, args)
         return self

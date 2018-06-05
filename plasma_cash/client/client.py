@@ -31,7 +31,7 @@ class Client(object):
 
     # Plasma Functions
 
-    def start_exit(self, uid, prev_tx_blk_num, tx_blk_num):
+    def startExit(self, uid, prev_tx_blk_num, tx_blk_num):
         '''
         As a user, you declare that you want to exit a coin at slot `uid`
         at the state which happened at block `tx_blk_num` and you also need to
@@ -53,31 +53,55 @@ class Client(object):
             prev_tx = prev_block.get_tx_by_uid(uid)
             prev_tx_proof = self.get_proof(prev_tx_blk_num, uid)
 
-        return self.root_chain.start_exit(
+        return self.root_chain.startExit(
                 uid, rlp.encode(prev_tx, UnsignedTransaction),
                 rlp.encode(exiting_tx, UnsignedTransaction), prev_tx_proof,
                 exiting_tx_proof, exiting_tx.sig, prev_tx_blk_num, tx_blk_num)
 
-    def challenge(self, slot):
-        self.root_chain.challenge(slot)
+    def challengeBefore(self, slot, prev_tx_bytes, exiting_tx_bytes,
+                        prev_tx_inclusion_proof, exiting_tx_inclusion_proof,
+                        sig, prev_tx_block_num, exiting_tx_block_num):
+        self.root_chain.challengeBefore(slot)
         return self
 
-    def finalize_exits(self):
-        self.root_chain.finalize_exits()
+    def respondChallengeBefore(self, slot, challenging_block_number,
+                               challenging_transaction, proof):
+        self.root_chain.respondChallengeBefore(slot, challenging_block_number,
+                                               challenging_transaction, proof)
+        return self
+
+    def challengeBetween(self, slot, challenging_block_number,
+                         challenging_transaction, proof):
+        self.root_chain.challengeBetween(slot, challenging_block_number,
+                                         challenging_transaction, proof)
+        return self
+
+    def challengeAfter(self, slot, challenging_block_number,
+                       challenging_transaction, proof):
+        self.root_chain.challengeAfter(slot, challenging_block_number,
+                                       challenging_transaction, proof)
+        return self
+
+    def finalizeExits(self):
+        self.root_chain.finalizeExits()
         return self
 
     def withdraw(self, slot):
         self.root_chain.withdraw(slot)
         return self
 
+    def withdrawBonds(self):
+        self.root_chain.withdrawBonds()
+        return self
+
     # Child Chain Functions
 
-    def submit_block(self):
+    def submitBlock(self):
         block = self.get_current_block()
         block.make_mutable()  # mutex for mutability?
         block.sign(self.key)
         block.make_immutable()
-        return self.child_chain.submit_block(rlp.encode(block, Block).hex())
+        return self.child_chain.submitBlock(rlp.encode(block, Block).hex())
 
     def send_transaction(self, uid, prev_block, denomination, new_owner):
         new_owner = utils.normalize_address(new_owner)
