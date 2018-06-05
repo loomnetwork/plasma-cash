@@ -4,6 +4,7 @@ from threading import Thread
 import time
 import json
 
+
 class Contract(object):
     '''Base class for interfacing with a contract'''
     def __init__(self, keystore, address, abi_file, endpoint):
@@ -11,7 +12,7 @@ class Contract(object):
         # address = w3.toChecksumAddress(address) # need to comment out because of ganache bug
         with open(abi_file) as f:
             abi = json.load(f)['abi']
-        contract = w3.eth.contract(abi = abi, address = address)
+        contract = w3.eth.contract(abi=abi, address=address)
         self.w3 = w3
         # self.w3.eth.enable_unaudited_features()
         if keystore is not None:
@@ -30,9 +31,9 @@ class Contract(object):
                 func,
                 args,
                 value,
-                gas # may need to change gas
+                gas  # may need to change gas
             )
-        self.nonce += 1 # Increment nonce after signing a tx
+        self.nonce += 1  # Increment nonce after signing a tx
 
         info = '{}, Args: {}'.format(func.__name__, args)
         try:
@@ -46,7 +47,7 @@ class Contract(object):
 
     def send_transaction(self, to, value):
         signed_tx = self._sign_transaction(to, value)
-        self.nonce += 1 # Increment nonce after signing a tx
+        self.nonce += 1  # Increment nonce after signing a tx
         self._send_raw_tx(signed_tx)
 
         info = 'Sent {} to {}'.format(value, to)
@@ -62,12 +63,11 @@ class Contract(object):
             'value': value,
             'gas': gas,
             'gasPrice': gasPrice,
-            #'nonce': self.nonce
+            # 'nonce': self.nonce
             'nonce': self.w3.eth.getTransactionCount(self.account.address)
         }
 
         # print(raw_tx)
-
 
         signed_tx = self.account.signTransaction(raw_tx)
 
@@ -113,25 +113,24 @@ class Contract(object):
 
     def waitForTxReceipt(self, tx):
         receipt = self.w3.eth.getTransactionReceipt(tx)
-        while receipt == None:
+        while receipt is None:
             info = 'Waiting for transaction to get mined...'
             # self.logger.debug(yellow(info))
-            time.sleep(12) # Block time avg
+            time.sleep(12)  # Block time avg
             receipt = self.w3.eth.getTransactionReceipt(tx)
         return receipt
 
-    def watch_event(self, event_name, callback, interval, fromBlock=0, toBlock='latest', filters=None):
+    def watch_event(self, event_name, callback, interval, fromBlock=0,
+                    toBlock='latest', filters=None):
         event_filter = self.install_filter(
                 event_name,
                 fromBlock,
                 toBlock,
                 filters
             )
-        worker = Thread(
-                target=self.watcher,
-                args=(event_filter, callback, interval),
-                daemon=True
-            ).start()
+        worker = Thread(target=self.watcher,
+                        args=(event_filter, callback, interval),
+                        daemon=True).start()
 
     def watcher(self, event_filter, callback, interval):
         while True:
@@ -139,12 +138,10 @@ class Contract(object):
                 callback(event)
                 time.sleep(interval)
 
-
-    def install_filter(self, event_name, fromBlock=0, toBlock='latest', filters=None):
+    def install_filter(self, event_name, fromBlock=0, toBlock='latest',
+                       filters=None):
         event = getattr(self.contract.events, event_name)
-        eventFilter = event.createFilter(
-                fromBlock = fromBlock,
-                toBlock = toBlock,
-                argument_filters=filters
-        )
+        eventFilter = event.createFilter(fromBlock=fromBlock,
+                                         toBlock=toBlock,
+                                         argument_filters=filters)
         return eventFilter
