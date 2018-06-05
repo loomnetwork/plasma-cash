@@ -22,7 +22,6 @@ class Client(object):
         self.child_chain = child_chain
         self.child_block_interval = 1000
 
-
     ## Token Functions
     def register(self):
         ''' Register a new player and grant 5 cards, for demo purposes'''

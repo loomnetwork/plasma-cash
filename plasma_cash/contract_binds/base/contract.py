@@ -23,12 +23,11 @@ class Contract(object):
         account = self.w3.eth.account.privateKeyToAccount(data)
         del data
         return account
-        
 
     def sign_and_send(self, func, args, value=0, gas=1000000):
         ''' Expecting all arguments in 1 array '''
         signed_tx = self._sign_function_call(
-                func, 
+                func,
                 args,
                 value,
                 gas # may need to change gas
@@ -36,7 +35,7 @@ class Contract(object):
         self.nonce += 1 # Increment nonce after signing a tx
 
         info = '{}, Args: {}'.format(func.__name__, args)
-        try: 
+        try:
             self._send_raw_tx(signed_tx)
             # info = 'Success '+info
             # self.logger.debug(green(info))
@@ -76,7 +75,7 @@ class Contract(object):
 
     def _sign_function_call(self, func, args, value, gas):
         """
-            Takes reading and timestamp and creates a 
+            Takes reading and timestamp and creates a
             raw transaction call to `ping` at the target contract
             TODO: Add option to modify gas
         """
@@ -108,7 +107,7 @@ class Contract(object):
     def _send_raw_tx(self, signed_tx):
         tx = self.w3.eth.sendRawTransaction(signed_tx.rawTransaction)
         # Wait until the transaction gets mined
-        # receipt = self.waitForTxReceipt(tx) 
+        # receipt = self.waitForTxReceipt(tx)
         # info = 'Transaction Receipt => {}'.format(receipt)
         # self.logger.debug(yellow(info))
 
@@ -123,14 +122,14 @@ class Contract(object):
 
     def watch_event(self, event_name, callback, interval, fromBlock=0, toBlock='latest', filters=None):
         event_filter = self.install_filter(
-                event_name, 
-                fromBlock, 
-                toBlock, 
+                event_name,
+                fromBlock,
+                toBlock,
                 filters
             )
         worker = Thread(
-                target=self.watcher, 
-                args=(event_filter, callback, interval), 
+                target=self.watcher,
+                args=(event_filter, callback, interval),
                 daemon=True
             ).start()
 
