@@ -29,33 +29,33 @@ class ChildChainService(object):
             raise RequestFailedException(
                         'failed with response: {}'.format(response))
 
-    def getCurrentBlock(self):
+    def get_current_block(self):
         end_point = '/block'
         response = self.request(end_point, 'GET')
         return response.text
 
-    def getBlockNumber(self):
+    def get_block_number(self):
         end_point = '/blocknumber'
         response = self.request(end_point, 'GET')
         return int(response.text)
 
-    def getBlock(self, blknum):
+    def get_block(self, blknum):
         end_point = '/block/{}'.format(blknum)
         response = self.request(end_point, 'GET')
         return response.text
 
-    def getProof(self, blknum, uid):
+    def get_proof(self, blknum, uid):
         end_point = '/proof'
         params = {'blknum': blknum, 'uid': uid}
         response = self.request(end_point, 'GET', params=params)
         return response.text
 
-    def submitBlock(self, block):
+    def submit_block(self, block):
         end_point = '/submit_block'
         data = {'block': block}
         self.request(end_point, 'POST', data=data)
 
-    def sendTransaction(self, tx):
+    def send_transaction(self, tx):
         end_point = '/send_tx'
         data = {'tx': tx}
         self.request(end_point, 'POST', data=data)

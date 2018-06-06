@@ -7,10 +7,10 @@ class PlasmaCash(Contract):
         super().__init__(private_key, address, abi_file, endpoint)
         self.BOND = self.w3.toWei(0.1, 'ether')
 
-    def challengeBefore(self, slot, prev_tx_bytes, exiting_tx_bytes,
-                        prev_tx_inclusion_proof, exiting_tx_inclusion_proof,
-                        sig, prev_tx_block_num,
-                        exiting_tx_block_num):
+    def challenge_before(self, slot, prev_tx_bytes, exiting_tx_bytes,
+                         prev_tx_inclusion_proof, exiting_tx_inclusion_proof,
+                         sig, prev_tx_block_num,
+                         exiting_tx_block_num):
         args = [slot, prev_tx_bytes, exiting_tx_bytes,
                 prev_tx_inclusion_proof, exiting_tx_inclusion_proof,
                 sig, prev_tx_block_num, exiting_tx_block_num]
@@ -18,34 +18,34 @@ class PlasmaCash(Contract):
         self.sign_and_send(self.contract.functions.challengeBefore, args)
         return self
 
-    def respondChallengeBefore(self, slot, challenging_block_number,
-                               challenging_transaction, proof):
+    def respond_challenge_before(self, slot, challenging_block_number,
+                                 challenging_transaction, proof):
         args = [slot, challenging_block_number, challenging_transaction, proof]
-        self.sign_and_send(self.contract.functions.respondChallengeBefore,
+        self.sign_and_send(self.contract.functions.respond_challenge_before,
                            args)
         return self
 
-    def challengeBetween(self, slot, challenging_block_number,
-                         challenging_transaction, proof):
+    def challenge_between(self, slot, challenging_block_number,
+                          challenging_transaction, proof):
         args = [slot, challenging_block_number, challenging_transaction, proof]
         self.sign_and_send(self.contract.functions.challengeBetween, args)
         return self
 
-    def challengeAfter(self, slot, challenging_block_number,
-                       challenging_transaction, proof):
+    def challenge_after(self, slot, challenging_block_number,
+                        challenging_transaction, proof):
         args = [slot, challenging_block_number, challenging_transaction, proof]
         self.sign_and_send(self.contract.functions.challengeAfter, args)
         return self
 
-    def startExit(self, uid, prev_tx, exiting_tx, prev_tx_proof,
-                  exiting_tx_proof, sigs, prev_tx_blk_num, tx_blk_num):
+    def start_exit(self, uid, prev_tx, exiting_tx, prev_tx_proof,
+                   exiting_tx_proof, sigs, prev_tx_blk_num, tx_blk_num):
         args = [uid, prev_tx, exiting_tx, prev_tx_proof, exiting_tx_proof,
                 sigs, prev_tx_blk_num, tx_blk_num]
         self.sign_and_send(self.contract.functions.startExit, args,
                            value=self.BOND)
         return self
 
-    def finalizeExits(self):
+    def finalize_exits(self):
         args = []
         self.sign_and_send(self.contract.functions.finalizeExits, args)
         return self
@@ -55,11 +55,11 @@ class PlasmaCash(Contract):
         self.sign_and_send(self.contract.functions.withdraw, args)
         return self
 
-    def submitBlock(self, root):
+    def submit_block(self, root):
         args = [root]
         self.sign_and_send(self.contract.functions.submitBlock, args)
         return self
 
-    def withdrawBonds(self):
+    def withdraw_bonds(self):
         self.sign_and_send(self.contract.functions.withdrawBonds, [])
         return self

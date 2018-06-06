@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from hexbytes import HexBytes
-from ethereum.utils import sha3
+from eth_utils.crypto import keccak
 
 
 class SparseMerkleTree(object):
@@ -26,12 +26,12 @@ class SparseMerkleTree(object):
     def create_default_nodes(self, depth):
         # Default nodes are the nodes whose children are both empty nodes at
         # each level.
-        default_hash = sha3(HexBytes('00' * 32))
+        default_hash = keccak(HexBytes('00' * 32))
         default_nodes = [default_hash]
         for level in range(1, depth):
             prev_default = default_nodes[level - 1]
             default_nodes.append(
-                    sha3(prev_default + prev_default)
+                    keccak(prev_default + prev_default)
             )
         return default_nodes
 
@@ -46,14 +46,14 @@ class SparseMerkleTree(object):
                     # If the node is a left node, assume the right sibling is
                     # a default node. In the case right sibling is not default
                     # node, it would override on next round
-                    next_level[index // 2] = sha3(value + default_nodes[level])
+                    next_level[index // 2] = keccak(value + default_nodes[level])
                 else:
                     # If the node is a right node, check if its left sibling is
                     # a default node.
                     if index == prev_index + 1:
-                        next_level[index // 2] = sha3(tree_level[prev_index] + value)
+                        next_level[index // 2] = keccak(tree_level[prev_index] + value)
                     else:
-                        next_level[index // 2] = sha3(default_nodes[level] + value)
+                        next_level[index // 2] = keccak(default_nodes[level] + value)
                 prev_index = index
             tree_level = next_level
             tree.append(tree_level)
@@ -93,9 +93,9 @@ class SparseMerkleTree(object):
                 proof_element = proof[p:p+32]
                 p += 32
             if (index % 2 == 0):
-                computed_hash = sha3(computed_hash + proof_element)
+                computed_hash = keccak(computed_hash + proof_element)
             else:
-                computed_hash = sha3(proof_element + computed_hash)
+                computed_hash = keccak(proof_element + computed_hash)
             proofbits = proofbits // 2
             index = index // 2
         return computed_hash == self.root

@@ -1,6 +1,6 @@
 import pytest
 from hexbytes import HexBytes
-from ethereum.utils import sha3
+from eth_utils.crypto import keccak
 from utils.merkle.sparse_merkle_tree import SparseMerkleTree
 
 
@@ -13,8 +13,8 @@ class TestSparseMerkleTree(object):
         dummy_val = b'\x01' * 32
         leaves = {0: dummy_val, 1: dummy_val, 2: dummy_val, 3: dummy_val}
         tree = SparseMerkleTree(depth=3, leaves=leaves)
-        mid_level_val = sha3(dummy_val + dummy_val)
-        assert tree.root == sha3(mid_level_val + mid_level_val)
+        mid_level_val = keccak(dummy_val + dummy_val)
+        assert tree.root == keccak(mid_level_val + mid_level_val)
 
 #   def test_empty_leaves(self):
 #       tree = SparseMerkleTree(depth=3)

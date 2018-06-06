@@ -24,7 +24,7 @@ class ERC721(Contract):
         )
         return self
 
-    def balanceOf(self):
+    def balance_of(self):
         return self.contract.functions.balanceOf(
                 self.account.address
         ).call()

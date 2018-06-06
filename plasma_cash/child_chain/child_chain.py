@@ -49,7 +49,7 @@ class ChildChain(object):
             raise InvalidBlockSignatureException('failed to submit a block')
 
         merkle_hash = w3.toHex(block.merklize_transaction_set())
-        self.root_chain.submitBlock(merkle_hash)
+        self.root_chain.submit_block(merkle_hash)
 
         self.blocks[self.current_block_number] = self.current_block
         self.current_block_number += self.child_block_interval
