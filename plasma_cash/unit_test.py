@@ -9,12 +9,6 @@ class TestSparseMerkleTree(object):
         emptyTree = SparseMerkleTree(64, {})
         assert len(emptyTree.leaves) == 0
 
-    def test_twoItemSMT(self):
-        twoItemSMT = SparseMerkleTree(64, {1: bytearray.fromhex('46fc5f183973cb120cfde52cc65295b4429034c3036f9a16260d02454c707b5c'),
-                                           2: bytearray.fromhex('598219f259df021d8251187348dcd17c46ff86a42286b43d4660c1e19d160c2d')})
-        assert len(twoItemSMT.leaves) == 2
-        assert twoItemSMT.create_merkle_proof(1) == bytearray.fromhex('00000000000000028711aeb008ae8a08665f7d8cbeac73dee60e2d82543b11df0f05406eee3baef8')
-
     def test_all_leaves_with_val(self):
         dummy_val = b'\x01' * 32
         leaves = {0: dummy_val, 1: dummy_val, 2: dummy_val, 3: dummy_val}
