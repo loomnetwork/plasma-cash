@@ -25,17 +25,19 @@ class ChildChain(object):
         self.current_block_number = self.child_block_interval
 
         # Watch all deposit events, callback to self._send_deposit
-        deposit_filter = self.root_chain.watch_event('Deposit', self._send_deposit, 1)
+        self.root_chain.watch_event('Deposit', self._send_deposit, 1)
 
     def _send_deposit(self, event):
         ''' Called by event watcher and creates a deposit block '''
         slot = event['args']['slot']
         blknum = event['args']['depositBlockNumber']
-        denomination = event['args']['denomination'] # currently always 1, to change in the future
+        # Currently, denomination is always 1. This may change in the future.
+        denomination = event['args']['denomination']
         depositor = event['args']['from']
-        deposit_tx = Transaction (slot, 0, denomination, depositor,
-                                  incl_block=blknum)
-        deposit_block = Block([deposit_tx])  # create a new plasma block on deposit
+        deposit_tx = Transaction(slot, 0, denomination, depositor,
+                                 incl_block=blknum)
+        # create a new plasma block on deposit
+        deposit_block = Block([deposit_tx])
 
         self.blocks[blknum] = deposit_block
 
@@ -76,9 +78,10 @@ class ChildChain(object):
                 raise PreviousTxNotFoundException('failed to send transaction')
             if prev_tx.spent:
                 raise TxAlreadySpentException('failed to send transaction')
-            if prev_tx.prev_block % self.child_block_interval == 0:  # deposit tx if prev_block is 0
-                if tx.sender != prev_tx.new_owner:
-                    raise InvalidTxSignatureException('failed to send transaction')
+            # deposit tx if prev_block is 0
+            if (prev_tx.prev_block % self.child_block_interval == 0
+                    and tx.sender != prev_tx.new_owner):
+                raise InvalidTxSignatureException('failed to send transaction')
             prev_tx.spent = True  # Mark the previous tx as spent
         self.current_block.add_tx(tx)
         return tx.hash
