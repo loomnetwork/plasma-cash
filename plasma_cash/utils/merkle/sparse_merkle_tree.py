@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from hexbytes import HexBytes
-from .utils import keccak256, to_bytes
+from .utils import keccak256
 
 
 class SparseMerkleTree(object):
@@ -9,7 +9,8 @@ class SparseMerkleTree(object):
         self.depth = depth
         if len(leaves) > 2**(depth-1):
             raise self.TreeSizeExceededException(
-                'tree with depth {} could not have {} leaves'.format(depth, len(leaves))
+                'tree with depth {} cannot have {} leaves'.format(depth,
+                                                                  len(leaves))
             )
 
         # Sort the transaction dict by index.
@@ -52,9 +53,13 @@ class SparseMerkleTree(object):
                     # If the node is a right node, check if its left sibling is
                     # a default node.
                     if index == prev_index + 1:
-                        next_level[index // 2] = keccak256(tree_level[prev_index], value)
+                        next_level[index // 2] = keccak256(
+                                                    tree_level[prev_index],
+                                                    value)
                     else:
-                        next_level[index // 2] = keccak256(default_nodes[level], value)
+                        next_level[index // 2] = keccak256(
+                                                    default_nodes[level],
+                                                    value)
                 prev_index = index
             tree_level = next_level
             tree.append(tree_level)
@@ -66,23 +71,15 @@ class SparseMerkleTree(object):
         # we are at a default-node
         index = uid
         proof = b''
-        proofbits = b''
+        proofbits = 0
         for level in range(self.depth - 1):
             sibling_index = index + 1 if index % 2 == 0 else index - 1
             index = index // 2
             if sibling_index in self.tree[level]:
                 proof += self.tree[level][sibling_index]
-                proofbits += b'1'
+                proofbits += 2 ** level
 
-            else:
-                proofbits += b'0'
-
-        # Reverse string, reading from right to left
-        proofbits = proofbits[::-1]
-
-        # Need to convert the binary string to bytes for solidity to
-        # understand.
-        proof_bytes = to_bytes(proofbits)
+        proof_bytes = proofbits.to_bytes(8, byteorder='big')
         return proof_bytes + proof
 
     def verify(self, uid, proof):
