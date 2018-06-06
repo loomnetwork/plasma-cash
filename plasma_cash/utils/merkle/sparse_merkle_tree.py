@@ -1,5 +1,4 @@
 from collections import OrderedDict
-from hexbytes import HexBytes
 from .utils import keccak256
 
 
@@ -10,8 +9,7 @@ class SparseMerkleTree(object):
         if len(leaves) > 2**(depth-1):
             raise self.TreeSizeExceededException(
                 'tree with depth {} cannot have {} leaves'.format(depth,
-                                                                  len(leaves))
-            )
+                                                                  len(leaves)))
 
         # Sort the transaction dict by index.
         self.leaves = OrderedDict(sorted(leaves.items(), key=lambda t: t[0]))
@@ -27,7 +25,7 @@ class SparseMerkleTree(object):
     def create_default_nodes(self, depth):
         # Default nodes are the nodes whose children are both empty nodes at
         # each level.
-        default_hash = keccak256(HexBytes('00' * 32))
+        default_hash = keccak256('\x00' * 32)
         default_nodes = [default_hash]
         for level in range(1, depth):
             prev_default = default_nodes[level - 1]
