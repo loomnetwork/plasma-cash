@@ -1,4 +1,4 @@
 {
-  "extends": "solium:recommended",
+  "extends": "solium:all",
   "rules": {}
 }
