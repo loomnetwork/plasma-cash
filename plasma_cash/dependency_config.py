@@ -10,16 +10,19 @@ class DependencyContainer(object):
         self.root_chain_abi = '../server/build/contracts/RootChain.json'
         self.token_contract_abi = '../server/build/contracts/CryptoCards.json'
         self.endpoint = 'http://localhost:8545'
-        self.root_chain = PlasmaCash(plasma_config['authority'], self.root_chain_abi, plasma_config['root_chain'], self.endpoint)
+        self.root_chain = PlasmaCash(plasma_config['authority'],
+                                     self.root_chain_abi,
+                                     plasma_config['root_chain'],
+                                     self.endpoint)
 
     def get_root(self, key):
-        return PlasmaCash(
-                plasma_config[key], self.root_chain_abi, plasma_config['root_chain'], self.endpoint
-        )
+        return PlasmaCash(plasma_config[key], self.root_chain_abi,
+                          plasma_config['root_chain'], self.endpoint)
+
     def get_token(self, key):
-        return ERC721(
-                plasma_config[key], self.token_contract_abi, plasma_config['token_contract'], self.endpoint
-        )
+        return ERC721(plasma_config[key], self.token_contract_abi,
+                      plasma_config['token_contract'], self.endpoint)
+
     def get_child_chain(self):
         if self._child_chain is None:
             self._child_chain = ChildChain(self.root_chain)
