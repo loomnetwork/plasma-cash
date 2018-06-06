@@ -6,16 +6,18 @@ from .block import Block
 from .exceptions import (InvalidBlockSignatureException,
                          InvalidTxSignatureException,
                          CoinAlreadyIncludedException,
-                         PreviousTxNotFoundException, TxAlreadySpentException,
-                         TxAmountMismatchException)
-
+                         PreviousTxNotFoundException, TxAlreadySpentException)
 from .transaction import Transaction
 
+
 class ChildChain(object):
-    ''' Operator runs child chain, watches all Deposit events and creates deposit blcoks '''
+    '''
+    Operator runs child chain, watches all Deposit events and creates
+    deposit blocks
+    '''
 
     def __init__(self, root_chain):
-        self.root_chain = root_chain # PlasmaCash object from plasma_cash.py
+        self.root_chain = root_chain  # PlasmaCash object from plasma_cash.py
         self.authority = self.root_chain.account.address
         self.blocks = {}
         self.current_block = Block()
@@ -23,16 +25,19 @@ class ChildChain(object):
         self.current_block_number = self.child_block_interval
 
         # Watch all deposit events, callback to self._send_deposit
-        deposit_filter = self.root_chain.watch_event('Deposit', self._send_deposit, 1)
+        self.root_chain.watch_event('Deposit', self._send_deposit, 1)
 
     def _send_deposit(self, event):
         ''' Called by event watcher and creates a deposit block '''
         slot = event['args']['slot']
         blknum = event['args']['depositBlockNumber']
-        denomination = event['args']['denomination'] # currently always 1, to change in the future
+        # Currently, denomination is always 1. This may change in the future.
+        denomination = event['args']['denomination']
         depositor = event['args']['from']
-        deposit_tx = Transaction (slot, 0, denomination, depositor, incl_block=blknum)
-        deposit_block = Block( [ deposit_tx ] ) # create a new plasma block on deposit
+        deposit_tx = Transaction(slot, 0, denomination, depositor,
+                                 incl_block=blknum)
+        # create a new plasma block on deposit
+        deposit_block = Block([deposit_tx])
 
         self.blocks[blknum] = deposit_block
 
@@ -62,17 +67,21 @@ class ChildChain(object):
 
         # If the tx we are spending is not a deposit tx
         if tx.prev_block % self.child_block_interval == 0:
-            # if the tx we are referencing is deposit transaction it does not have a sig
-            # The TX we are referencing should be included in a block, should not be spent.
-            # If the TX we are referencing was initially a deposit TX, then it does not have a signature attached
+            # if the tx we are referencing is deposit transaction it does not
+            # have a sig
+            # The TX we are referencing should be included in a block, should
+            # not be spent.
+            # If the TX we are referencing was initially a deposit TX, then it
+            # does not have a signature attached
             prev_tx = self.blocks[tx.prev_block].get_tx_by_uid(tx.uid)
             if prev_tx is None:
                 raise PreviousTxNotFoundException('failed to send transaction')
             if prev_tx.spent:
                 raise TxAlreadySpentException('failed to send transaction')
-            if prev_tx.prev_block % self.child_block_interval == 0: # deposit tx if prev_block is 0
-                if tx.sender != prev_tx.new_owner:
-                    raise InvalidTxSignatureException('failed to send transaction')
+            # deposit tx if prev_block is 0
+            if (prev_tx.prev_block % self.child_block_interval == 0
+                    and tx.sender != prev_tx.new_owner):
+                raise InvalidTxSignatureException('failed to send transaction')
             prev_tx.spent = True  # Mark the previous tx as spent
         self.current_block.add_tx(tx)
         return tx.hash

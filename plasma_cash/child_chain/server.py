@@ -14,6 +14,7 @@ def get_block(blknum):
 def get_current_block():
     return container.get_child_chain().get_current_block()
 
+
 @bp.route('/blocknumber', methods=['GET'])
 def get_block_number():
     return str(container.get_child_chain().get_block_number())
@@ -24,7 +25,8 @@ def get_proof():
     blknum = int(request.args.get('blknum'))
     uid = int(request.args.get('uid'))
     data = container.get_child_chain().get_proof(blknum, uid)
-    return base64.b64encode(data) # proofs are binary so encoding b64 during transmission
+    # proofs are binary so encoding b64 during transmission
+    return base64.b64encode(data)
 
 
 @bp.route('/submit_block', methods=['POST'])

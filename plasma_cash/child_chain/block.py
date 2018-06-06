@@ -2,9 +2,11 @@ import rlp
 from rlp.sedes import CountableList, binary
 from web3.auto import w3
 
+from child_chain.exceptions import InvalidBlockSignatureException
 from .transaction import Transaction
 from utils.utils import get_sender, sign
 from utils.merkle.sparse_merkle_tree import SparseMerkleTree
+
 
 class Block(rlp.Serializable):
 
@@ -35,7 +37,8 @@ class Block(rlp.Serializable):
         return get_sender(self.hash, self.sig)
 
     def merklize_transaction_set(self):
-        hashed_transaction_dict = {tx.uid: tx.hash for tx in self.transaction_set}
+        hashed_transaction_dict = {tx.uid: tx.hash
+                                   for tx in self.transaction_set}
         self.merkle = SparseMerkleTree(64, hashed_transaction_dict)
         return self.merkle.root
 
@@ -44,13 +47,13 @@ class Block(rlp.Serializable):
 
     # `uid` is the coin that was transferred
     def get_tx_by_uid(self, uid):
-        for tx in self.transaction_set: # replace with better searching 
+        for tx in self.transaction_set:  # replace with better searching
             if tx.uid == uid:
                 return tx
         return None
 
-
     def sign(self, key):
         self.sig = sign(self.hash, key)
+
 
 UnsignedBlock = Block.exclude(['sig'])
