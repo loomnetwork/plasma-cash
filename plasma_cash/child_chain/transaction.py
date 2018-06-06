@@ -6,6 +6,7 @@ from rlp.sedes import big_endian_int, binary
 from utils.utils import get_sender, sign
 from .exceptions import InvalidTxSignatureException
 
+
 class Transaction(rlp.Serializable):
 
     fields = [
@@ -16,14 +17,15 @@ class Transaction(rlp.Serializable):
         ('sig', binary)
     ]
 
-    def __init__(self, uid, prev_block, denomination, new_owner, sig=b'\x00' * 65, incl_block=0):
+    def __init__(self, uid, prev_block, denomination, new_owner,
+                 sig=b'\x00' * 65, incl_block=0):
         self.uid = uid
         self.prev_block = prev_block
         self.incl_block = incl_block
         self.denomination = denomination
         self.new_owner = ethereum.utils.normalize_address(new_owner)
         self.sig = sig
-        self.spent = False # not part of the rlp
+        self.spent = False  # not part of the rlp
         self.make_mutable()
 
     @property
@@ -46,5 +48,6 @@ class Transaction(rlp.Serializable):
 
     def sign(self, key):
         self.sig = sign(self.hash, key)
+
 
 UnsignedTransaction = Transaction.exclude(['sig'])

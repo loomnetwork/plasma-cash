@@ -1,10 +1,12 @@
 from web3.auto import w3
 from hexbytes import HexBytes
+from child_chain.exceptions import InvalidTxSignatureException
 
 
 def sign(hash, key):
     # DO NOT PREFIX!
-    sig = HexBytes('0') + w3.eth.account.signHash(hash, private_key=key).signature
+    sig = HexBytes('0') + w3.eth.account.signHash(hash,
+                                                  private_key=key).signature
     return sig
 
 
