@@ -1,0 +1,2 @@
+[flake8]
+exclude = unit_test.py, contract.py, config.py
