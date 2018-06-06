@@ -87,8 +87,8 @@ library RLP {
         it._unsafe_item = self;
         it._unsafe_nextPtr = ptr;
     }
-    /* Iterator */
 
+    /* Iterator */
     function next(Iterator memory self) private pure returns (RLPItem memory subItem) {
         uint ptr = self._unsafe_nextPtr;
         uint itemLength = _itemLength(ptr);
@@ -101,7 +101,6 @@ library RLP {
         RLPItem memory item = self._unsafe_item;
         return self._unsafe_nextPtr < item._unsafe_memPtr + item._unsafe_length;
     }
-
 
     // Get the payload offset.
     function _payloadOffset(RLPItem memory self)

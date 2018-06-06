@@ -1,19 +1,19 @@
 pragma solidity ^0.4.24;
 
 // Linked contract for withdrawals, import only safeTransferFrom interface for gas efficiency in the future
-import './Cards.sol';
+import "./Cards.sol";
 
 // Zeppelin Imports
-import 'openzeppelin-solidity/contracts/token/ERC721/ERC721Receiver.sol';
-import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
+import "openzeppelin-solidity/contracts/token/ERC721/ERC721Receiver.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 // Lib deps
-import '../Libraries/Transaction/Transaction.sol';
-import '../Libraries/ByteUtils.sol';
-import '../Libraries/ECVerify.sol';
+import "../Libraries/Transaction/Transaction.sol";
+import "../Libraries/ByteUtils.sol";
+import "../Libraries/ECVerify.sol";
 
 // Sparse Merkle Tree functionalities
-import './SparseMerkleTree.sol';
+import "./SparseMerkleTree.sol";
 
 contract RootChainEvents{
     event Deposit(uint64 indexed slot, uint256 depositBlockNumber, uint64 denomination, address indexed from, bytes32 hash);
@@ -49,7 +49,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
 
 
     modifier isBonded() {
-        require ( msg.value == BOND_AMOUNT );
+        require(msg.value == BOND_AMOUNT);
 
         // Save challenger's bond
         balances[msg.sender].bonded = balances[msg.sender].bonded.add(msg.value);
@@ -168,7 +168,8 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         uint256 depositBlockNumber = getDepositBlock();
 
         childChain[depositBlockNumber] = childBlock({
-            root: txHash, // save signed transaction hash as root
+            // save signed transaction hash as root
+            root: txHash,
             created_at: block.timestamp
         });
 
@@ -294,16 +295,12 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
 
 
     function challengeBetween(uint64 slot, uint challengingBlockNumber, bytes challengingTransaction, bytes proof)
-        external
-        isState(slot, State.EXITING)
-        cleanupExit(slot)
+        external isState(slot, State.EXITING) cleanupExit(slot)
     {
         // Must challenge with a tx in between
         require(
-                coins[slot].exit.exitBlock > challengingBlockNumber &&
-                coins[slot].exit.prevBlock < challengingBlockNumber,
-                "Challenging transaction must have happened AFTER the attested exit's timestamp"
-       );
+            coins[slot].exit.exitBlock > challengingBlockNumber && coins[slot].exit.prevBlock < challengingBlockNumber,
+            "Challenging transaction must have happened AFTER the attested exit's timestamp");
 
         checkTxIncluded(challengingTransaction, challengingBlockNumber, proof);
         // Apply penalties and change state
@@ -402,13 +399,13 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
     }
 
     function checkBlockInclusion(
-            bytes prevTxBytes, bytes exitingTxBytes,
-            bytes prevTxInclusionProof, bytes exitingTxInclusionProof,
-            bytes sig,
-            uint prevTxIncBlock, uint exitingTxIncBlock, bool checkSender)
-            private
-            view
-            returns (bool)
+        bytes prevTxBytes, bytes exitingTxBytes,
+        bytes prevTxInclusionProof, bytes exitingTxInclusionProof,
+        bytes sig,
+        uint prevTxIncBlock, uint exitingTxIncBlock, bool checkSender)
+        private
+        view
+        returns (bool)
     {
         Transaction.TX memory exitingTxData = exitingTxBytes.getTx();
         if (checkSender) require(exitingTxData.owner == msg.sender, "Invalid sender");

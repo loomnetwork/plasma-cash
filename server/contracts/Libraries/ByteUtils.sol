@@ -5,6 +5,7 @@ pragma solidity ^0.4.24;
  * @dev Based on https://github.com/GNSPS/solidity-bytes-utils/blob/master/contracts/BytesLib.sol
  */
 
+
 library ByteUtils {
     function slice(bytes _bytes, uint _start, uint _length)
         internal

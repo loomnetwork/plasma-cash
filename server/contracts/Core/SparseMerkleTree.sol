@@ -1,5 +1,6 @@
 pragma solidity ^0.4.24;
 
+
 // Based on https://rinkeby.etherscan.io/address/0x881544e0b2e02a79ad10b01eca51660889d5452b#code
 contract SparseMerkleTree {
 
@@ -42,7 +43,7 @@ contract SparseMerkleTree {
             }
             if (index % 2 == 0) {
                 computedHash = keccak256(abi.encodePacked(computedHash, proofElement));
-            }else{
+            } else {
                 computedHash = keccak256(abi.encodePacked(proofElement, computedHash));
             }
             proofBits = proofBits / 2; // shift it right for next bit

@@ -61,7 +61,11 @@ class Client(object):
     def challenge_before(self, slot, prev_tx_bytes, exiting_tx_bytes,
                          prev_tx_inclusion_proof, exiting_tx_inclusion_proof,
                          sig, prev_tx_block_num, exiting_tx_block_num):
-        self.root_chain.challenge_before(slot)
+        self.root_chain.challenge_before(slot, prev_tx_bytes, exiting_tx_bytes,
+                                         prev_tx_inclusion_proof,
+                                         exiting_tx_inclusion_proof, sig,
+                                         prev_tx_block_num,
+                                         exiting_tx_block_num)
         return self
 
     def respond_challenge_before(self, slot, challenging_block_number,

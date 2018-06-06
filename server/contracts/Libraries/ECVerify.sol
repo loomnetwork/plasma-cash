@@ -1,5 +1,6 @@
 pragma solidity ^0.4.24;
 
+
 library ECVerify {
 
     enum SignatureMode {
