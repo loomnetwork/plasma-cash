@@ -16,14 +16,16 @@ class SparseMerkleTree(object):
         self.leaves = OrderedDict(sorted(leaves.items(), key=lambda t: t[0]))
         self.default_nodes = self.create_default_nodes(self.depth)
         if leaves:
-            self.tree = self.create_tree(self.leaves, self.depth, self.default_nodes)
+            self.tree = self.create_tree(self.leaves, self.depth,
+                                         self.default_nodes)
             self.root = self.tree[-1][0]
         else:
             self.tree = []
             self.root = self.default_nodes[self.depth - 1]
 
     def create_default_nodes(self, depth):
-        # Default nodes are the nodes whose children are both empty nodes at each level.
+        # Default nodes are the nodes whose children are both empty nodes at
+        # each level.
         default_hash = keccak256(HexBytes('00' * 32))
         default_nodes = [default_hash]
         for level in range(1, depth):
@@ -41,12 +43,14 @@ class SparseMerkleTree(object):
             prev_index = -1
             for index, value in tree_level.items():
                 if index % 2 == 0:
-                    # If the node is a left node, assume the right sibling is a default node.
-                    # in the case right sibling is not default node,
-                    # it would override on next round
-                    next_level[index // 2] = keccak256(value, default_nodes[level])
+                    # If the node is a left node, assume the right sibling is
+                    # a default node. In the case right sibling is not default
+                    # node, it would override on next round
+                    next_level[index // 2] = keccak256(value,
+                                                       default_nodes[level])
                 else:
-                    # If the node is a right node, check if its left sibling is a default node.
+                    # If the node is a right node, check if its left sibling is
+                    # a default node.
                     if index == prev_index + 1:
                         next_level[index // 2] = keccak256(tree_level[prev_index], value)
                     else:
@@ -76,7 +80,8 @@ class SparseMerkleTree(object):
         # Reverse string, reading from right to left
         proofbits = proofbits[::-1]
 
-        # Need to convert the binary string to bytes for solidity to understand.
+        # Need to convert the binary string to bytes for solidity to
+        # understand.
         proof_bytes = to_bytes(proofbits)
         return proof_bytes + proof
 
