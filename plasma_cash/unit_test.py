@@ -5,6 +5,8 @@ from utils.merkle.sparse_merkle_tree import SparseMerkleTree
 
 empty_val = b'\x00' * 32
 default_hash = keccak(empty_val)
+dummy_val = keccak(2)
+dummy_val_2 = keccak(3)
 
 class TestSparseMerkleTree(object):
 
@@ -17,10 +19,9 @@ class TestSparseMerkleTree(object):
         assert len(emptyTree.leaves) == 0
 
     def test_all_leaves_with_val(self):
-        dummy_val = b'\x01' * 32
         leaves = {0: dummy_val, 1: dummy_val, 2: dummy_val, 3: dummy_val}
         tree = SparseMerkleTree(depth=3, leaves=leaves)
-        mid_level_val = keccak(dummy_val + dummy_val)
+        mid_level_val = keccak(dummy_val * 2)
         assert tree.root == keccak(mid_level_val + mid_level_val)
 
     def test_empty_leaves(self):
@@ -29,19 +30,17 @@ class TestSparseMerkleTree(object):
         assert tree.root == keccak(mid_level_val * 2)
 
     def test_empty_left_leave(self):
-        dummy_val = b'\x01' * 32
         leaves = {1: dummy_val, 2: dummy_val, 3: dummy_val}
         tree = SparseMerkleTree(depth=3, leaves=leaves)
         mid_left_val = keccak(default_hash + dummy_val)
-        mid_right_val = keccak(dummy_val + dummy_val)
+        mid_right_val = keccak(dummy_val * 2)
         assert tree.root == keccak(mid_left_val + mid_right_val)
 
     def test_empty_right_leave(self):
-        dummy_val = b'\x01' * 32
         leaves = {0: dummy_val, 2: dummy_val, 3: dummy_val}
         tree = SparseMerkleTree(depth=3, leaves=leaves)
         mid_left_val = keccak(dummy_val + default_hash)
-        mid_right_val = keccak(dummy_val + dummy_val)
+        mid_right_val = keccak(dummy_val * 2)
         assert tree.root == keccak(mid_left_val + mid_right_val)
 
     def test_exceed_tree_size(self):
@@ -49,8 +48,6 @@ class TestSparseMerkleTree(object):
             SparseMerkleTree(depth=1, leaves={0: '0', 1: '1'})
 
     def test_create_merkle_proof(self):
-        dummy_val = keccak(2)
-        dummy_val_2 = keccak(3)
         leaves = {0: dummy_val, 2: dummy_val, 3: dummy_val_2}
         tree = SparseMerkleTree(depth=3, leaves=leaves)
         mid_left_val = keccak(dummy_val + default_hash)
