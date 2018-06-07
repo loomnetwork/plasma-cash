@@ -6,6 +6,7 @@ pragma solidity ^0.4.24;
  * @author Andreas Olofsson (androlo1980@gmail.com)
  */
 
+
 library RLP {
     uint constant DATA_SHORT_START = 0x80;
     uint constant DATA_LONG_START = 0xB8;
@@ -47,7 +48,7 @@ library RLP {
         list = new RLPItem[](numItems);
         Iterator memory it = iterator(self);
         uint idx;
-        while(idx < numItems) {
+        while (idx < numItems) {
             list[idx] = next(it);
             idx++;
         }
@@ -87,8 +88,8 @@ library RLP {
         it._unsafe_item = self;
         it._unsafe_nextPtr = ptr;
     }
-    /* Iterator */
 
+    /* Iterator */
     function next(Iterator memory self) private pure returns (RLPItem memory subItem) {
         uint ptr = self._unsafe_nextPtr;
         uint itemLength = _itemLength(ptr);
@@ -102,7 +103,6 @@ library RLP {
         return self._unsafe_nextPtr < item._unsafe_memPtr + item._unsafe_length;
     }
 
-
     // Get the payload offset.
     function _payloadOffset(RLPItem memory self)
         private
@@ -114,9 +114,9 @@ library RLP {
         assembly {
             b0 := byte(0, mload(memPtr))
         }
-        if(b0 < DATA_SHORT_START)
+        if (b0 < DATA_SHORT_START)
             return 0;
-        if(b0 < DATA_LONG_START || (b0 >= LIST_SHORT_START && b0 < LIST_LONG_START))
+        if (b0 < DATA_LONG_START || (b0 >= LIST_SHORT_START && b0 < LIST_LONG_START))
             return 1;
     }
 

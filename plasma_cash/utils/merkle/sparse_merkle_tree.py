@@ -1,5 +1,4 @@
 from collections import OrderedDict
-from hexbytes import HexBytes
 from eth_utils.crypto import keccak
 
 
@@ -26,13 +25,11 @@ class SparseMerkleTree(object):
     def create_default_nodes(self, depth):
         # Default nodes are the nodes whose children are both empty nodes at
         # each level.
-        default_hash = keccak(HexBytes('00' * 32))
+        default_hash = keccak(b'\x00' * 32)
         default_nodes = [default_hash]
         for level in range(1, depth):
             prev_default = default_nodes[level - 1]
-            default_nodes.append(
-                    keccak(prev_default + prev_default)
-            )
+            default_nodes.append(keccak(prev_default * 2))
         return default_nodes
 
     def create_tree(self, ordered_leaves, depth, default_nodes):
@@ -46,14 +43,17 @@ class SparseMerkleTree(object):
                     # If the node is a left node, assume the right sibling is
                     # a default node. In the case right sibling is not default
                     # node, it would override on next round
-                    next_level[index // 2] = keccak(value + default_nodes[level])
+                    next_level[index // 2] = keccak(value
+                                                    + default_nodes[level])
                 else:
                     # If the node is a right node, check if its left sibling is
                     # a default node.
                     if index == prev_index + 1:
-                        next_level[index // 2] = keccak(tree_level[prev_index] + value)
+                        next_level[index // 2] = keccak(tree_level[prev_index]
+                                                        + value)
                     else:
-                        next_level[index // 2] = keccak(default_nodes[level] + value)
+                        next_level[index // 2] = keccak(default_nodes[level]
+                                                        + value)
                 prev_index = index
             tree_level = next_level
             tree.append(tree_level)

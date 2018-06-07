@@ -1,25 +1,26 @@
 pragma solidity ^0.4.24;
 
 // Linked contract for withdrawals, import only safeTransferFrom interface for gas efficiency in the future
-import './Cards.sol';
+import "./Cards.sol";
 
 // Zeppelin Imports
-import 'openzeppelin-solidity/contracts/token/ERC721/ERC721Receiver.sol';
-import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
+import "openzeppelin-solidity/contracts/token/ERC721/ERC721Receiver.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 // Lib deps
-import '../Libraries/Transaction/Transaction.sol';
-import '../Libraries/ByteUtils.sol';
-import '../Libraries/ECVerify.sol';
+import "../Libraries/Transaction/Transaction.sol";
+import "../Libraries/ByteUtils.sol";
+import "../Libraries/ECVerify.sol";
 
 // Sparse Merkle Tree functionalities
-import './SparseMerkleTree.sol';
+import "./SparseMerkleTree.sol";
 
-contract RootChainEvents{
+
+contract RootChainEvents {
     event Deposit(uint64 indexed slot, uint256 depositBlockNumber, uint64 denomination, address indexed from, bytes32 hash);
     event SubmittedBlock(uint blockNumber, bytes32 root, uint timestamp);
 
-    event StartedExit(uint64 indexed slot, address indexed owner, uint created_at);
+    event StartedExit(uint64 indexed slot, address indexed owner, uint createdAt);
     event ChallengedExit(uint64 indexed slot);
     event RespondedExitChallenge(uint64 indexed slot);
     event FinalizedExit(uint64  indexed slot, address owner);
@@ -28,6 +29,7 @@ contract RootChainEvents{
     event SlashedBond(address indexed from, address indexed to, uint amount);
     event WithdrewBonds(address indexed from, uint amount);
 }
+
 
 contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
 
@@ -49,7 +51,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
 
 
     modifier isBonded() {
-        require ( msg.value == BOND_AMOUNT );
+        require(msg.value == BOND_AMOUNT);
 
         // Save challenger's bond
         balances[msg.sender].bonded = balances[msg.sender].bonded.add(msg.value);
@@ -80,7 +82,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
     mapping (uint64 => address) challengers;
     struct Exit {
         address owner;
-        uint256 created_at;
+        uint256 createdAt;
         uint256 bond;
         uint256 prevBlock;
         uint256 exitBlock;
@@ -112,7 +114,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
     uint256 public lastParentBlock;
     struct childBlock {
         bytes32 root;
-        uint256 created_at;
+        uint256 createdAt;
     }
 
     uint public depositCount;
@@ -139,7 +141,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
 
         childChain[currentChildBlock] = childBlock({
             root: root,
-            created_at: block.timestamp
+            createdAt: block.timestamp
         });
 
         emit SubmittedBlock(currentChildBlock, root, block.timestamp);
@@ -168,8 +170,9 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         uint256 depositBlockNumber = getDepositBlock();
 
         childChain[depositBlockNumber] = childBlock({
-            root: txHash, // save signed transaction hash as root
-            created_at: block.timestamp
+            // save signed transaction hash as root
+            root: txHash,
+            createdAt: block.timestamp
         });
 
         currentDepositBlock = currentDepositBlock.add(1);
@@ -181,10 +184,9 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
     /******************** EXIT RELATED ********************/
 
     function startExit(
-        uint64 slot,
-        bytes prevTxBytes, bytes exitingTxBytes,
-        bytes prevTxInclusionProof, bytes exitingTxInclusionProof,
-        bytes sig,
+        uint64 slot, bytes prevTxBytes,
+        bytes exitingTxBytes, bytes prevTxInclusionProof,
+        bytes exitingTxInclusionProof, bytes sig,
         uint prevTxIncBlock, uint exitingTxIncBlock)
         isState(slot, State.DEPOSITED)
         payable isBonded
@@ -210,19 +212,20 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         Coin storage coin = coins[slot];
 
         // If a coin is not under exit/challenge, then ignore it
-        if (coin.state == State.DEPOSITED || coin.state == State.EXITED) return;
+        if (coin.state == State.DEPOSITED || coin.state == State.EXITED)
+            return;
 
         // If an exit is not matured, ignore it
-        if ((block.timestamp - coin.exit.created_at) <= 7 days) return;
+        if ((block.timestamp - coin.exit.createdAt) <= 7 days)
+            return;
 
         // If a coin has been challenged AND not responded, slash it
         if (coin.state == State.CHALLENGED) {
             // Update coin state & penalize exitor
             coin.state = State.DEPOSITED;
             slashBond(coin.exit.owner, challengers[slot]);
-        }
         // otherwise, the exit has not been challenged, or it has been challenged and responded
-        else {
+        } else {
             // If the exit was actually challenged and responded, penalize the challenger
             if (coin.state == State.RESPONDED) {
                 slashBond(challengers[slot], coin.exit.owner);
@@ -269,7 +272,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         isState(slot, State.EXITING)
     {
         // If we're exiting a deposit UTXO directly, we do a different inclusion check
-        if (exitingTxIncBlock % childBlockInterval != 0 ) {
+        if (exitingTxIncBlock % childBlockInterval != 0) {
             checkDepositBlockInclusion(exitingTxBytes, sig, exitingTxIncBlock, false);
         } else {
             checkBlockInclusion(
@@ -294,16 +297,12 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
 
 
     function challengeBetween(uint64 slot, uint challengingBlockNumber, bytes challengingTransaction, bytes proof)
-        external
-        isState(slot, State.EXITING)
-        cleanupExit(slot)
+        external isState(slot, State.EXITING) cleanupExit(slot)
     {
         // Must challenge with a tx in between
         require(
-                coins[slot].exit.exitBlock > challengingBlockNumber &&
-                coins[slot].exit.prevBlock < challengingBlockNumber,
-                "Challenging transaction must have happened AFTER the attested exit's timestamp"
-       );
+            coins[slot].exit.exitBlock > challengingBlockNumber && coins[slot].exit.prevBlock < challengingBlockNumber,
+            "Challenging transaction must have happened AFTER the attested exit's timestamp");
 
         checkTxIncluded(challengingTransaction, challengingBlockNumber, proof);
         // Apply penalties and change state
@@ -356,7 +355,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         Coin storage c = coins[slot];
         c.exit = Exit({
             owner: msg.sender,
-            created_at: block.timestamp,
+            createdAt: block.timestamp,
             bond: msg.value,
             prevBlock: prevBlock,
             exitBlock: exitingBlock
@@ -389,7 +388,8 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
          returns (bool)
     {
         Transaction.TX memory txData = txBytes.getTx();
-        if (checkSender) require(txData.owner == msg.sender, "Invalid sender");
+        if (checkSender)
+            require(txData.owner == msg.sender, "Invalid sender");
 
         bytes32 txHash = keccak256(abi.encodePacked(txData.slot));
         require(txHash.ecverify(signature, txData.owner), "Invalid sig");
@@ -402,16 +402,17 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
     }
 
     function checkBlockInclusion(
-            bytes prevTxBytes, bytes exitingTxBytes,
-            bytes prevTxInclusionProof, bytes exitingTxInclusionProof,
-            bytes sig,
-            uint prevTxIncBlock, uint exitingTxIncBlock, bool checkSender)
-            private
-            view
-            returns (bool)
+        bytes prevTxBytes, bytes exitingTxBytes,
+        bytes prevTxInclusionProof, bytes exitingTxInclusionProof,
+        bytes sig,
+        uint prevTxIncBlock, uint exitingTxIncBlock, bool checkSender)
+        private
+        view
+        returns (bool)
     {
         Transaction.TX memory exitingTxData = exitingTxBytes.getTx();
-        if (checkSender) require(exitingTxData.owner == msg.sender, "Invalid sender");
+        if (checkSender)
+            require(exitingTxData.owner == msg.sender, "Invalid sender");
 
         Transaction.TX memory prevTxData = prevTxBytes.getTx();
         require(keccak256(exitingTxBytes).ecverify(sig, prevTxData.owner), "Invalid sig");
@@ -465,8 +466,10 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
 
     function getIndex(uint64 slot) private view returns (uint) {
         uint len = exitSlots.length;
-        for (uint i = 0; i < len; i++)
-            if (exitSlots[i] == slot) return i;
+        for (uint i = 0; i < len; i++) {
+            if (exitSlots[i] == slot)
+                return i;
+        }
         return 0;
     }
 

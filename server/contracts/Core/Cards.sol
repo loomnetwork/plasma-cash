@@ -1,6 +1,7 @@
 pragma solidity ^0.4.24;
 
-import 'openzeppelin-solidity/contracts/token/ERC721/ERC721Token.sol';
+import "openzeppelin-solidity/contracts/token/ERC721/ERC721Token.sol";
+
 
 contract CryptoCards is ERC721Token("CryptoCards", "CCC") {
 
@@ -20,10 +21,10 @@ contract CryptoCards is ERC721Token("CryptoCards", "CCC") {
         // registered[msg.sender] = true;
     }
 
-	function create() private {
-		uint256 tokenId = allTokens.length + 1;
-		_mint(msg.sender, tokenId);
-	}
+    function create() private {
+        uint256 tokenId = allTokens.length + 1;
+        _mint(msg.sender, tokenId);
+    }
 
     function depositToPlasmaWithData(uint tokenId, bytes _data) public {
         require(plasma != address(0));
