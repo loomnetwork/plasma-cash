@@ -60,9 +60,6 @@ class TestSparseMerkleTree(object):
         assert tree.create_merkle_proof(2) == (3).to_bytes(8, byteorder='big') + dummy_val_2 + mid_left_val
         assert tree.create_merkle_proof(3) == (3).to_bytes(8, byteorder='big') + dummy_val + mid_left_val
 
-        # this is problematic since it doesn't seem that the value at a particular node matters
-        assert tree.verify(0, tree.create_merkle_proof(0))
-
     def test_old(self):
         slot = 2
         txHash = HexBytes('0xcf04ea8bb4ff94066eb84dd932f9e66d1c9f40d84d5491f5a7735200de010d84')
