@@ -1,5 +1,4 @@
 from collections import OrderedDict
-from hexbytes import HexBytes
 from eth_utils.crypto import keccak
 
 
@@ -26,13 +25,12 @@ class SparseMerkleTree(object):
     def create_default_nodes(self, depth):
         # Default nodes are the nodes whose children are both empty nodes at
         # each level.
-        default_hash = keccak(HexBytes('00' * 32))
+        default_hash = keccak(b'\x00' * 32)
         default_nodes = [default_hash]
         for level in range(1, depth):
             prev_default = default_nodes[level - 1]
             default_nodes.append(
-                    keccak(prev_default + prev_default)
-            )
+                keccak(prev_default * 2))
         return default_nodes
 
     def create_tree(self, ordered_leaves, depth, default_nodes):
