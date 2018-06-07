@@ -29,8 +29,7 @@ class SparseMerkleTree(object):
         default_nodes = [default_hash]
         for level in range(1, depth):
             prev_default = default_nodes[level - 1]
-            default_nodes.append(
-                keccak(prev_default * 2))
+            default_nodes.append(keccak(prev_default * 2))
         return default_nodes
 
     def create_tree(self, ordered_leaves, depth, default_nodes):
