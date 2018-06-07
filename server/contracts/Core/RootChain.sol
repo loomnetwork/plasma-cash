@@ -184,10 +184,9 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
     /******************** EXIT RELATED ********************/
 
     function startExit(
-        uint64 slot,
-        bytes prevTxBytes, bytes exitingTxBytes,
-        bytes prevTxInclusionProof, bytes exitingTxInclusionProof,
-        bytes sig,
+        uint64 slot, bytes prevTxBytes,
+        bytes exitingTxBytes, bytes prevTxInclusionProof,
+        bytes exitingTxInclusionProof, bytes sig,
         uint prevTxIncBlock, uint exitingTxIncBlock)
         isState(slot, State.DEPOSITED)
         payable isBonded
@@ -273,7 +272,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         isState(slot, State.EXITING)
     {
         // If we're exiting a deposit UTXO directly, we do a different inclusion check
-        if (exitingTxIncBlock % childBlockInterval != 0 ) {
+        if (exitingTxIncBlock % childBlockInterval != 0) {
             checkDepositBlockInclusion(exitingTxBytes, sig, exitingTxIncBlock, false);
         } else {
             checkBlockInclusion(

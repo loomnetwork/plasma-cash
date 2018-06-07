@@ -58,14 +58,27 @@ class Client(object):
                 rlp.encode(exiting_tx, UnsignedTransaction), prev_tx_proof,
                 exiting_tx_proof, exiting_tx.sig, prev_tx_blk_num, tx_blk_num)
 
-    def challenge_before(self, slot, prev_tx_bytes, exiting_tx_bytes,
-                         prev_tx_inclusion_proof, exiting_tx_inclusion_proof,
-                         sig, prev_tx_block_num, exiting_tx_block_num):
-        self.root_chain.challenge_before(slot, prev_tx_bytes, exiting_tx_bytes,
-                                         prev_tx_inclusion_proof,
-                                         exiting_tx_inclusion_proof, sig,
-                                         prev_tx_block_num,
-                                         exiting_tx_block_num)
+    def challenge_before(self, uid, prev_tx_block_num, exiting_tx_block_num):
+        block = self.get_block(exiting_tx_block_num)
+        exiting_tx = block.get_tx_by_uid(uid)
+        # make sure this is inclusion
+        exiting_tx_inclusion_proof = self.get_proof(exiting_tx_block_num, uid)
+
+        # If the referenced transaction is a deposit transaction then no need
+        prev_tx = '0x0'
+        prev_tx_inclusion_proof = '0x0'
+        if prev_tx_block_num % self.child_block_interval == 0:
+            prev_block = self.get_block(prev_tx_block_num)
+            prev_tx = prev_block.get_tx_by_uid(uid)
+            prev_tx_inclusion_proof = self.get_proof(prev_tx_block_num, uid)
+
+        self.root_chain.challenge_before(
+            uid, rlp.encode(prev_tx, UnsignedTransaction),
+            rlp.encode(exiting_tx, UnsignedTransaction),
+            prev_tx_inclusion_proof,
+            exiting_tx_inclusion_proof, exiting_tx.sig,
+            prev_tx_block_num,
+            exiting_tx_block_num)
         return self
 
     def respond_challenge_before(self, slot, challenging_block_number,
