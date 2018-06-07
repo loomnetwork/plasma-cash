@@ -48,16 +48,20 @@ class TestSparseMerkleTree(object):
         with pytest.raises(SparseMerkleTree.TreeSizeExceededException):
             SparseMerkleTree(depth=1, leaves={0: '0', 1: '1'})
 
-#   def test_create_merkle_proof(self):
-#       dummy_val = b'\x01' * 32
-#       leaves = {0: dummy_val, 2: dummy_val, 3: dummy_val}
-#       tree = SparseMerkleTree(depth=3, leaves=leaves)
-#       mid_left_val = keccak(dummy_val + default_hash)
-#       mid_right_val = keccak(dummy_val + dummy_val)
-#       assert tree.create_merkle_proof(0) == default_hash + mid_right_val
-#       assert tree.create_merkle_proof(1) == dummy_val + mid_right_val
-#       assert tree.create_merkle_proof(2) == dummy_val + mid_left_val
-#       assert tree.create_merkle_proof(3) == dummy_val + mid_left_val
+    def test_create_merkle_proof(self):
+        dummy_val = keccak(2)
+        dummy_val_2 = keccak(3)
+        leaves = {0: dummy_val, 2: dummy_val, 3: dummy_val_2}
+        tree = SparseMerkleTree(depth=3, leaves=leaves)
+        mid_left_val = keccak(dummy_val + default_hash)
+        mid_right_val = keccak(dummy_val + dummy_val_2)
+        assert tree.create_merkle_proof(0) == (2).to_bytes(8, byteorder='big') + mid_right_val
+        assert tree.create_merkle_proof(1) == (3).to_bytes(8, byteorder='big') + dummy_val + mid_right_val
+        assert tree.create_merkle_proof(2) == (3).to_bytes(8, byteorder='big') + dummy_val_2 + mid_left_val
+        assert tree.create_merkle_proof(3) == (3).to_bytes(8, byteorder='big') + dummy_val + mid_left_val
+
+        # this is problematic since it doesn't seem that the value at a particular node matters
+        assert tree.verify(0, tree.create_merkle_proof(0))
 
     def test_old(self):
         slot = 2
