@@ -411,10 +411,11 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         returns (bool)
     {
         Transaction.TX memory exitingTxData = exitingTxBytes.getTx();
-        if (checkSender)
-            require(exitingTxData.owner == msg.sender, "Invalid sender");
-
         Transaction.TX memory prevTxData = prevTxBytes.getTx();
+
+        if (checkSender) require(exitingTxData.owner == msg.sender, "Invalid sender");
+        require(exitingTxData.slot == prevTxData.slot);
+        require(prevTxIncBlock < exitingTxIncBlock);
         require(keccak256(exitingTxBytes).ecverify(sig, prevTxData.owner), "Invalid sig");
 
         checkTxIncluded(prevTxBytes, prevTxIncBlock, prevTxInclusionProof);
