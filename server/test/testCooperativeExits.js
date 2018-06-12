@@ -27,7 +27,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
     // Alice registers and has 5 coins, and she deposits 3 of them.
     const ALICE_INITIAL_COINS = 5;
     const ALICE_DEPOSITED_COINS = 3;
-    const COINS = [ 1, 2, 3];
+    const COINS = [1, 2, 3];
 
     let cards;
     let plasma;

@@ -46,8 +46,9 @@ class Client(object):
         exiting_tx_proof = self.get_proof(tx_blk_num, uid)
 
         # If the referenced transaction is a deposit transaction then no need
-        prev_tx = '0x0'
-        prev_tx_proof = '0x0'
+        prev_tx = Transaction(0, 0, 0,
+                              0x0000000000000000000000000000000000000000)
+        prev_tx_proof = '0x0000000000000000'
         if prev_tx_blk_num % self.child_block_interval == 0:
             prev_block = self.get_block(prev_tx_blk_num)
             prev_tx = prev_block.get_tx_by_uid(uid)
@@ -65,8 +66,9 @@ class Client(object):
         exiting_tx_inclusion_proof = self.get_proof(exiting_tx_block_num, uid)
 
         # If the referenced transaction is a deposit transaction then no need
-        prev_tx = '0x0'
-        prev_tx_inclusion_proof = '0x0'
+        prev_tx = Transaction(0, 0, 0,
+                              0x0000000000000000000000000000000000000000)
+        prev_tx_inclusion_proof = '0x0000000000000000'
         if prev_tx_block_num % self.child_block_interval == 0:
             prev_block = self.get_block(prev_tx_block_num)
             prev_tx = prev_block.get_tx_by_uid(uid)
