@@ -27,7 +27,7 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
     // Alice registers and has 5 coins, and she deposits 3 of them.
     const ALICE_INITIAL_COINS = 5;
     const ALICE_DEPOSITED_COINS = 3;
-    const COINS = [ 1, 2, 3];
+    const COINS = [1, 2, 3];
 
     let cards;
     let plasma;
@@ -190,14 +190,14 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
             );
 
             return {
-                'charlie' : { 'data' : bob_to_charlie, 'tree': tree_charlie},
-                'dylan' : { 'data' : charlie_to_dylan, 'tree' : tree_dylan }
+                'charlie': {'data': bob_to_charlie, 'tree': tree_charlie},
+                'dylan': {'data': charlie_to_dylan, 'tree': tree_dylan}
             };
         }
     })
 
     describe('Invalid Exit of UTXO 0', function() {
-        let UTXO = [ {'slot' : 0, 'block' : 1 }, { 'slot' : 2, 'block' : 3 }];
+        let UTXO = [{'slot' : 0, 'block' : 1}, {'slot' : 2, 'block' : 3}];
 
         it("Alice gives a coin to Bob and Charlie and immediately tries to exit Bob's coin. Gets Challenged.", async function() {
             let alice_to_bob = txlib.createUTXO(UTXO[0].slot, UTXO[0].block, 1000, alice, bob);
@@ -223,12 +223,12 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
             let proof = tree.createMerkleProof(slot);
             await plasma.challengeAfter(
                 slot, 1000, challengeTx, proof,
-                {'from': challenger }
+                {'from': challenger}
             );
             t0 = (await web3.eth.getBlock('latest')).timestamp;
             await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2 });
-            assertRevert(plasma.withdraw(slot, {from : alice }));
+            await plasma.finalizeExits({from: random_guy2});
+            assertRevert(plasma.withdraw(slot, {from : alice}));
             assert.equal(await cards.balanceOf.call(alice), 2);
             assert.equal(await cards.balanceOf.call(bob), 0);
             assert.equal(await cards.balanceOf.call(plasma.address), 3);
@@ -265,13 +265,13 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
             let proof = tree2.createMerkleProof(slot);
             await plasma.challengeAfter(
                 slot, 2000, challengeTx, proof,
-                {'from': challenger }
+                {'from': challenger}
             );
 
             t0 = (await web3.eth.getBlock('latest')).timestamp;
             await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2 });
-            assertRevert(plasma.withdraw(0, {from : bob }));
+            await plasma.finalizeExits({from: random_guy2});
+            assertRevert(plasma.withdraw(0, {from : bob}));
 
             assert.equal(await cards.balanceOf.call(alice), 2);
             assert.equal(await cards.balanceOf.call(bob), 0);
