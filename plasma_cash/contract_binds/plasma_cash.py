@@ -63,3 +63,13 @@ class PlasmaCash(Contract):
     def withdraw_bonds(self):
         self.sign_and_send(self.contract.functions.withdrawBonds, [])
         return self
+
+    def get_plasma_coin(self, slot):
+        data = self.contract.functions.getPlasmaCoin(slot).call()
+        ret = { 'uid': data[0], 
+                'deposit_block': data[1],
+                'denomination' : data[2],
+                'owner' : data[3], 
+                'state': data[4] 
+        }
+        return ret
