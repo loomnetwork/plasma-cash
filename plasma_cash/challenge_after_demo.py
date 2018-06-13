@@ -22,9 +22,10 @@ print('current block: {}'.format(current_block))
 
 # Mallory deposits one of her coins to the plasma contract
 mallory.deposit(6)
+mallory.deposit(7)
 malloryTokensPostDeposit = mallory.token_contract.balance_of()
 print('Mallory has {} tokens'.format(malloryTokensPostDeposit))
-assert (malloryTokensPostDeposit == 4), \
+assert (malloryTokensPostDeposit == 3), \
         "POST-DEPOSIT: Mallory has incorrect number of tokens"
 
 current_block = authority.get_block_number()
@@ -41,20 +42,20 @@ authority.submit_block()
 utxo_id = 6
 # this works as a value for blk_num, but I think it means there's an
 # implementation error somewhere
-blk_num = 4
-mallory_to_dan = mallory.send_transaction(
-        utxo_id, blk_num, 1, dan.token_contract.account.address)
-authority.submit_block()
-
-# Mallory attempts to exit spent coin (the one sent to Dan)
-current_block = authority.get_block_number()
-print('current block: {}'.format(current_block))
-# Vitalik mentions in Minimal Viable Plasma that the origin transaction for
-# a coin must be mentioned. Did this change in Plasma cash?
-mallory.start_exit(utxo_id, 3000, 4000)
-
-# Dan challenges Mallory's attempt to exit a spent coin
-tx = mallory_to_dan.hash
-# how should we generate the proof?
-proof = '0x0000000000000000'
-dan.challenge_after(utxo_id, 4000, tx, proof)
+# blk_num = 4
+# mallory_to_dan = mallory.send_transaction(
+#         utxo_id, blk_num, 1, dan.token_contract.account.address)
+# authority.submit_block()
+#
+# # Mallory attempts to exit spent coin (the one sent to Dan)
+# current_block = authority.get_block_number()
+# print('current block: {}'.format(current_block))
+# # Vitalik mentions in Minimal Viable Plasma that the origin transaction for
+# # a coin must be mentioned. Did this change in Plasma cash?
+# mallory.start_exit(utxo_id, 3000, 4000)
+#
+# # Dan challenges Mallory's attempt to exit a spent coin
+# tx = mallory_to_dan.hash
+# # how should we generate the proof?
+# proof = '0x0000000000000000'
+# dan.challenge_after(utxo_id, 4000, tx, proof)

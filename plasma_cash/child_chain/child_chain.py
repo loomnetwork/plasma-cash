@@ -22,7 +22,7 @@ class ChildChain(object):
         self.blocks = {}
         self.current_block = Block()
         self.child_block_interval = 1000
-        self.current_block_number = self.child_block_interval
+        self.current_block_number = 0
 
         # Watch all deposit events, callback to self._send_deposit
         self.root_chain.watch_event('Deposit', self._send_deposit, 1)
@@ -30,7 +30,7 @@ class ChildChain(object):
     def _send_deposit(self, event):
         ''' Called by event watcher and creates a deposit block '''
         slot = event['args']['slot']
-        blknum = event['args']['depositBlockNumber']
+        blknum = event['args']['blockNumber']
         # Currently, denomination is always 1. This may change in the future.
         denomination = event['args']['denomination']
         depositor = event['args']['from']
@@ -38,7 +38,7 @@ class ChildChain(object):
                                  incl_block=blknum)
         # create a new plasma block on deposit
         deposit_block = Block([deposit_tx])
-
+        print("new deposit: " + str(blknum) + " slot: " + str(slot))
         self.blocks[blknum] = deposit_block
 
     def submit_block(self, block):
@@ -48,11 +48,11 @@ class ChildChain(object):
         if (get_sender(block.hash, signature) != self.authority):
             raise InvalidBlockSignatureException('failed to submit a block')
 
+        self.current_block_number += self.child_block_interval
         merkle_hash = w3.toHex(block.merklize_transaction_set())
         self.root_chain.submit_block(merkle_hash)
 
         self.blocks[self.current_block_number] = self.current_block
-        self.current_block_number += self.child_block_interval
         self.current_block = Block()
 
         return merkle_hash
@@ -98,4 +98,7 @@ class ChildChain(object):
         return block.merkle.create_merkle_proof(uid)
 
     def get_block_number(self):
+        print([list(map(lambda a: a.uid, block.transaction_set))
+               for block in self.blocks.values()])
+        print(self.blocks.keys())
         return self.current_block_number

@@ -17,7 +17,7 @@ import "./SparseMerkleTree.sol";
 
 
 contract RootChainEvents {
-    event Deposit(uint64 indexed slot, uint256 depositBlockNumber, uint64 denomination, address indexed from, bytes32 hash);
+    event Deposit(uint64 indexed slot, uint256 blockNumber, uint64 denomination, address indexed from, bytes32 hash);
     event SubmittedBlock(uint256 blockNumber, bytes32 root, uint256 timestamp);
 
     event StartedExit(uint64 indexed slot, address indexed owner, uint256 createdAt);
