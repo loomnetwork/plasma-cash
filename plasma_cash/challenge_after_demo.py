@@ -43,8 +43,8 @@ print(authority.get_block(3000).transaction_set)
 authority.submit_block()
 
 # Mallory sends her coin to Dan
-# Coin 6 was the first deposit of 
-utxo_id = 3 
+# Coin 6 was the first deposit of
+utxo_id = 3
 coin = mallory.get_plasma_coin(utxo_id)
 mallory_to_dan = mallory.send_transaction(
          utxo_id, coin['deposit_block'], 1, dan.token_contract.account.address)
@@ -69,7 +69,8 @@ dan.withdraw(utxo_id)
 dan_balance_before = w3.eth.getBalance(dan.token_contract.account.address)
 dan.withdraw_bonds()
 dan_balance_after = w3.eth.getBalance(dan.token_contract.account.address)
-assert (dan_balance_before < dan_balance_after), "END: Dan did not withdraw his bonds"
+assert (dan_balance_before < dan_balance_after), \
+        "END: Dan did not withdraw his bonds"
 
 malloryTokensEnd = mallory.token_contract.balance_of()
 print('Mallory has {} tokens'.format(malloryTokensEnd))

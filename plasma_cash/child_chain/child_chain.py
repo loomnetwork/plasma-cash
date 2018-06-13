@@ -38,7 +38,6 @@ class ChildChain(object):
                                  incl_block=blknum)
         # create a new plasma block on deposit
         deposit_block = Block([deposit_tx])
-        print("new deposit: " + str(blknum) + " slot: " + str(slot))
         self.blocks[blknum] = deposit_block
 
     def submit_block(self, block):
@@ -98,7 +97,4 @@ class ChildChain(object):
         return block.merkle.create_merkle_proof(uid)
 
     def get_block_number(self):
-        print([list(map(lambda a: a.uid, block.transaction_set))
-               for block in self.blocks.values()])
-        print(self.blocks.keys())
         return self.current_block_number

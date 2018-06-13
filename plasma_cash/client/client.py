@@ -42,19 +42,24 @@ class Client(object):
         # operator which sould be changed in the future after the exiting
         # process is more standardized
 
-        if (tx_blk_num % self.child_block_interval != 0 and prev_tx_blk_num == 0):
-            # In case the sender is exiting a Deposit transaction, they should 
-            # just create a signed transaction to themselves. There is no need for
-            # a merkle proof. 
-            exiting_tx = Transaction(slot, 0, 1, self.token_contract.account.address, incl_block=tx_blk_num) # prevBlockehw = 0 , denomination = 1
+        if (tx_blk_num % self.child_block_interval != 0 and
+                prev_tx_blk_num == 0):
+            # In case the sender is exiting a Deposit transaction, they should
+            # just create a signed transaction to themselves. There is no need
+            # for a merkle proof.
+
+            # prevBlockehw = 0 , denomination = 1
+            exiting_tx = Transaction(slot, 0, 1,
+                                     self.token_contract.account.address,
+                                     incl_block=tx_blk_num)
             exiting_tx.make_mutable()
             exiting_tx.sign(self.key)
             exiting_tx.make_immutable()
             self.root_chain.start_exit(
-                    slot, 
-                    b'0x0', rlp.encode(exiting_tx, UnsignedTransaction), 
+                    slot,
+                    b'0x0', rlp.encode(exiting_tx, UnsignedTransaction),
                     b'0x0', b'0x0',
-                    exiting_tx.sig, 
+                    exiting_tx.sig,
                     0, tx_blk_num
             )
         else:
@@ -67,15 +72,17 @@ class Client(object):
             prev_block = self.get_block(prev_tx_blk_num)
             prev_tx = prev_block.get_tx_by_uid(slot)
             if (prev_tx_blk_num % self.child_block_interval != 0):
-                # After 1 off-chain transfer, referencing a deposit transaction, no need for proof
+                # After 1 off-chain transfer, referencing a deposit
+                # transaction, no need for proof
                 prev_tx_proof = b'0x0000000000000000'
             else:
                 prev_tx_proof = self.get_proof(prev_tx_blk_num, slot)
             self.root_chain.start_exit(
-                    slot, 
-                    rlp.encode(prev_tx, UnsignedTransaction),  rlp.encode(exiting_tx, UnsignedTransaction), 
+                    slot,
+                    rlp.encode(prev_tx, UnsignedTransaction),
+                    rlp.encode(exiting_tx, UnsignedTransaction),
                     prev_tx_proof, exiting_tx_proof,
-                    exiting_tx.sig, 
+                    exiting_tx.sig,
                     prev_tx_blk_num, tx_blk_num
             )
 
@@ -112,7 +119,7 @@ class Client(object):
         proof = self.get_proof(challenging_block_number, slot)
 
         self.root_chain.respond_challenge_before(
-            slot, challenging_block_number, 
+            slot, challenging_block_number,
             rlp.encode(challenging_tx, UnsignedTransaction), proof
         )
         return self
@@ -127,7 +134,7 @@ class Client(object):
         proof = self.get_proof(challenging_block_number, slot)
 
         self.root_chain.challenge_between(
-            slot, challenging_block_number, 
+            slot, challenging_block_number,
             rlp.encode(challenging_tx, UnsignedTransaction), proof
         )
         return self

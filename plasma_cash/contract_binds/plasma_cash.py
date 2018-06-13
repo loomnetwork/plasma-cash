@@ -67,10 +67,9 @@ class PlasmaCash(Contract):
 
     def get_plasma_coin(self, slot):
         data = self.contract.functions.getPlasmaCoin(slot).call()
-        ret = { 'uid': data[0], 
-                'deposit_block': data[1],
-                'denomination' : data[2],
-                'owner' : data[3], 
-                'state': data[4] 
-        }
+        ret = {'uid': data[0],
+               'deposit_block': data[1],
+               'denomination': data[2],
+               'owner': data[3],
+               'state': data[4]}
         return ret
