@@ -136,6 +136,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         // ensure finality on previous blocks before submitting another
         // require(block.number >= lastParentBlock.add(6)); // commented out while prototyping
 
+        // rounding to next whole `childBlockInterval`
         currentBlock = currentBlock.add(childBlockInterval)
                                    .div(childBlockInterval)
                                    .mul(childBlockInterval);
