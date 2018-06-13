@@ -414,7 +414,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         Transaction.TX memory exitingTxData = exitingTxBytes.getTx();
         Transaction.TX memory prevTxData = prevTxBytes.getTx();
 
-        if (checkSender)
+        if (checkSender) 
             require(exitingTxData.owner == msg.sender, "Invalid sender");
         require(exitingTxData.slot == prevTxData.slot);
         require(prevTxIncBlock < exitingTxIncBlock);
