@@ -31,9 +31,9 @@ class Client(object):
 
     # Plasma Functions
 
-    def start_exit(self, uid, prev_tx_blk_num, tx_blk_num):
+    def start_exit(self, slot, prev_tx_blk_num, tx_blk_num):
         '''
-        As a user, you declare that you want to exit a coin at slot `uid`
+        As a user, you declare that you want to exit a coin at slot `slot`
         at the state which happened at block `tx_blk_num` and you also need to
         reference a previous block
         '''
@@ -42,8 +42,8 @@ class Client(object):
         # operator which sould be changed in the future after the exiting
         # process is more standardized
         block = self.get_block(tx_blk_num)
-        exiting_tx = block.get_tx_by_uid(uid)
-        exiting_tx_proof = self.get_proof(tx_blk_num, uid)
+        exiting_tx = block.get_tx_by_uid(slot)
+        exiting_tx_proof = self.get_proof(tx_blk_num, slot)
 
         # If the referenced transaction is a deposit transaction then no need
         prev_tx = Transaction(0, 0, 0,
@@ -51,56 +51,80 @@ class Client(object):
         prev_tx_proof = '0x0000000000000000'
         if prev_tx_blk_num % self.child_block_interval == 0:
             prev_block = self.get_block(prev_tx_blk_num)
-            prev_tx = prev_block.get_tx_by_uid(uid)
-            prev_tx_proof = self.get_proof(prev_tx_blk_num, uid)
+            prev_tx = prev_block.get_tx_by_uid(slot)
+            prev_tx_proof = self.get_proof(prev_tx_blk_num, slot)
 
-        return self.root_chain.start_exit(
-                uid, rlp.encode(prev_tx, UnsignedTransaction),
-                rlp.encode(exiting_tx, UnsignedTransaction), prev_tx_proof,
-                exiting_tx_proof, exiting_tx.sig, prev_tx_blk_num, tx_blk_num)
+        self.root_chain.start_exit(
+            slot, rlp.encode(prev_tx, UnsignedTransaction),
+            rlp.encode(exiting_tx, UnsignedTransaction), prev_tx_proof,
+            exiting_tx_proof, exiting_tx.sig, prev_tx_blk_num, tx_blk_num
+        )
+        return self
 
-    def challenge_before(self, uid, prev_tx_block_num, exiting_tx_block_num):
-        block = self.get_block(exiting_tx_block_num)
-        exiting_tx = block.get_tx_by_uid(uid)
-        # make sure this is inclusion
-        exiting_tx_inclusion_proof = self.get_proof(exiting_tx_block_num, uid)
+    def challenge_before(self, slot, prev_tx_blk_num, tx_blk_num):
+        block = self.get_block(tx_blk_num)
+        tx = block.get_tx_by_uid(slot)
+        tx_proof = self.get_proof(tx_blk_num, slot)
 
         # If the referenced transaction is a deposit transaction then no need
         prev_tx = Transaction(0, 0, 0,
                               0x0000000000000000000000000000000000000000)
-        prev_tx_inclusion_proof = '0x0000000000000000'
-        if prev_tx_block_num % self.child_block_interval == 0:
-            prev_block = self.get_block(prev_tx_block_num)
-            prev_tx = prev_block.get_tx_by_uid(uid)
-            prev_tx_inclusion_proof = self.get_proof(prev_tx_block_num, uid)
+        prev_tx_proof = '0x0000000000000000'
+        if prev_tx_blk_num % self.child_block_interval == 0:
+            prev_block = self.get_block(prev_tx_blk_num)
+            prev_tx = prev_block.get_tx_by_uid(slot)
+            prev_tx_proof = self.get_proof(prev_tx_blk_num, slot)
 
         self.root_chain.challenge_before(
-            uid, rlp.encode(prev_tx, UnsignedTransaction),
-            rlp.encode(exiting_tx, UnsignedTransaction),
-            prev_tx_inclusion_proof,
-            exiting_tx_inclusion_proof, exiting_tx.sig,
-            prev_tx_block_num,
-            exiting_tx_block_num)
+            slot, rlp.encode(prev_tx, UnsignedTransaction),
+            rlp.encode(tx, UnsignedTransaction), prev_tx_proof,
+            tx_proof, tx.sig, prev_tx_blk_num, tx_blk_num
+        )
         return self
 
-    def respond_challenge_before(self, slot, challenging_block_number,
-                                 challenging_transaction, proof):
-        self.root_chain.respond_challenge_before(slot,
-                                                 challenging_block_number,
-                                                 challenging_transaction,
-                                                 proof)
+    def respond_challenge_before(self, slot, challenging_block_number):
+        '''
+        Respond to an exit with invalid history challenge by proving that
+        you were given the coin under question
+        '''
+        block = self.get_block(challenging_block_number)
+        challenging_tx = block.get_tx_by_uid(slot)
+        proof = self.get_proof(challenging_block_number, slot)
+
+        self.root_chain.respond_challenge_before(
+            slot, challenging_block_number, 
+            rlp.encode(challenging_tx, UnsignedTransaction), proof
+        )
         return self
 
-    def challenge_between(self, slot, challenging_block_number,
-                          challenging_transaction, proof):
-        self.root_chain.challenge_between(slot, challenging_block_number,
-                                          challenging_transaction, proof)
+    def challenge_between(self, slot, challenging_block_number):
+        '''
+        `Double Spend Challenge`: Challenge a double spend of a coin
+        with a spend between the exit's blocks
+        '''
+        block = self.get_block(challenging_block_number)
+        challenging_tx = block.get_tx_by_uid(slot)
+        proof = self.get_proof(challenging_block_number, slot)
+
+        self.root_chain.challenge_between(
+            slot, challenging_block_number, 
+            rlp.encode(challenging_tx, UnsignedTransaction), proof
+        )
         return self
 
-    def challenge_after(self, slot, challenging_block_number,
-                        challenging_transaction, proof):
-        self.root_chain.challenge_after(slot, challenging_block_number,
-                                        challenging_transaction, proof)
+    def challenge_after(self, slot, challenging_block_number):
+        '''
+        `Exit Spent Coin Challenge`: Challenge an exit with a spend
+        after the exit's blocks
+        '''
+        block = self.get_block(challenging_block_number)
+        challenging_tx = block.get_tx_by_uid(slot)
+        proof = self.get_proof(challenging_block_number, slot)
+
+        self.root_chain.challenge_after(
+            slot, challenging_block_number,
+            rlp.encode(challenging_tx, UnsignedTransaction), proof
+        )
         return self
 
     def finalize_exits(self):
@@ -124,10 +148,10 @@ class Client(object):
         block.make_immutable()
         return self.child_chain.submit_block(rlp.encode(block, Block).hex())
 
-    def send_transaction(self, uid, prev_block, denomination, new_owner):
+    def send_transaction(self, slot, prev_block, denomination, new_owner):
         new_owner = utils.normalize_address(new_owner)
         incl_block = self.get_block_number()
-        tx = Transaction(uid, prev_block, denomination, new_owner,
+        tx = Transaction(slot, prev_block, denomination, new_owner,
                          incl_block=incl_block)
         tx.make_mutable()
         tx.sign(self.key)
@@ -146,5 +170,5 @@ class Client(object):
         block = self.child_chain.get_block(blknum)
         return rlp.decode(utils.decode_hex(block), Block)
 
-    def get_proof(self, blknum, uid):
-        return base64.b64decode(self.child_chain.get_proof(blknum, uid))
+    def get_proof(self, blknum, slot):
+        return base64.b64decode(self.child_chain.get_proof(blknum, slot))
