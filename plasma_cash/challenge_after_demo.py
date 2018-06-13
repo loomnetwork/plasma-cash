@@ -1,4 +1,5 @@
 from client.client import Client
+import time
 from dependency_config import container
 from utils.utils import increaseTime
 
@@ -23,6 +24,9 @@ print('current block: {}'.format(current_block))
 # Mallory deposits one of her coins to the plasma contract
 mallory.deposit(6)
 mallory.deposit(7)
+# wait to make sure that events get fired correctly
+time.sleep(2)
+
 malloryTokensPostDeposit = mallory.token_contract.balance_of()
 print('Mallory has {} tokens'.format(malloryTokensPostDeposit))
 assert (malloryTokensPostDeposit == 3), \
@@ -51,6 +55,8 @@ current_block = authority.get_block_number()
 print('current block: {}'.format(current_block))
 
 mallory.start_exit(utxo_id, 0, coin['deposit_block'])
+
+# Dan's transaction was included in block 5000. He challenges!
 dan.challenge_after(utxo_id, 5000)
 dan.start_exit(utxo_id, coin['deposit_block'], 5000)
 
@@ -59,6 +65,11 @@ increaseTime(w3, 8 * 24 * 3600)
 authority.finalize_exits()
 
 dan.withdraw(utxo_id)
+
+dan_balance_before = w3.eth.getBalance(dan.token_contract.account.address)
+dan.withdraw_bonds()
+dan_balance_after = w3.eth.getBalance(dan.token_contract.account.address)
+assert (dan_balance_before < dan_balance_after), "END: Dan did not withdraw his bonds"
 
 malloryTokensEnd = mallory.token_contract.balance_of()
 print('Mallory has {} tokens'.format(malloryTokensEnd))

@@ -15,7 +15,8 @@ class PlasmaCash(Contract):
                 prev_tx_inclusion_proof, exiting_tx_inclusion_proof,
                 sig, prev_tx_block_num, exiting_tx_block_num]
 
-        self.sign_and_send(self.contract.functions.challengeBefore, args)
+        self.sign_and_send(self.contract.functions.challengeBefore, args,
+                           value=self.BOND)
         return self
 
     def respond_challenge_before(self, slot, challenging_block_number,

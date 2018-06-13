@@ -155,7 +155,7 @@ class Client(object):
         self.root_chain.withdraw(slot)
         return self
 
-    def withdrawBonds(self):
+    def withdraw_bonds(self):
         self.root_chain.withdraw_bonds()
         return self
 

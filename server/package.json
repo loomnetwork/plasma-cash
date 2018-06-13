@@ -24,7 +24,7 @@
   "scripts": {
     "console": "truffle console --network rpc",
     "compile": "truffle compile",
-    "test": "npm run ganache-cli:dev && truffle test --network rpc",
+    "test": "truffle test",
     "test:gas": "GAS_REPORTER=true npm test",
     "lint": "solium --dir ./contracts",
     "ganache-cli:dev": "scripts/ganache-cli.sh",
