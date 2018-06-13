@@ -27,7 +27,6 @@ class Client(object):
     def deposit(self, tokenId):
         ''' Deposit happens by a use calling the erc721 token contract '''
         self.token_contract.deposit(tokenId)
-        return self
 
     # Plasma Functions
 
@@ -86,8 +85,6 @@ class Client(object):
                     prev_tx_blk_num, tx_blk_num
             )
 
-        return self
-
     def challenge_before(self, slot, prev_tx_blk_num, tx_blk_num):
         block = self.get_block(tx_blk_num)
         tx = block.get_tx_by_uid(slot)
@@ -107,7 +104,6 @@ class Client(object):
             rlp.encode(tx, UnsignedTransaction), prev_tx_proof,
             tx_proof, tx.sig, prev_tx_blk_num, tx_blk_num
         )
-        return self
 
     def respond_challenge_before(self, slot, challenging_block_number):
         '''
@@ -122,7 +118,6 @@ class Client(object):
             slot, challenging_block_number,
             rlp.encode(challenging_tx, UnsignedTransaction), proof
         )
-        return self
 
     def challenge_between(self, slot, challenging_block_number):
         '''
@@ -137,7 +132,6 @@ class Client(object):
             slot, challenging_block_number,
             rlp.encode(challenging_tx, UnsignedTransaction), proof
         )
-        return self
 
     def challenge_after(self, slot, challenging_block_number):
         '''
@@ -152,19 +146,15 @@ class Client(object):
             slot, challenging_block_number,
             rlp.encode(challenging_tx, UnsignedTransaction), proof
         )
-        return self
 
     def finalize_exits(self):
         self.root_chain.finalize_exits()
-        return self
 
     def withdraw(self, slot):
         self.root_chain.withdraw(slot)
-        return self
 
     def withdraw_bonds(self):
         self.root_chain.withdraw_bonds()
-        return self
 
     def get_plasma_coin(self, slot):
         return self.root_chain.get_plasma_coin(slot)
