@@ -9,11 +9,12 @@ trap cleanup EXIT
 
 cd server
 ganache_pid=$(npm run --silent migrate:dev)
-echo $ganache_pid
+echo 'Launched ganache' $ganache_pid
 
 cd ../plasma_cash
 FLASK_APP=./child_chain FLASK_ENV=development flask run --port=8546 &
 flask_pid=$!
+echo 'Launched flask' $flask_pid
 
 sleep 3
 

@@ -15,5 +15,6 @@ start_ganache() {
 if ganache_running; then
   echo "Using existing ganache instance at port $ganache_port"
 else
+  # echo "Starting our own ganache instance at port $ganache_port"
   start_ganache
 fi

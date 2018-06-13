@@ -2,3 +2,10 @@ node_modules/
 build/
 __pycache__/
 .pytest_cache/
+
+bin/
+include/
+lib/
+pip-selfcheck.json
+lib64/
+src/
