@@ -6,12 +6,14 @@ npm run lint
 npm run test
 
 cd ../plasma_cash
+
+sudo apt install python3.6
+sudo pip install virtualenv
 virtualenv --python=python3.6 .
-cd bin/ 
-source activate
+source bin/activate
 pip install -r requirements.txt
 
-cd ../..
+cd ../
 bash integration_test.sh
 
 # make lint
