@@ -102,6 +102,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
     struct Coin {
         uint64 uid; // there are up to 2^64 cards, can probably make it less
         uint32 denomination; // an owner cannot own more than 256 of a card. Currently set to 1 always, subject to change once the token changes
+        uint256 depositBlock;
         address owner; // who owns that nft
         State state;
         Exit exit;
@@ -157,17 +158,18 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
     function deposit(address from, uint64 uid, uint32 denomination)
         private
     {
+        currentBlock = currentBlock.add(1);
 
         // Update state. Leave `exit` empty
         Coin memory coin;
         coin.uid = uid;
         coin.denomination = denomination;
+        coin.depositBlock = currentBlock;
         coin.owner = from;
         coin.state = State.DEPOSITED;
         coins[numCoins] = coin;
 
         bytes32 txHash = keccak256(abi.encodePacked(numCoins)); // hash for deposit transactions is the hash of its slot
-        currentBlock = currentBlock.add(1);
 
         childChain[currentBlock] = childBlock({
             // save signed transaction hash as root
@@ -472,5 +474,10 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
                 return i;
         }
         return 0;
+    }
+
+    function getPlasmaCoin(uint64 slot) external view returns(uint64, uint256, uint32, address, State) {
+        Coin memory c = coins[slot];
+        return (c.uid, c.depositBlock, c.denomination, c.owner, c.state);
     }
 }
