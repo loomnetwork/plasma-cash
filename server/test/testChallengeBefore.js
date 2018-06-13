@@ -8,17 +8,6 @@ import assertRevert from './helpers/assertRevert.js';
 
 const txlib = require('./UTXO.js')
 
-const Promisify = (inner) =>
-    new Promise((resolve, reject) =>
-        inner((err, res) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(res);
-            }
-        })
-    );
-
 contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async function(accounts) {
 
     const t1 = 3600 * 24 * 3; // 3 days later
@@ -53,7 +42,7 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
         assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), ALICE_DEPOSITED_COINS);
 
         const depositEvent = plasma.Deposit({}, {fromBlock: 0, toBlock: 'latest'});
-        const events = await Promisify(cb => depositEvent.get(cb));
+        const events = await txlib.Promisify(cb => depositEvent.get(cb));
 
         // Check that events were emitted properly
         let coin;

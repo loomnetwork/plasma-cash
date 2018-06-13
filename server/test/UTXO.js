@@ -74,5 +74,6 @@ module.exports = {
     signHash : signHash,
     createUTXO : createUTXO,
     submitTransactions: submitTransactions,
-    withdrawBonds: withdrawBonds
+    withdrawBonds: withdrawBonds,
+    Promisify: Promisify
 }
