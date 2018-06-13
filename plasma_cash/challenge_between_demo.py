@@ -12,7 +12,7 @@ authority = Client(container.get_root('authority'),
 bobTokensStart = bob.token_contract.balance_of()
 
 # Give Eve 5 tokens
-eve.token_contract.register()
+eve.register()
 
 # Eve deposits a coin
 eve.deposit(11)

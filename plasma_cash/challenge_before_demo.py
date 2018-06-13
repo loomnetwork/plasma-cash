@@ -10,7 +10,7 @@ authority = Client(container.get_root('authority'),
                    container.get_token('authority'))
 
 # Give Dan 5 tokens
-dan.token_contract.register()
+dan.register()
 
 # Dan deposits a coin
 dan.deposit(16)
