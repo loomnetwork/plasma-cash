@@ -16,11 +16,12 @@ eve.token_contract.register()
 
 # Eve deposits a coin
 eve.deposit(11)
+
 # wait to make sure that events get fired correctly
 time.sleep(2)
 
 # Eve sends her plasma coin to Bob
-# stop manually setting these utxo's manually
+# TODO stop manually setting these utxo's manually
 utxo_id = 5
 coin = eve.get_plasma_coin(utxo_id)
 eve_to_bob = eve.send_transaction(
@@ -30,7 +31,7 @@ eve_to_bob_block = authority.get_block_number()
 
 # Eve sends this same plasma coin to Alice
 eve_to_alice = eve.send_transaction(
-         utxo_id, coin['deposit_block'], 1, alice.token_contract.account.address)
+      utxo_id, coin['deposit_block'], 1, alice.token_contract.account.address)
 authority.submit_block()
 
 eve_to_alice_block = authority.get_block_number()
@@ -57,6 +58,7 @@ assert (bob_balance_before < bob_balance_after), \
 bobTokensEnd = bob.token_contract.balance_of()
 
 print('Bob has {} tokens'.format(bobTokensEnd))
-assert (bobTokensEnd == bobTokensStart + 1), "END: Bob has incorrect number of tokens"
+assert (bobTokensEnd == bobTokensStart + 1), \
+        "END: Bob has incorrect number of tokens"
 
 print('Plasma Cash `challengeBetween` success :)')
