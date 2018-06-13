@@ -9,12 +9,35 @@ Client -> Child Chain Service sendtx -> Child Chain server listens to that reque
 
 Child Chain ALWAYS listens for events on the RootChain contract and acts on them accordingly
 
+## Installation
+
+1. In plasma_cash folder follow the (README.md)[plasmas_cash/README.md]
+
+
+```
+cd plasma_cash
+mkvirtualenv erc721plasma --python=/usr/bin/python3.6
+pip install -r requirements.txt
+```
+
+On OSX + Homebrew (may need this)
+```
+source /usr/local/bin/virtualenvwrapper.sh
+```
+
+2. In server folder follow the (README.md)[server/README.md]
+
+```
+cd server
+npm install
+```
+
 
 ## Demos
 
 To run demo, execute the integration test script:
 ```
-bash integration_test.sh
+./integration_test.sh
 ```
 
 Under `demos/` there are various scenarios which can occur. You should have initialized both the smart contracts from the `server/` directory, and launched a Plasma Chain instance, as described in the corresponding READMEs.

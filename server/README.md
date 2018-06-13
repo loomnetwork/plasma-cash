@@ -12,6 +12,12 @@
 - Exit Spent Coin Challenge
 - Exit with Invalid history Challenge & Response
 
+## Install
+
+```
+npm install
+```
+
 ## Linting
 
 ```
