@@ -14,12 +14,27 @@ eve.token_contract.register()
 
 # Eve deposits a coin
 eve.deposit(11)
+# wait to make sure that events get fired correctly
+time.sleep(2)
 
-# Eve sends this same plasma coin to Bob
+# Eve sends her plasma coin to Bob
+# stop manually setting these utxo's manually
+utxo_id = 5
+coin = eve.get_plasma_coin(utxo_id)
+eve_to_bob = eve.send_transaction(
+         utxo_id, coin['deposit_block'], 1, bob.token_contract.account.address)
+authority.submit_block()
+eve_to_bob_block = authority.get_block_number()
 
-# Eve sends her plasma coin to Alice
+# Eve sends this same plasma coin to Alice
+eve_to_alice = eve.send_transaction(
+         utxo_id, coin['deposit_block'], 1, alice.token_contract.account.address)
+authority.submit_block()
+
+eve_to_alice_block = authority.get_block_number()
 
 # Alice attempts to exit here double-spent coin
+alice.start_exit(utxo_id, coin['deposit_block'], eve_to_alice_block)
 
 # Bob challenges Alice's exit
-# bob.challenge_between(utxo_id, 5000)
+bob.challenge_between(utxo_id, eve_to_bob_block)

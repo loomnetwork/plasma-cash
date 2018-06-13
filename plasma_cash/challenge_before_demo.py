@@ -13,7 +13,7 @@ authority = Client(container.get_root('authority'),
 dan.token_contract.register()
 
 # Dan deposits a coin
-Dan.deposit(16)
+dan.deposit(16)
 
 # Trudy submits an invalid transaction in which she moves Dan's coin
 
