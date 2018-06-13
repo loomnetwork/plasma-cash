@@ -15,7 +15,8 @@ class PlasmaCash(Contract):
                 prev_tx_inclusion_proof, exiting_tx_inclusion_proof,
                 sig, prev_tx_block_num, exiting_tx_block_num]
 
-        self.sign_and_send(self.contract.functions.challengeBefore, args)
+        self.sign_and_send(self.contract.functions.challengeBefore, args,
+                           value=self.BOND)
         return self
 
     def respond_challenge_before(self, slot, challenging_block_number,
@@ -63,3 +64,12 @@ class PlasmaCash(Contract):
     def withdraw_bonds(self):
         self.sign_and_send(self.contract.functions.withdrawBonds, [])
         return self
+
+    def get_plasma_coin(self, slot):
+        data = self.contract.functions.getPlasmaCoin(slot).call()
+        ret = {'uid': data[0],
+               'deposit_block': data[1],
+               'denomination': data[2],
+               'owner': data[3],
+               'state': data[4]}
+        return ret

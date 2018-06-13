@@ -17,17 +17,17 @@ import "./SparseMerkleTree.sol";
 
 
 contract RootChainEvents {
-    event Deposit(uint64 indexed slot, uint256 depositBlockNumber, uint64 denomination, address indexed from, bytes32 hash);
-    event SubmittedBlock(uint blockNumber, bytes32 root, uint timestamp);
+    event Deposit(uint64 indexed slot, uint256 blockNumber, uint64 denomination, address indexed from, bytes32 hash);
+    event SubmittedBlock(uint256 blockNumber, bytes32 root, uint256 timestamp);
 
-    event StartedExit(uint64 indexed slot, address indexed owner, uint createdAt);
+    event StartedExit(uint64 indexed slot, address indexed owner, uint256 createdAt);
     event ChallengedExit(uint64 indexed slot);
     event RespondedExitChallenge(uint64 indexed slot);
     event FinalizedExit(uint64  indexed slot, address owner);
 
-    event FreedBond(address indexed from, uint amount);
-    event SlashedBond(address indexed from, address indexed to, uint amount);
-    event WithdrewBonds(address indexed from, uint amount);
+    event FreedBond(address indexed from, uint256 amount);
+    event SlashedBond(address indexed from, address indexed to, uint256 amount);
+    event WithdrewBonds(address indexed from, uint256 amount);
 }
 
 
@@ -37,7 +37,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
     using Transaction for bytes;
     using ECVerify for bytes32;
 
-    uint constant BOND_AMOUNT = 0.1 ether;
+    uint256 constant BOND_AMOUNT = 0.1 ether;
 
     address public authority;
 
@@ -71,8 +71,8 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
     }
 
     struct Balance {
-        uint bonded;
-        uint withdrawable;
+        uint256 bonded;
+        uint256 withdrawable;
     }
     mapping (address => Balance ) public balances;
 
@@ -102,6 +102,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
     struct Coin {
         uint64 uid; // there are up to 2^64 cards, can probably make it less
         uint32 denomination; // an owner cannot own more than 256 of a card. Currently set to 1 always, subject to change once the token changes
+        uint256 depositBlock;
         address owner; // who owns that nft
         State state;
         Exit exit;
@@ -109,25 +110,22 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
 
     // child chain
     uint256 public childBlockInterval;
-    uint256 public currentChildBlock;
-    uint256 public currentDepositBlock;
+    uint256 public currentBlock;
     uint256 public lastParentBlock;
     struct childBlock {
         bytes32 root;
         uint256 createdAt;
     }
 
-    uint public depositCount;
-    mapping(uint => childBlock) public childChain;
+    uint256 public depositCount;
+    mapping(uint256 => childBlock) public childChain;
     CryptoCards cryptoCards;
 
-    constructor () public{
+    constructor () public {
         authority = msg.sender;
         childBlockInterval = 1000;
-        currentChildBlock = childBlockInterval;
-        currentDepositBlock = 1;
+        currentBlock = 0;
         lastParentBlock = block.number; // to ensure no chain reorgs
-
     }
 
     /// @param root 32 byte merkleRoot of ChildChain block
@@ -139,15 +137,18 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         // ensure finality on previous blocks before submitting another
         // require(block.number >= lastParentBlock.add(6)); // commented out while prototyping
 
-        childChain[currentChildBlock] = childBlock({
+        // rounding to next whole `childBlockInterval`
+        currentBlock = currentBlock.add(childBlockInterval)
+                                   .div(childBlockInterval)
+                                   .mul(childBlockInterval);
+
+        childChain[currentBlock] = childBlock({
             root: root,
             createdAt: block.timestamp
         });
 
-        emit SubmittedBlock(currentChildBlock, root, block.timestamp);
+        emit SubmittedBlock(currentBlock, root, block.timestamp);
 
-        currentChildBlock = currentChildBlock.add(childBlockInterval);
-        currentDepositBlock = 1;
         lastParentBlock = block.number;
 
     }
@@ -157,26 +158,26 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
     function deposit(address from, uint64 uid, uint32 denomination)
         private
     {
+        currentBlock = currentBlock.add(1);
 
         // Update state. Leave `exit` empty
         Coin memory coin;
         coin.uid = uid;
         coin.denomination = denomination;
+        coin.depositBlock = currentBlock;
         coin.owner = from;
         coin.state = State.DEPOSITED;
         coins[numCoins] = coin;
 
         bytes32 txHash = keccak256(abi.encodePacked(numCoins)); // hash for deposit transactions is the hash of its slot
-        uint256 depositBlockNumber = getDepositBlock();
 
-        childChain[depositBlockNumber] = childBlock({
+        childChain[currentBlock] = childBlock({
             // save signed transaction hash as root
             root: txHash,
             createdAt: block.timestamp
         });
 
-        currentDepositBlock = currentDepositBlock.add(1);
-        emit Deposit(numCoins, depositBlockNumber, denomination, from, txHash); // create a utxo at slot `numCoins`
+        emit Deposit(numCoins, currentBlock, denomination, from, txHash); // create a utxo at slot `numCoins`
 
         numCoins += 1;
     }
@@ -187,7 +188,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         uint64 slot, bytes prevTxBytes,
         bytes exitingTxBytes, bytes prevTxInclusionProof,
         bytes exitingTxInclusionProof, bytes sig,
-        uint prevTxIncBlock, uint exitingTxIncBlock)
+        uint256 prevTxIncBlock, uint256 exitingTxIncBlock)
         isState(slot, State.DEPOSITED)
         payable isBonded
         external
@@ -245,8 +246,8 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
     }
 
     function finalizeExits() external {
-        uint exitSlotsLength = exitSlots.length;
-        for (uint i = 0; i < exitSlotsLength; i++) {
+        uint256 exitSlotsLength = exitSlots.length;
+        for (uint256 i = 0; i < exitSlotsLength; i++) {
             finalizeExit(exitSlots[i]);
         }
     }
@@ -266,7 +267,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         bytes prevTxBytes, bytes exitingTxBytes,
         bytes prevTxInclusionProof, bytes exitingTxInclusionProof,
         bytes sig,
-        uint prevTxIncBlock, uint exitingTxIncBlock)
+        uint256 prevTxIncBlock, uint256 exitingTxIncBlock)
         external
         payable isBonded
         isState(slot, State.EXITING)
@@ -284,7 +285,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
     }
 
     // If `challengeBefore` was successfully challenged, then set state to RESPONDED and allow the coin to be exited. No need to actually attach a bond when responding to a challenge
-    function respondChallengeBefore(uint64 slot, uint challengingBlockNumber, bytes challengingTransaction, bytes proof)
+    function respondChallengeBefore(uint64 slot, uint256 challengingBlockNumber, bytes challengingTransaction, bytes proof)
         external
         isState(slot, State.CHALLENGED)
     {
@@ -296,7 +297,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
     }
 
 
-    function challengeBetween(uint64 slot, uint challengingBlockNumber, bytes challengingTransaction, bytes proof)
+    function challengeBetween(uint64 slot, uint256 challengingBlockNumber, bytes challengingTransaction, bytes proof)
         external isState(slot, State.EXITING) cleanupExit(slot)
     {
         // Must challenge with a tx in between
@@ -310,7 +311,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         coins[slot].state = State.DEPOSITED;
     }
 
-    function challengeAfter(uint64 slot, uint challengingBlockNumber, bytes challengingTransaction, bytes proof)
+    function challengeAfter(uint64 slot, uint256 challengingBlockNumber, bytes challengingTransaction, bytes proof)
         external
         isState(slot, State.EXITING)
         cleanupExit(slot)
@@ -334,7 +335,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
 
     function withdrawBonds() external {
         // Can only withdraw bond if the msg.sender
-        uint amount = balances[msg.sender].withdrawable;
+        uint256 amount = balances[msg.sender].withdrawable;
         balances[msg.sender].withdrawable = 0; // no reentrancy!
 
         msg.sender.transfer(amount);
@@ -380,7 +381,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
     function checkDepositBlockInclusion(
         bytes txBytes,
         bytes signature,
-        uint txIncBlock,
+        uint256 txIncBlock,
         bool checkSender
     )
          private
@@ -405,7 +406,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         bytes prevTxBytes, bytes exitingTxBytes,
         bytes prevTxInclusionProof, bytes exitingTxInclusionProof,
         bytes sig,
-        uint prevTxIncBlock, uint exitingTxIncBlock, bool checkSender)
+        uint256 prevTxIncBlock, uint256 exitingTxIncBlock, bool checkSender)
         private
         view
         returns (bool)
@@ -425,7 +426,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         return true;
     }
 
-    function checkTxIncluded(bytes txBytes, uint blockNumber, bytes proof) private view {
+    function checkTxIncluded(bytes txBytes, uint256 blockNumber, bytes proof) private view {
         Transaction.TX memory txData = txBytes.getTx();
         bytes32 txHash;
         bytes32 root = childChain[blockNumber].root;
@@ -466,16 +467,17 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         cryptoCards = _cryptoCards;
     }
 
-    function getIndex(uint64 slot) private view returns (uint) {
-        uint len = exitSlots.length;
-        for (uint i = 0; i < len; i++) {
+    function getIndex(uint64 slot) private view returns (uint256) {
+        uint256 len = exitSlots.length;
+        for (uint256 i = 0; i < len; i++) {
             if (exitSlots[i] == slot)
                 return i;
         }
         return 0;
     }
 
-    function getDepositBlock() private view returns (uint256) {
-        return currentChildBlock.sub(childBlockInterval).add(currentDepositBlock);
+    function getPlasmaCoin(uint64 slot) external view returns(uint64, uint256, uint32, address, State) {
+        Coin memory c = coins[slot];
+        return (c.uid, c.depositBlock, c.denomination, c.owner, c.state);
     }
 }
