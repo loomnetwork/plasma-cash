@@ -109,8 +109,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
 
     // child chain
     uint256 public childBlockInterval;
-    uint256 public currentChildBlock;
-    uint256 public currentDepositBlock;
+    uint256 public currentBlock;
     uint256 public lastParentBlock;
     struct childBlock {
         bytes32 root;
@@ -124,10 +123,8 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
     constructor () public {
         authority = msg.sender;
         childBlockInterval = 1000;
-        currentChildBlock = childBlockInterval;
-        currentDepositBlock = 1;
+        currentBlock = 0;
         lastParentBlock = block.number; // to ensure no chain reorgs
-
     }
 
     /// @param root 32 byte merkleRoot of ChildChain block
@@ -139,15 +136,17 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         // ensure finality on previous blocks before submitting another
         // require(block.number >= lastParentBlock.add(6)); // commented out while prototyping
 
-        childChain[currentChildBlock] = childBlock({
+        currentBlock = currentBlock.add(childBlockInterval)
+                                   .div(childBlockInterval)
+                                   .mul(childBlockInterval);
+
+        childChain[currentBlock] = childBlock({
             root: root,
             createdAt: block.timestamp
         });
 
-        emit SubmittedBlock(currentChildBlock, root, block.timestamp);
+        emit SubmittedBlock(currentBlock, root, block.timestamp);
 
-        currentChildBlock = currentChildBlock.add(childBlockInterval);
-        currentDepositBlock = 1;
         lastParentBlock = block.number;
 
     }
@@ -167,16 +166,15 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         coins[numCoins] = coin;
 
         bytes32 txHash = keccak256(abi.encodePacked(numCoins)); // hash for deposit transactions is the hash of its slot
-        uint256 depositBlockNumber = getDepositBlock();
+        currentBlock = currentBlock.add(1);
 
-        childChain[depositBlockNumber] = childBlock({
+        childChain[currentBlock] = childBlock({
             // save signed transaction hash as root
             root: txHash,
             createdAt: block.timestamp
         });
 
-        currentDepositBlock = currentDepositBlock.add(1);
-        emit Deposit(numCoins, depositBlockNumber, denomination, from, txHash); // create a utxo at slot `numCoins`
+        emit Deposit(numCoins, currentBlock, denomination, from, txHash); // create a utxo at slot `numCoins`
 
         numCoins += 1;
     }
@@ -413,7 +411,8 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         Transaction.TX memory exitingTxData = exitingTxBytes.getTx();
         Transaction.TX memory prevTxData = prevTxBytes.getTx();
 
-        if (checkSender) require(exitingTxData.owner == msg.sender, "Invalid sender");
+        if (checkSender)
+            require(exitingTxData.owner == msg.sender, "Invalid sender");
         require(exitingTxData.slot == prevTxData.slot);
         require(prevTxIncBlock < exitingTxIncBlock);
         require(keccak256(exitingTxBytes).ecverify(sig, prevTxData.owner), "Invalid sig");
@@ -472,9 +471,5 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
                 return i;
         }
         return 0;
-    }
-
-    function getDepositBlock() private view returns (uint256) {
-        return currentChildBlock.sub(childBlockInterval).add(currentDepositBlock);
     }
 }
