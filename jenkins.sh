@@ -5,6 +5,14 @@ npm install
 npm run lint
 npm run test
 
-# cd ../plasma_cash
+cd ../plasma_cash
+virtualenv --python=python3.6 .
+cd bin/ 
+source activate
+pip install -r requirements.txt
+
+cd ../..
+bash integration_test.sh
+
 # make lint
 # make test
