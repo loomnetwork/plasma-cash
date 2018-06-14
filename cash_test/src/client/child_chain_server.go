@@ -1,25 +1,8 @@
 package client
 
-type Block struct {
-}
-
-type Proof struct {
-}
-
-type ChainServiceClient interface {
-	CurrentBlock() (error, *Block)
-	BlockNumber() int
-
-	Block(blknum int) (error, *Block)
-	Proof(blknum int, uid int) (error, *Proof) //TODO what is the uid?
-
-	SubmitBlock(*Block) error
-
-	SendTransaction() error
-}
-
 // ChildChainService child client to reference server
 type ChildChainService struct {
+	url string
 }
 
 func (c *ChildChainService) CurrentBlock() (error, *Block) {
@@ -47,6 +30,6 @@ func (c *ChildChainService) SendTransaction() error {
 	return nil
 }
 
-func NewChildChainServer() ChainServiceClient {
-	return &ChildChainService{}
+func NewChildChainService(url string) ChainServiceClient {
+	return &ChildChainService{url}
 }
