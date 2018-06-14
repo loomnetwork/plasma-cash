@@ -64,8 +64,10 @@ class Client(object):
         else:
             # Otherwise, they should get the raw tx info from the block
             # And the merkle proof and submit these
-            exiting_tx, exiting_tx_proof = self.get_tx_and_proof(tx_blk_num, slot)
-            prev_tx, prev_tx_proof = self.get_tx_and_proof(prev_tx_blk_num, slot)
+            exiting_tx, exiting_tx_proof = self.get_tx_and_proof(tx_blk_num,
+                                                                 slot)
+            prev_tx, prev_tx_proof = self.get_tx_and_proof(prev_tx_blk_num,
+                                                           slot)
 
             self.root_chain.start_exit(
                     slot,
@@ -77,19 +79,39 @@ class Client(object):
         return self
 
     def challenge_before(self, slot, prev_tx_blk_num, tx_blk_num):
-        tx, tx_proof = self.get_tx_and_proof(tx_blk_num, slot)
+        if (tx_blk_num % self.child_block_interval != 0):
+            # In case the sender is exiting a Deposit transaction, they should
+            # just create a signed transaction to themselves. There is no need
+            # for a merkle proof.
 
-        # If the referenced transaction is a deposit transaction then no need
-        prev_tx = Transaction(0, 0, 0,
-                              0x0000000000000000000000000000000000000000)
-        prev_tx_proof = '0x0000000000000000'
-        if prev_tx_blk_num % self.child_block_interval == 0:
-            prev_tx, prev_tx_proof = self.get_tx_and_proof(prev_tx_blk_num, slot)
+            # prev_block = 0 , denomination = 1
+            exiting_tx = Transaction(slot, 0, 1,
+                                     self.token_contract.account.address,
+                                     incl_block=tx_blk_num)
+            exiting_tx.make_mutable()
+            exiting_tx.sign(self.key)
+            exiting_tx.make_immutable()
+            self.root_chain.challenge_before(
+                    slot,
+                    b'0x0', rlp.encode(exiting_tx, UnsignedTransaction),
+                    b'0x0', b'0x0',
+                    exiting_tx.sig,
+                    0, tx_blk_num)
+        else:
+            # Otherwise, they should get the raw tx info from the block
+            # And the merkle proof and submit these
+            exiting_tx, exiting_tx_proof = self.get_tx_and_proof(tx_blk_num,
+                                                                 slot)
+            prev_tx, prev_tx_proof = self.get_tx_and_proof(prev_tx_blk_num,
+                                                           slot)
 
-        self.root_chain.challenge_before(
-            slot, rlp.encode(prev_tx, UnsignedTransaction),
-            rlp.encode(tx, UnsignedTransaction), prev_tx_proof,
-            tx_proof, tx.sig, prev_tx_blk_num, tx_blk_num)
+            self.root_chain.challenge_before(
+                    slot,
+                    rlp.encode(prev_tx, UnsignedTransaction),
+                    rlp.encode(exiting_tx, UnsignedTransaction),
+                    prev_tx_proof, exiting_tx_proof,
+                    exiting_tx.sig,
+                    prev_tx_blk_num, tx_blk_num)
         return self
 
     def respond_challenge_before(self, slot, challenging_block_number):
@@ -97,7 +119,8 @@ class Client(object):
         Respond to an exit with invalid history challenge by proving that
         you were given the coin under question
         '''
-        challenging_tx, proof = self.get_tx_and_proof(challenging_block_number, slot)
+        challenging_tx, proof = self.get_tx_and_proof(challenging_block_number,
+                                                      slot)
 
         self.root_chain.respond_challenge_before(
             slot, challenging_block_number,
@@ -110,7 +133,8 @@ class Client(object):
         `Double Spend Challenge`: Challenge a double spend of a coin
         with a spend between the exit's blocks
         '''
-        challenging_tx, proof = self.get_tx_and_proof(challenging_block_number, slot)
+        challenging_tx, proof = self.get_tx_and_proof(challenging_block_number,
+                                                      slot)
 
         self.root_chain.challenge_between(
             slot, challenging_block_number,
@@ -123,7 +147,8 @@ class Client(object):
         `Exit Spent Coin Challenge`: Challenge an exit with a spend
         after the exit's blocks
         '''
-        challenging_tx, proof = self.get_tx_and_proof(challenging_block_number, slot)
+        challenging_tx, proof = self.get_tx_and_proof(challenging_block_number,
+                                                      slot)
 
         self.root_chain.challenge_after(
             slot, challenging_block_number,
