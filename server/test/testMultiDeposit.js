@@ -8,17 +8,6 @@ import assertRevert from './helpers/assertRevert.js';
 
 const txlib = require('./UTXO.js')
 
-const Promisify = (inner) =>
-new Promise((resolve, reject) =>
-        inner((err, res) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(res);
-            }
-        })
-);
-
 contract("Plasma ERC721 - Multiple Deposits in various blocks", async function(accounts) {
 
     const t1 = 3600 * 24 * 3; // 3 days later
@@ -54,7 +43,7 @@ contract("Plasma ERC721 - Multiple Deposits in various blocks", async function(a
         assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), ALICE_DEPOSITED_COINS);
 
         const depositEvent = plasma.Deposit({}, {fromBlock: 0, toBlock: 'latest'});
-        const events = await Promisify(cb => depositEvent.get(cb));
+        const events = await txlib.Promisify(cb => depositEvent.get(cb));
 
         // Check that events were emitted properly
         let coin;
@@ -130,7 +119,7 @@ contract("Plasma ERC721 - Multiple Deposits in various blocks", async function(a
             await plasma.withdrawBonds({'from' : bob });
             await plasma.withdrawBonds({'from' : alice });
             let withdrewBonds = plasma.WithdrewBonds({}, {fromBlock: 0, toBlock: 'latest'});
-            let e = await Promisify(cb => withdrewBonds.get(cb));
+            let e = await txlib.Promisify(cb => withdrewBonds.get(cb));
             let withdraw = e[0].args;
             assert.equal(withdraw.from, bob);
             assert.equal(withdraw.amount, web3.toWei(0.1, 'ether'));

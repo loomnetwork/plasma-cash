@@ -9,7 +9,7 @@ authority = Client(container.get_root('authority'),
                    container.get_token('authority'))
 
 # Give alice 5 tokens
-alice.token_contract.register()
+alice.register()
 
 aliceTokensStart = alice.token_contract.balance_of()
 print('Alice has {} tokens'.format(aliceTokensStart))
