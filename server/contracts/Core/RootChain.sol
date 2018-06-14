@@ -97,7 +97,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
     }
 
     // tracking of NFTs deposited in each slot
-    uint64 public numCoins;
+    uint64 public numCoins = 0;
     mapping (uint64 => Coin) public coins;
     struct Coin {
         uint64 uid; // there are up to 2^64 cards, can probably make it less
@@ -109,8 +109,8 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
     }
 
     // child chain
-    uint256 public childBlockInterval;
-    uint256 public currentBlock;
+    uint256 public childBlockInterval = 1000;
+    uint256 public currentBlock = 0;
     uint256 public lastParentBlock;
     struct childBlock {
         bytes32 root;
@@ -123,8 +123,6 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
 
     constructor () public {
         authority = msg.sender;
-        childBlockInterval = 1000;
-        currentBlock = 0;
         lastParentBlock = block.number; // to ensure no chain reorgs
     }
 
