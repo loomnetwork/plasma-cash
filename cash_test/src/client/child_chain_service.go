@@ -24,7 +24,7 @@ func (c *ChildChainService) CurrentBlock() (error, *Block) {
 	}
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("response Body:", string(body))
+	// fmt.Println("CurrentBlock Body:", string(body))
 	block := Block{blockId: string(body)}
 	return nil, &block
 }
@@ -42,14 +42,30 @@ func (c *ChildChainService) BlockNumber() int {
 	defer resp.Body.Close()
 
 	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("response Body:", string(body))
+	// fmt.Println("BlockNumber Body:", string(body))
 
 	i, _ := strconv.Atoi(string(body))
 	return i
 }
 
 func (c *ChildChainService) Block(blknum int) (error, *Block) {
-	return nil, nil
+	result := fmt.Sprintf("%s/block/%s", c.url, strconv.Itoa(blknum))
+	fmt.Println(result)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/block/%s", c.url, strconv.Itoa(blknum)), nil)
+	if err != nil {
+		fmt.Print(err)
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Print(err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := ioutil.ReadAll(resp.Body)
+	// fmt.Println("Block Body:", string(body))
+	block := Block{blockId: string(body)}
+	return nil, &block
 }
 
 func (c *ChildChainService) Proof(blknum int, uid int) (error, *Proof) {

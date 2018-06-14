@@ -31,9 +31,7 @@ func BlockNumberHandler(w http.ResponseWriter, r *http.Request) {
 
 // ??? why no return blknum???
 func BlockHandler(w http.ResponseWriter, r *http.Request) {
-	// vars := mux.Vars(r)
-	// blknum := vars["theblock"]
-	blknum := `10`
+	blknum := `f8a2f85df85b808001945194b63f10691e46635b27925100cfc0a5ceca62b8410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b8410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000`
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, blknum)
 }
@@ -101,6 +99,15 @@ func (s *ChildChainSuite) TestBlockNumber(c *C) {
 }
 
 func (s *ChildChainSuite) TestBlock(c *C) {
+	router := NewRouter()
+	localServer := httptest.NewServer(router)
+	defer localServer.Close()
+
+	svc := NewChildChainService(localServer.URL)
+	blknum := 1
+	_, block := svc.Block(blknum)
+	respString := "f8a2f85df85b808001945194b63f10691e46635b27925100cfc0a5ceca62b8410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b8410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+	c.Assert(block.blockId, Equals, respString)
 }
 
 func (s *ChildChainSuite) TestProof(c *C) {
