@@ -2,12 +2,12 @@ package client
 
 type Client struct {
 	/*
-			        c.rootChain = rootChain
+			        c.RootChain = rootChain
 		        c.key = token_contract.account.privateKey
 		        c.token_contract = token_contract
 	*/
 	childChain         ChainServiceClient
-	rootChain          RootChainClient
+	RootChain          RootChainClient
 	TokenContract      TokenContract
 	childBlockInterval int
 }
@@ -27,7 +27,7 @@ func (c *Client) Deposit(tokenId int) {
 
 // Plasma Functions
 
-func (c *Client) StartExit() { //slot, prev_tx_blk_num, tx_blk_num
+func (c *Client) StartExit(slot int, prevTxBlkNum int, txBlkNum int) {
 	// As a user, you declare that you want to exit a coin at slot `slot`
 	//at the state which happened at block `tx_blk_num` and you also need to
 	// reference a previous block
@@ -50,7 +50,7 @@ func (c *Client) StartExit() { //slot, prev_tx_blk_num, tx_blk_num
 	       exiting_tx.make_mutable()
 	       exiting_tx.sign(c.key)
 	       exiting_tx.make_immutable()
-	       c.rootChain.start_exit(
+	       c.RootChain.start_exit(
 	               slot,
 	               b'0x0', rlp.encode(exiting_tx, UnsignedTransaction),
 	               b'0x0', b'0x0',
@@ -72,7 +72,7 @@ func (c *Client) StartExit() { //slot, prev_tx_blk_num, tx_blk_num
 	           prev_tx_proof = b'0x0000000000000000'
 	       else:
 	           prev_tx_proof = c.get_proof(prev_tx_blk_num, slot)
-	       c.rootChain.start_exit(
+	       c.RootChain.start_exit(
 	               slot,
 	               rlp.encode(prev_tx, UnsignedTransaction),
 	               rlp.encode(exiting_tx, UnsignedTransaction),
@@ -99,7 +99,7 @@ func (c *Client) ChallengeBefore() { //slot, prev_tx_blk_num, tx_blk_num
 	               prev_tx = prev_block.get_tx_by_uid(slot)
 	               prev_tx_proof = c.get_proof(prev_tx_blk_num, slot)
 
-	           c.rootChain.challenge_before(
+	           c.RootChain.challenge_before(
 	               slot, rlp.encode(prev_tx, UnsignedTransaction),
 	               rlp.encode(tx, UnsignedTransaction), prev_tx_proof,
 	               tx_proof, tx.sig, prev_tx_blk_num, tx_blk_num
@@ -117,7 +117,7 @@ func (c *Client) RespondChallengeBefore() { //slot, challenging_block_number
 	   challenging_tx = block.get_tx_by_uid(slot)
 	   proof = c.get_proof(challenging_block_number, slot)
 
-	   c.rootChain.respond_challenge_before(
+	   c.RootChain.respond_challenge_before(
 	       slot, challenging_block_number,
 	       rlp.encode(challenging_tx, UnsignedTransaction), proof
 	   )
@@ -133,7 +133,7 @@ func (c *Client) ChallengeBetween() { //slot, challenging_block_number
 		        challenging_tx = block.get_tx_by_uid(slot)
 		        proof = c.get_proof(challenging_block_number, slot)
 
-		        c.rootChain.challenge_between(
+		        c.RootChain.challenge_between(
 		            slot, challenging_block_number,
 		            rlp.encode(challenging_tx, UnsignedTransaction), proof
 		        )
@@ -147,7 +147,7 @@ func (c *Client) ChallengeBetween() { //slot, challenging_block_number
 		        challenging_tx = block.get_tx_by_uid(slot)
 		        proof = c.get_proof(challenging_block_number, slot)
 
-		        c.rootChain.challenge_after(
+		        c.RootChain.challenge_after(
 		            slot, challenging_block_number,
 		            rlp.encode(challenging_tx, UnsignedTransaction), proof
 		        )
@@ -156,19 +156,19 @@ func (c *Client) ChallengeBetween() { //slot, challenging_block_number
 }
 
 func (c *Client) FinalizeExits() {
-	c.rootChain.FinalizeExits()
+	c.RootChain.FinalizeExits()
 }
 
 func (c *Client) Withdraw(slot int) {
-	c.rootChain.Withdraw(slot)
+	c.RootChain.Withdraw(slot)
 }
 
 func (c *Client) WithdrawBonds() {
-	c.rootChain.WithdrawBonds()
+	c.RootChain.WithdrawBonds()
 }
 
 func (c *Client) PlasmaCoin(slot int) {
-	c.rootChain.PlasmaCoin(slot)
+	c.RootChain.PlasmaCoin(slot)
 }
 
 // Child Chain Functions
@@ -217,5 +217,5 @@ func (c *Client) Proof(blkHeight int, slot int) {
 }
 
 func NewClient(childChainServer ChainServiceClient, rootChain RootChainClient, tokenContract TokenContract) *Client {
-	return &Client{childChain: childChainServer, childBlockInterval: 1000, rootChain: rootChain, TokenContract: tokenContract}
+	return &Client{childChain: childChainServer, childBlockInterval: 1000, RootChain: rootChain, TokenContract: tokenContract}
 }

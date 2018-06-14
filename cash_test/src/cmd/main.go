@@ -63,33 +63,41 @@ func main() {
 	blkNum = 1000                                                                       // the prev transaction was included in block 1000
 	_ = bob.SendTransaction(utxoID, blkNum, 1, charlie.TokenContract.Account().Address) //bobToCharlie
 	authority.SubmitBlock()
-	/*
-		// Charlie should be able to submit an exit by referencing blocks 0 and 1 which
-		// included his transaction.
-		utxoID = 2
-		prev_tx_blkNum = 1000
-		exiting_tx_blkNum = 2000
-		charlie.start_exit(utxoID, prev_tx_blkNum, exiting_tx_blkNum)
 
-		// After 8 days pass, charlie's exit should be finalizable
-		w3 = charlie.root_chain.w3  // get w3 instance
-		increaseTime(w3, 8 * 24 * 3600)
-		authority.finalize_exits()
-		// Charlie should now be able to withdraw the utxo which included token 2 to his
-		// wallet.
+	// Charlie should be able to submit an exit by referencing blocks 0 and 1 which
+	// included his transaction.
+	utxoID = 2
+	prevTxBlkNum := 1000
+	exitingTxBlkNum := 2000
+	charlie.StartExit(utxoID, prevTxBlkNum, exitingTxBlkNum)
 
-		charlie.withdraw(utxoID)
+	// After 8 days pass, charlie's exit should be finalizable
+	//	w3 = charlie.RootChain().w3 // get w3 instance
+	//increaseTime(w3, 8*24*3600) //TODO ???
 
-		aliceTokensEnd = alice.TokenContract.BalanceOf()
-		log.Printf('Alice has {} tokens'.format(aliceTokensEnd))
-		assert (aliceTokensEnd == 2), "END: Alice has incorrect number of tokens"
-		bobTokensEnd = bob.TokenContract.BalanceOf()
-		log.Printf('Bob has {} tokens'.format(bobTokensEnd))
-		assert (bobTokensEnd == 0), "END: Bob has incorrect number of tokens"
-		charlieTokensEnd = charlie.TokenContract.BalanceOf()
-		log.Printf('Charlie has {} tokens'.format(charlieTokensEnd))
-		assert (charlieTokensEnd == 1), "END: Charlie has incorrect number of tokens"
+	authority.FinalizeExits()
+	// Charlie should now be able to withdraw the utxo which included token 2 to his
+	// wallet.
 
-		log.Printf('Plasma Cash with ERC721 tokens success :)')
-	*/
+	charlie.Withdraw(utxoID)
+
+	aliceTokensEnd := alice.TokenContract.BalanceOf()
+	log.Printf("Alice has %d tokens\n", aliceTokensEnd)
+	if aliceTokensEnd != 2 {
+		log.Fatal("END: Alice has incorrect number of tokens")
+	}
+
+	bobTokensEnd := bob.TokenContract.BalanceOf()
+	log.Printf("Bob has %d tokens\n", bobTokensEnd)
+	if bobTokensEnd != 0 {
+		log.Fatal("END: Bob has incorrect number of tokens")
+	}
+	charlieTokensEnd := charlie.TokenContract.BalanceOf()
+	log.Printf("Charlie has %d  tokens\n", charlieTokensEnd)
+	if charlieTokensEnd != 1 {
+		log.Fatal("END: Charlie has incorrect number of tokens")
+	}
+
+	log.Printf("Plasma Cash with ERC721 tokens success :)")
+
 }
