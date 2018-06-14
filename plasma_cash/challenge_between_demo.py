@@ -21,7 +21,7 @@ eve.deposit(11)
 time.sleep(2)
 
 # Eve sends her plasma coin to Bob
-# TODO stop manually setting these utxo's manually
+# TODO stop manually setting these UTXOs
 utxo_id = 5
 coin = eve.get_plasma_coin(utxo_id)
 eve_to_bob = eve.send_transaction(
