@@ -9,6 +9,7 @@ type Proof struct {
 type TokenContract interface {
 	Register()
 	Deposit(int)
+	BalanceOf() int
 }
 
 type RootChainClient interface {

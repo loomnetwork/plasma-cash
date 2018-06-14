@@ -8,7 +8,7 @@ type Client struct {
 	*/
 	childChain         ChainServiceClient
 	rootChain          RootChainClient
-	tokenContract      TokenContract
+	TokenContract      TokenContract
 	childBlockInterval int
 }
 
@@ -17,12 +17,12 @@ type Client struct {
 // Register a new player and grant 5 cards, for demo purposes
 func (c *Client) Register() {
 
-	c.tokenContract.Register()
+	c.TokenContract.Register()
 }
 
 // Deposit happens by a use calling the erc721 token contract
 func (c *Client) Deposit(tokenId int) {
-	c.tokenContract.Deposit(tokenId)
+	c.TokenContract.Deposit(tokenId)
 }
 
 // Plasma Functions
@@ -216,5 +216,5 @@ func (c *Client) Proof(blkHeight int, slot int) {
 }
 
 func NewClient(childChainServer ChainServiceClient, rootChain RootChainClient, tokenContract TokenContract) *Client {
-	return &Client{childChain: childChainServer, childBlockInterval: 1000, rootChain: rootChain, tokenContract: tokenContract}
+	return &Client{childChain: childChainServer, childBlockInterval: 1000, rootChain: rootChain, TokenContract: tokenContract}
 }
