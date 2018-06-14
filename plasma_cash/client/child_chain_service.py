@@ -44,11 +44,18 @@ class ChildChainService(object):
         response = self.request(end_point, 'GET')
         return response.text
 
-    def get_proof(self, blknum, uid):
+    def get_proof(self, blknum, slot):
         end_point = '/proof'
-        params = {'blknum': blknum, 'uid': uid}
+        params = {'blknum': blknum, 'slot': slot}
         response = self.request(end_point, 'GET', params=params)
         return response.text
+
+    def get_tx_and_proof(self, blknum, slot):
+        end_point = '/tx'
+        params = {'blknum': blknum, 'slot': slot}
+        response = self.request(end_point, 'GET', params=params)
+        return response.text
+
 
     def submit_block(self, block):
         end_point = '/submit_block'

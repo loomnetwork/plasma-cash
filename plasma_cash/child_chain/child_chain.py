@@ -91,10 +91,20 @@ class ChildChain(object):
     def get_block(self, blknum):
         return rlp.encode(self.blocks[blknum]).hex()
 
-    def get_proof(self, blknum, uid):
-        block = self.blocks[blknum]
-        block.merklize_transaction_set()
-        return block.merkle.create_merkle_proof(uid)
-
     def get_block_number(self):
         return self.current_block_number
+
+    def get_proof(self, blknum, slot):
+        block = self.blocks[blknum]
+        block.merklize_transaction_set()
+        return block.merkle.create_merkle_proof(slot).hex()
+
+    def get_tx(self, blknum, slot):
+        block = self.blocks[blknum]
+        tx = block.get_tx_by_uid(slot)
+        return rlp.encode(tx).hex()
+
+    def get_tx_and_proof(self, blknum, slot):
+        tx = self.get_tx(blknum, slot)
+        proof = self.get_proof(blknum, slot)
+        return tx, proof

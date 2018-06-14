@@ -3,7 +3,7 @@ from ethereum import utils
 from child_chain.block import Block
 from child_chain.transaction import Transaction, UnsignedTransaction
 from .child_chain_service import ChildChainService
-import base64
+import json
 
 
 class Client(object):
@@ -64,13 +64,9 @@ class Client(object):
         else:
             # Otherwise, they should get the raw tx info from the block
             # And the merkle proof and submit these
-            block = self.get_block(tx_blk_num)
-            exiting_tx = block.get_tx_by_uid(slot)
-            exiting_tx_proof = self.get_proof(tx_blk_num, slot)
+            exiting_tx, exiting_tx_proof = self.get_tx_and_proof(tx_blk_num, slot)
+            prev_tx, prev_tx_proof = self.get_tx_and_proof(prev_tx_blk_num, slot)
 
-            prev_block = self.get_block(prev_tx_blk_num)
-            prev_tx = prev_block.get_tx_by_uid(slot)
-            prev_tx_proof = self.get_proof(prev_tx_blk_num, slot)
             self.root_chain.start_exit(
                     slot,
                     rlp.encode(prev_tx, UnsignedTransaction),
@@ -81,27 +77,19 @@ class Client(object):
         return self
 
     def challenge_before(self, slot, prev_tx_blk_num, tx_blk_num):
-        block = self.get_block(tx_blk_num)
-        tx = block.get_tx_by_uid(slot)
-        tx_proof = self.get_proof(tx_blk_num, slot)
-        if (tx_blk_num % self.child_block_interval != 0):
-            # In case the challenger has only made a Deposit transaction, they
-            # should just create a signed transaction to themselves. There is
-            # no need for a merkle proof.
+        tx, tx_proof = self.get_tx_and_proof(tx_blk_num, slot)
 
-            self.root_chain.challenge_before(
-                slot, b'0x0',
-                rlp.encode(tx, UnsignedTransaction), b'0x0',
-                tx_proof, tx.sig, prev_tx_blk_num, tx_blk_num)
-        else:
-            prev_block = self.get_block(prev_tx_blk_num)
-            prev_tx = prev_block.get_tx_by_uid(slot)
-            prev_tx_proof = self.get_proof(prev_tx_blk_num, slot)
+        # If the referenced transaction is a deposit transaction then no need
+        prev_tx = Transaction(0, 0, 0,
+                              0x0000000000000000000000000000000000000000)
+        prev_tx_proof = '0x0000000000000000'
+        if prev_tx_blk_num % self.child_block_interval == 0:
+            prev_tx, prev_tx_proof = self.get_tx_and_proof(prev_tx_blk_num, slot)
 
-            self.root_chain.challenge_before(
-                slot, rlp.encode(prev_tx, UnsignedTransaction),
-                rlp.encode(tx, UnsignedTransaction), prev_tx_proof,
-                tx_proof, tx.sig, prev_tx_blk_num, tx_blk_num)
+        self.root_chain.challenge_before(
+            slot, rlp.encode(prev_tx, UnsignedTransaction),
+            rlp.encode(tx, UnsignedTransaction), prev_tx_proof,
+            tx_proof, tx.sig, prev_tx_blk_num, tx_blk_num)
         return self
 
     def respond_challenge_before(self, slot, challenging_block_number):
@@ -109,9 +97,7 @@ class Client(object):
         Respond to an exit with invalid history challenge by proving that
         you were given the coin under question
         '''
-        block = self.get_block(challenging_block_number)
-        challenging_tx = block.get_tx_by_uid(slot)
-        proof = self.get_proof(challenging_block_number, slot)
+        challenging_tx, proof = self.get_tx_and_proof(challenging_block_number, slot)
 
         self.root_chain.respond_challenge_before(
             slot, challenging_block_number,
@@ -124,9 +110,7 @@ class Client(object):
         `Double Spend Challenge`: Challenge a double spend of a coin
         with a spend between the exit's blocks
         '''
-        block = self.get_block(challenging_block_number)
-        challenging_tx = block.get_tx_by_uid(slot)
-        proof = self.get_proof(challenging_block_number, slot)
+        challenging_tx, proof = self.get_tx_and_proof(challenging_block_number, slot)
 
         self.root_chain.challenge_between(
             slot, challenging_block_number,
@@ -139,9 +123,7 @@ class Client(object):
         `Exit Spent Coin Challenge`: Challenge an exit with a spend
         after the exit's blocks
         '''
-        block = self.get_block(challenging_block_number)
-        challenging_tx = block.get_tx_by_uid(slot)
-        proof = self.get_proof(challenging_block_number, slot)
+        challenging_tx, proof = self.get_tx_and_proof(challenging_block_number, slot)
 
         self.root_chain.challenge_after(
             slot, challenging_block_number,
@@ -195,5 +177,11 @@ class Client(object):
         block = self.child_chain.get_block(blknum)
         return rlp.decode(utils.decode_hex(block), Block)
 
+    def get_tx_and_proof(self, blknum, slot):
+        data = json.loads(self.child_chain.get_tx_and_proof(blknum, slot))
+        tx = rlp.decode(utils.decode_hex(data['tx']), Transaction)
+        proof = utils.decode_hex(data['proof'])
+        return tx, proof
+
     def get_proof(self, blknum, slot):
-        return base64.b64decode(self.child_chain.get_proof(blknum, slot))
+        return utils.decode_hex(self.child_chain.get_proof(blknum, slot))

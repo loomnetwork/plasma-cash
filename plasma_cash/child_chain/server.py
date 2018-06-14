@@ -1,8 +1,8 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify
 from dependency_config import container
-import base64
 
 bp = Blueprint('api', __name__)
+
 
 
 @bp.route('/block/<blknum>', methods=['GET'])
@@ -19,14 +19,18 @@ def get_current_block():
 def get_block_number():
     return str(container.get_child_chain().get_block_number())
 
+@bp.route('/tx', methods=['GET'])
+def get_tx_and_proof():
+    blknum = int(request.args.get('blknum'))
+    slot = int(request.args.get('slot'))
+    tx, proof = container.get_child_chain().get_tx_and_proof(int(blknum), int(slot))
+    return jsonify({ 'tx': tx, 'proof': proof })
 
 @bp.route('/proof', methods=['GET'])
 def get_proof():
     blknum = int(request.args.get('blknum'))
-    uid = int(request.args.get('uid'))
-    data = container.get_child_chain().get_proof(blknum, uid)
-    # proofs are binary so encoding b64 during transmission
-    return base64.b64encode(data)
+    slot = int(request.args.get('slot'))
+    return container.get_child_chain().get_proof(blknum, slot)
 
 
 @bp.route('/submit_block', methods=['POST'])
