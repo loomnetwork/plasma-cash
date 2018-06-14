@@ -26,6 +26,7 @@ type ChainServiceClient interface {
 
 // ChildChainService child client to reference server
 type ChildChainService struct {
+	url string
 }
 
 func (c *ChildChainService) CurrentBlock() (error, *Block) {
@@ -68,6 +69,6 @@ func (c *ChildChainService) SendTransaction() error {
 	return nil
 }
 
-func NewChildChainServer() ChainServiceClient {
-	return &ChildChainService{}
+func NewChildChainService(url string) ChainServiceClient {
+	return &ChildChainService{url}
 }
