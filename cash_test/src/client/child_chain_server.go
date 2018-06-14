@@ -1,5 +1,11 @@
 package client
 
+import (
+	"fmt"
+	"io/ioutil"
+	"net/http"
+)
+
 type Block struct {
 }
 
@@ -23,10 +29,25 @@ type ChildChainService struct {
 }
 
 func (c *ChildChainService) CurrentBlock() (error, *Block) {
+
 	return nil, nil
 }
 
 func (c *ChildChainService) BlockNumber() int {
+
+	req, err := http.NewRequest("GET", "http://localhost:46657/abci_info", nil)
+	if err != nil {
+		fmt.Print(err)
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Print(err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := ioutil.ReadAll(resp.Body)
+	fmt.Println("response Body:", string(body))
 	return 0
 }
 
