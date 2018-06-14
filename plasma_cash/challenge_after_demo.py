@@ -9,7 +9,7 @@ authority = Client(container.get_root('authority'),
                    container.get_token('authority'))
 
 # Give Mallory 5 tokens
-mallory.token_contract.register()
+mallory.register()
 
 danTokensStart = dan.token_contract.balance_of()
 print('Dan has {} tokens'.format(danTokensStart))
