@@ -3,11 +3,20 @@ package main
 import (
 	"client"
 	"log"
+	"os"
 )
 
 func main() {
 
-	svc := client.NewChildChainService("http://localhost:8546")
+	plasmaChain := os.Getenv("PLASMA_CHAIN")
+
+	var svc client.ChainServiceClient
+	if plasmaChain == "LOOM" {
+		svc = client.NewLoomChildChainService("http://localhost:8546")
+	} else {
+		svc = client.NewChildChainService("http://localhost:8546")
+	}
+
 	alice := client.NewClient(svc, client.GetRootChain("alice"), client.GetTokenContract("alice"))
 
 	bob := client.NewClient(svc, client.GetRootChain("bob"), client.GetTokenContract("bob"))
