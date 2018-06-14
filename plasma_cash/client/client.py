@@ -43,8 +43,7 @@ class Client(object):
         # operator which sould be changed in the future after the exiting
         # process is more standardized
 
-        if (tx_blk_num % self.child_block_interval != 0 and
-                prev_tx_blk_num == 0):
+        if (tx_blk_num % self.child_block_interval != 0):
             # In case the sender is exiting a Deposit transaction, they should
             # just create a signed transaction to themselves. There is no need
             # for a merkle proof.
@@ -71,12 +70,7 @@ class Client(object):
 
             prev_block = self.get_block(prev_tx_blk_num)
             prev_tx = prev_block.get_tx_by_uid(slot)
-            if (prev_tx_blk_num % self.child_block_interval != 0):
-                # After 1 off-chain transfer, referencing a deposit
-                # transaction, no need for proof
-                prev_tx_proof = b'0x0000000000000000'
-            else:
-                prev_tx_proof = self.get_proof(prev_tx_blk_num, slot)
+            prev_tx_proof = self.get_proof(prev_tx_blk_num, slot)
             self.root_chain.start_exit(
                     slot,
                     rlp.encode(prev_tx, UnsignedTransaction),
@@ -90,20 +84,24 @@ class Client(object):
         block = self.get_block(tx_blk_num)
         tx = block.get_tx_by_uid(slot)
         tx_proof = self.get_proof(tx_blk_num, slot)
+        if (tx_blk_num % self.child_block_interval != 0):
+            # In case the challenger has only made a Deposit transaction, they
+            # should just create a signed transaction to themselves. There is
+            # no need for a merkle proof.
 
-        # If the referenced transaction is a deposit transaction then no need
-        prev_tx = Transaction(0, 0, 0,
-                              0x0000000000000000000000000000000000000000)
-        prev_tx_proof = '0x0000000000000000'
-        if prev_tx_blk_num % self.child_block_interval == 0:
+            self.root_chain.challenge_before(
+                slot, b'0x0',
+                rlp.encode(tx, UnsignedTransaction), b'0x0',
+                tx_proof, tx.sig, prev_tx_blk_num, tx_blk_num)
+        else:
             prev_block = self.get_block(prev_tx_blk_num)
             prev_tx = prev_block.get_tx_by_uid(slot)
             prev_tx_proof = self.get_proof(prev_tx_blk_num, slot)
 
-        self.root_chain.challenge_before(
-            slot, rlp.encode(prev_tx, UnsignedTransaction),
-            rlp.encode(tx, UnsignedTransaction), prev_tx_proof,
-            tx_proof, tx.sig, prev_tx_blk_num, tx_blk_num)
+            self.root_chain.challenge_before(
+                slot, rlp.encode(prev_tx, UnsignedTransaction),
+                rlp.encode(tx, UnsignedTransaction), prev_tx_proof,
+                tx_proof, tx.sig, prev_tx_blk_num, tx_blk_num)
         return self
 
     def respond_challenge_before(self, slot, challenging_block_number):
