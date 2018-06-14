@@ -17,7 +17,7 @@ func (c *LoomChildChainService) CurrentBlock() (error, *Block) {
 }
 
 func (c *LoomChildChainService) BlockNumber() int {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/blocknumber7/abci_info", c.url), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/abci_info", c.url), nil)
 	if err != nil {
 		fmt.Print(err)
 	}
@@ -29,7 +29,6 @@ func (c *LoomChildChainService) BlockNumber() int {
 	defer resp.Body.Close()
 
 	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("response Body:", string(body))
 
 	type jResponse struct {
 		Last_block_height   int
