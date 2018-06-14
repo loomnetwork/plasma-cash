@@ -87,7 +87,7 @@ func (s *ChildChainSuite) TestBlockNumber(c *C) {
 	blockNumber := svc.BlockNumber()
 
 	// Check the response body is what we expect.
-	c.Assert(blockNumber, Equals, 4956)
+	c.Assert(blockNumber, Equals, 4955)
 
 }
 

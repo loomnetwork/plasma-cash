@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 )
 
 // ChildChainService child client to reference server
@@ -31,7 +32,8 @@ func (c *ChildChainService) BlockNumber() int {
 	body, _ := ioutil.ReadAll(resp.Body)
 	fmt.Println("response Body:", string(body))
 
-	return 0
+	i, _ := strconv.Atoi(string(body))
+	return i
 }
 
 func (c *ChildChainService) Block(blknum int) (error, *Block) {
