@@ -20,7 +20,8 @@ var _ = Suite(&ChildChainSuite{})
 
 func CurrentBlockHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "theBlock")
+	resp := `f844c0b8410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000`
+	fmt.Fprintf(w, resp)
 }
 
 func BlockNumberHandler(w http.ResponseWriter, r *http.Request) {
@@ -75,6 +76,14 @@ func NewRouter() (s *mux.Router) {
 }
 
 func (s *ChildChainSuite) TestCurrentBlock(c *C) {
+	router := NewRouter()
+	localServer := httptest.NewServer(router)
+	defer localServer.Close()
+
+	svc := NewChildChainService(localServer.URL)
+	_, currentBlock := svc.CurrentBlock()
+
+	c.Assert(currentBlock.blockId, Equals, "f844c0b8410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")
 
 }
 

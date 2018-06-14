@@ -13,8 +13,20 @@ type ChildChainService struct {
 }
 
 func (c *ChildChainService) CurrentBlock() (error, *Block) {
-
-	return nil, nil
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/block", c.url), nil)
+	if err != nil {
+		fmt.Print(err)
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Print(err)
+	}
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+	fmt.Println("response Body:", string(body))
+	block := Block{blockId: string(body)}
+	return nil, &block
 }
 
 func (c *ChildChainService) BlockNumber() int {
