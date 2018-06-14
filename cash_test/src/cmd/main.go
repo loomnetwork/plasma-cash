@@ -2,12 +2,17 @@ package main
 
 import (
 	"client"
+	"fmt"
 )
 
 func main() {
-	client := client.NewClient(client.NewChildChainService("http://localhost:8546"))
+
+	svc := client.NewChildChainService("http://localhost:8546")
+	alice := client.NewClient(svc, client.GetRootChain("alice"), client.GetTokenContract("alice"))
+
+	fmt.Printf("initialized %v\n", alice)
 	/*
-		alice = Client(container.get_root('alice'), container.get_token('alice'))
+
 		bob = Client(container.get_root('bob'), container.get_token('bob'))
 		charlie = Client(container.get_root('charlie'), container.get_token('charlie'))
 		authority = Client(container.get_root('authority'),

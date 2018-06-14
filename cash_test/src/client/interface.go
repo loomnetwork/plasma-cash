@@ -6,6 +6,18 @@ type Block struct {
 type Proof struct {
 }
 
+type TokenContract interface {
+	Register()
+	Deposit(int)
+}
+
+type RootChainClient interface {
+	FinalizeExits()
+	Withdraw(int)
+	WithdrawBonds()
+	PlasmaCoin(int)
+}
+
 type ChainServiceClient interface {
 	CurrentBlock() (error, *Block)
 	BlockNumber() int

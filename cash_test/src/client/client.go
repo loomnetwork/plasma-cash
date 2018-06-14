@@ -1,17 +1,5 @@
 package client
 
-type TokenContract interface {
-	Register()
-	Deposit(int)
-}
-
-type RootChainClient interface {
-	FinalizeExits()
-	Withdraw(int)
-	WithdrawBonds()
-	PlasmaCoin(int)
-}
-
 type Client struct {
 	/*
 			        c.rootChain = rootChain
@@ -227,9 +215,6 @@ func (c *Client) Proof(blkHeight int, slot int) {
 	//	return base64.b64decode(c.childChain.get_proof(blknum, slot))
 }
 
-func NewClient(childChainServer ChainServiceClient) *Client {
-	//			rootChain,
-	//			token_contract,
-
-	return &Client{childChain: childChainServer, childBlockInterval: 1000}
+func NewClient(childChainServer ChainServiceClient, rootChain RootChainClient, tokenContract TokenContract) *Client {
+	return &Client{childChain: childChainServer, childBlockInterval: 1000, rootChain: rootChain, tokenContract: tokenContract}
 }
