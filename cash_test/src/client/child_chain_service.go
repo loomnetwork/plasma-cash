@@ -69,8 +69,23 @@ func (c *ChildChainService) Block(blknum int) (error, *Block) {
 }
 
 func (c *ChildChainService) Proof(blknum int, uid int) (error, *Proof) {
-	return nil, nil
+	result := fmt.Sprintf("%s/proof/?blknum=%s&uid=%s", c.url, strconv.Itoa(blknum), strconv.Itoa(uid))
+	fmt.Println(result)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/proof?blknum=%s&uid=%s", c.url, strconv.Itoa(blknum), strconv.Itoa(uid)), nil)
+	if err != nil {
+		fmt.Print(err)
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Print(err)
+	}
+	defer resp.Body.Close()
 
+	body, _ := ioutil.ReadAll(resp.Body)
+	fmt.Println("Proof Body:", string(body))
+	proof := Proof{proofstring: string(body)}
+	return nil, &proof
 }
 
 func (c *ChildChainService) SubmitBlock(*Block) error {

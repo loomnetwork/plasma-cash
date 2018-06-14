@@ -8,6 +8,7 @@ type Block struct {
 }
 
 type Proof struct {
+	proofstring string
 }
 
 type Account struct {

@@ -29,22 +29,16 @@ func BlockNumberHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "4955")
 }
 
-// ??? why no return blknum???
 func BlockHandler(w http.ResponseWriter, r *http.Request) {
 	blknum := `f8a2f85df85b808001945194b63f10691e46635b27925100cfc0a5ceca62b8410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b8410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000`
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, blknum)
 }
 
-// not even sure if can extract those vars
 func ProofHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	blknum := vars["blknum"]
-	uid := vars["uid"]
-	fmt.Print(blknum)
-	fmt.Print(uid)
+	proofstring := "AAAAAAAAAAKdBSjS0ahpIEal4CqiRzU5/MeqvWl59n9KfDhLFvI8AQ=="
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "proof")
+	fmt.Fprintf(w, proofstring)
 }
 
 // same here
@@ -111,32 +105,16 @@ func (s *ChildChainSuite) TestBlock(c *C) {
 }
 
 func (s *ChildChainSuite) TestProof(c *C) {
-	/*
-		router := NewRouter()
-		localServer := httptest.NewServer(router)
-		defer localServer.Close()
+	router := NewRouter()
+	localServer := httptest.NewServer(router)
+	defer localServer.Close()
 
-		var jsonStr = []byte(`{"blknum":"1234", "uid":"what_is_id?"}`)
-
-		req, err := http.NewRequest("GET", "/proof", bytes.NewBuffer(jsonStr))
-		if err != nil {
-			c.Fatal(err)
-		}
-		// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
-		rr := httptest.NewRecorder()
-
-		handler := http.HandlerFunc(ProofHandler)
-		// Our handlers satisfy http.Handler, so we can call their ServeHTTP method
-		// directly and pass in our Request and ResponseRecorder.
-		handler.ServeHTTP(rr, req)
-
-		// Check the status code is what we expect.
-		c.Assert(rr.Code, Equals, http.StatusOK)
-
-		// Check the response body is what we expect.
-		expected := `proof`
-		c.Assert(rr.Body.String(), Equals, expected)
-	*/
+	svc := NewChildChainService(localServer.URL)
+	blknum := 1000
+	uid := 2
+	_, proof := svc.Proof(blknum, uid)
+	respString := "AAAAAAAAAAKdBSjS0ahpIEal4CqiRzU5/MeqvWl59n9KfDhLFvI8AQ=="
+	c.Assert(proof.proofstring, Equals, respString)
 }
 
 func (s *ChildChainSuite) TestSubmit(c *C) {
