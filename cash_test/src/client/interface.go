@@ -4,6 +4,7 @@ type Tx struct {
 }
 
 type Block struct {
+	blockId string
 }
 
 type Proof struct {
