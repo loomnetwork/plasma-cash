@@ -140,11 +140,11 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
 
             await plasma.respondChallengeBefore(
                 UTXO.slot, 2000, responseTx, responseProof,
-                {'from': elliot }
+                {'from': elliot}
             );
 
 
-            await increaseTimeTo( t0 + t1 + t2);
+            await increaseTimeTo(t0 + t1 + t2);
             await plasma.finalizeExits({from: random_guy2});
             await plasma.withdraw(UTXO.slot, {from : elliot});
 
@@ -232,8 +232,7 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
             // it is considered that they are all colluding together to steal
             // Bob's coin. Elliot actually has all the info required to submit
             // an exit, even if one of the transactions in the coin's history
-            // were
-            // invalid.
+            // were invalid.
             let sig = dylan_to_elliot.sig;
 
             let prev_tx_proof = tree_dylan.createMerkleProof(UTXO.slot)
