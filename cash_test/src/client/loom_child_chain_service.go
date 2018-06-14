@@ -17,8 +17,7 @@ func (c *LoomChildChainService) CurrentBlock() (error, *Block) {
 }
 
 func (c *LoomChildChainService) BlockNumber() int {
-
-	req, err := http.NewRequest("GET", "http://localhost:46657/abci_info", nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/blocknumber7/abci_info", c.url), nil)
 	if err != nil {
 		fmt.Print(err)
 	}

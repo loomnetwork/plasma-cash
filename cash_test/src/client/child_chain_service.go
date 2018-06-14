@@ -1,7 +1,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -18,8 +17,7 @@ func (c *ChildChainService) CurrentBlock() (error, *Block) {
 }
 
 func (c *ChildChainService) BlockNumber() int {
-
-	req, err := http.NewRequest("GET", "http://localhost:46657/abci_info", nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/blocknumber", c.url), nil)
 	if err != nil {
 		fmt.Print(err)
 	}
@@ -33,29 +31,7 @@ func (c *ChildChainService) BlockNumber() int {
 	body, _ := ioutil.ReadAll(resp.Body)
 	fmt.Println("response Body:", string(body))
 
-	type jResponse struct {
-		Last_block_height   int
-		Last_block_app_hash string
-	}
-
-	type jResult struct {
-		Response jResponse
-	}
-
-	type jBlock struct {
-		Jsonrpc string
-		Id      string
-		Result  jResult
-	}
-
-	var jblock jBlock
-
-	err = json.Unmarshal([]byte(body), &jblock)
-
-	if err != nil {
-		fmt.Print(err)
-	}
-	return jblock.Result.Response.Last_block_height
+	return 0
 }
 
 func (c *ChildChainService) Block(blknum int) (error, *Block) {
