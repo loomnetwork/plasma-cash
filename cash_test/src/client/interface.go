@@ -1,15 +1,24 @@
 package client
 
+type Tx struct {
+}
+
 type Block struct {
 }
 
 type Proof struct {
 }
 
+type Account struct {
+	Address string
+}
+
 type TokenContract interface {
 	Register()
 	Deposit(int)
 	BalanceOf() int
+
+	Account() *Account
 }
 
 type RootChainClient interface {

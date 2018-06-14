@@ -183,7 +183,7 @@ func (c *Client) SubmitBlock() {
 	*/
 }
 
-func (c *Client) SendTransaction() { // slot, prev_block, denomination, new_owne
+func (c *Client) SendTransaction(slot int, prevBlock int, denomination int, newOwner string) *Tx {
 	/*
 		        new_owner = utils.normalize_address(new_owner)
 		        incl_block = c.BlockNumber()
@@ -195,6 +195,7 @@ func (c *Client) SendTransaction() { // slot, prev_block, denomination, new_owne
 		        c.childChain.SendTransaction(rlp.encode(tx, Transaction).hex())
 				return tx
 	*/
+	return &Tx{}
 }
 
 func (c *Client) BlockNumber() int {

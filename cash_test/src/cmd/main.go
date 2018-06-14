@@ -2,7 +2,6 @@ package main
 
 import (
 	"client"
-	"fmt"
 	"log"
 )
 
@@ -36,40 +35,32 @@ func main() {
 		log.Fatalf("START: Charlie has incorrect number of tokens")
 	}
 
-	fmt.Printf("initialized %v\n", authority)
+	// Alice deposits 3 of her coins to the plasma contract and gets 3 plasma nft
+	// utxos in return
+	tokenID := 1
+	alice.Deposit(tokenID)
+	alice.Deposit(tokenID + 1)
+	alice.Deposit(tokenID + 2)
 
+	//Alice to Bob, and Alice to Charlie. We care about the Alice to Bob
+	// transaction
+	utxoID := 2
+	blkNum := 3
+	_ = alice.SendTransaction(utxoID, blkNum, 1, bob.TokenContract.Account().Address)         //aliceToBob
+	_ = alice.SendTransaction(utxoID-1, blkNum-1, 1, charlie.TokenContract.Account().Address) //randomTx
+	authority.SubmitBlock()
+
+	// Bob to Charlie
+	blkNum = 1000                                                                       // the prev transaction was included in block 1000
+	_ = bob.SendTransaction(utxoID, blkNum, 1, charlie.TokenContract.Account().Address) //bobToCharlie
+	authority.SubmitBlock()
 	/*
-
-		// Alice deposits 3 of her coins to the plasma contract and gets 3 plasma nft
-		// utxos in return
-		tokenId = 1
-		alice.deposit(tokenId)
-		alice.deposit(tokenId+1)
-		alice.deposit(tokenId+2)
-		``
-
-		 //Alice to Bob, and Alice to Charlie. We care about the Alice to Bob
-		// transaction
-		utxo_id := 2
-		blk_num := 3
-		alice_to_bob = alice.send_transaction(utxo_id, blk_num, 1,
-											  bob.TokenContract.account.address)
-		random_tx = alice.send_transaction(utxo_id-1, blk_num-1, 1,
-										   charlie.TokenContract.account.address)
-		authority.submit_block()
-
-		// Bob to Charlie
-		blk_num = 1000  // the prev transaction was included in block 1000
-		bob_to_charlie = bob.send_transaction(utxo_id, blk_num, 1,
-											  charlie.TokenContract.account.address)
-		authority.submit_block()
-
 		// Charlie should be able to submit an exit by referencing blocks 0 and 1 which
 		// included his transaction.
-		utxo_id = 2
-		prev_tx_blk_num = 1000
-		exiting_tx_blk_num = 2000
-		charlie.start_exit(utxo_id, prev_tx_blk_num, exiting_tx_blk_num)
+		utxoID = 2
+		prev_tx_blkNum = 1000
+		exiting_tx_blkNum = 2000
+		charlie.start_exit(utxoID, prev_tx_blkNum, exiting_tx_blkNum)
 
 		// After 8 days pass, charlie's exit should be finalizable
 		w3 = charlie.root_chain.w3  // get w3 instance
@@ -78,7 +69,7 @@ func main() {
 		// Charlie should now be able to withdraw the utxo which included token 2 to his
 		// wallet.
 
-		charlie.withdraw(utxo_id)
+		charlie.withdraw(utxoID)
 
 		aliceTokensEnd = alice.TokenContract.BalanceOf()
 		log.Printf('Alice has {} tokens'.format(aliceTokensEnd))
