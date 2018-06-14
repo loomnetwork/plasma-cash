@@ -1,28 +1,11 @@
 package client
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 )
-
-type Block struct {
-}
-
-type Proof struct {
-}
-
-type ChainServiceClient interface {
-	CurrentBlock() (error, *Block)
-	BlockNumber() int
-
-	Block(blknum int) (error, *Block)
-	Proof(blknum int, uid int) (error, *Proof) //TODO what is the uid?
-
-	SubmitBlock(*Block) error
-
-	SendTransaction() error
-}
 
 // ChildChainService child client to reference server
 type ChildChainService struct {
@@ -49,7 +32,30 @@ func (c *ChildChainService) BlockNumber() int {
 
 	body, _ := ioutil.ReadAll(resp.Body)
 	fmt.Println("response Body:", string(body))
-	return 0
+
+	type jResponse struct {
+		Last_block_height   int
+		Last_block_app_hash string
+	}
+
+	type jResult struct {
+		Response jResponse
+	}
+
+	type jBlock struct {
+		Jsonrpc string
+		Id      string
+		Result  jResult
+	}
+
+	var jblock jBlock
+
+	err = json.Unmarshal([]byte(body), &jblock)
+
+	if err != nil {
+		fmt.Print(err)
+	}
+	return jblock.Result.Response.Last_block_height
 }
 
 func (c *ChildChainService) Block(blknum int) (error, *Block) {

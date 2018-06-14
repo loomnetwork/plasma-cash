@@ -14,7 +14,7 @@ var _ = Suite(&LoomChildChainSuite{})
 func LoomBlockNumberHandler(w http.ResponseWriter, r *http.Request) {
 	//vars := mux.Vars(r)
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "123")
+	fmt.Fprintf(w, "4955")
 }
 
 func (s *LoomChildChainSuite) TestChildChainBlockNumber(c *C) {
