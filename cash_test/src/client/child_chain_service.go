@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 )
 
 // ChildChainService child client to reference server
@@ -49,8 +51,6 @@ func (c *ChildChainService) BlockNumber() int {
 }
 
 func (c *ChildChainService) Block(blknum int) (error, *Block) {
-	result := fmt.Sprintf("%s/block/%s", c.url, strconv.Itoa(blknum))
-	fmt.Println(result)
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/block/%s", c.url, strconv.Itoa(blknum)), nil)
 	if err != nil {
 		fmt.Print(err)
@@ -69,8 +69,6 @@ func (c *ChildChainService) Block(blknum int) (error, *Block) {
 }
 
 func (c *ChildChainService) Proof(blknum int, uid int) (error, *Proof) {
-	result := fmt.Sprintf("%s/proof/?blknum=%s&uid=%s", c.url, strconv.Itoa(blknum), strconv.Itoa(uid))
-	fmt.Println(result)
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/proof?blknum=%s&uid=%s", c.url, strconv.Itoa(blknum), strconv.Itoa(uid)), nil)
 	if err != nil {
 		fmt.Print(err)
@@ -83,16 +81,28 @@ func (c *ChildChainService) Proof(blknum int, uid int) (error, *Proof) {
 	defer resp.Body.Close()
 
 	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("Proof Body:", string(body))
 	proof := Proof{proofstring: string(body)}
 	return nil, &proof
 }
 
-func (c *ChildChainService) SubmitBlock(*Block) error {
-	return nil
+func (c *ChildChainService) SubmitBlock(block *Block) error {
+
+	data := url.Values{}
+	data.Set("block", block.blockId)
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/submit_block", c.url), strings.NewReader(data.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Print(err)
+	}
+	defer resp.Body.Close()
+	return err
 }
 
 func (c *ChildChainService) SendTransaction() error {
+
 	return nil
 }
 
