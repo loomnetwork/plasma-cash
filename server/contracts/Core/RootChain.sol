@@ -186,12 +186,12 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         bytes exitingTxBytes, bytes prevTxInclusionProof,
         bytes exitingTxInclusionProof, bytes sig,
         uint256 prevTxIncBlock, uint256 exitingTxIncBlock)
-        isState(slot, State.DEPOSITED)
-        payable isBonded
         external
+        payable isBonded
+        isState(slot, State.DEPOSITED)
     {
         // If we're exiting a deposit UTXO, we do a different inclusion check
-        if (exitingTxIncBlock % childBlockInterval != 0 ) {
+        if (exitingTxIncBlock % childBlockInterval != 0) {
             checkDepositBlockInclusion(exitingTxBytes, sig, exitingTxIncBlock, true);
         } else {
             checkBlockInclusion(
@@ -202,7 +202,6 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
                 true
             );
         }
-
         pushExit(slot, prevTxIncBlock, exitingTxIncBlock);
     }
 
@@ -269,12 +268,13 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         payable isBonded
         isState(slot, State.EXITING)
     {
+        require(prevTxIncBlock < exitingTxIncBlock);
         // If we're exiting a deposit UTXO directly, we do a different inclusion check
         if (exitingTxIncBlock % childBlockInterval != 0) {
             checkDepositBlockInclusion(exitingTxBytes, sig, exitingTxIncBlock, false);
         } else {
             checkBlockInclusion(
-                prevTxBytes, exitingTxBytes,prevTxInclusionProof,
+                prevTxBytes, exitingTxBytes, prevTxInclusionProof,
                 exitingTxInclusionProof, sig,
                 prevTxIncBlock, exitingTxIncBlock, false);
         }

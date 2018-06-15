@@ -41,12 +41,14 @@ mallory_to_trudy_block = authority.get_block_number()
 # Trudy attemps to exit her illegitimate coin
 trudy.start_exit(utxo_id, trudy_to_mallory_block, mallory_to_trudy_block)
 
+w3 = dan.root_chain.w3
+
 # Dan challenges Trudy's exit
 dan.challenge_before(utxo_id, 0, coin['deposit_block'])
+increaseTime(w3, 8 * 24 * 3600)
 authority.finalize_exits()
 dan.start_exit(utxo_id, 0, coin['deposit_block'])
 
-w3 = dan.root_chain.w3
 increaseTime(w3, 8 * 24 * 3600)
 authority.finalize_exits()
 

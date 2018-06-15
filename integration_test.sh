@@ -21,3 +21,4 @@ sleep 3
 python demo.py
 python challenge_after_demo.py
 python challenge_between_demo.py
+python challenge_before_demo.py
