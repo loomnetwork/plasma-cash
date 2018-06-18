@@ -50,8 +50,7 @@ class Client(object):
 
             # prev_block = 0 , denomination = 1
             exiting_tx = Transaction(slot, 0, 1,
-                                     self.token_contract.account.address,
-                                     incl_block=tx_blk_num)
+                                     self.token_contract.account.address)
             exiting_tx.make_mutable()
             exiting_tx.sign(self.key)
             exiting_tx.make_immutable()
@@ -86,8 +85,7 @@ class Client(object):
 
             # prev_block = 0 , denomination = 1
             exiting_tx = Transaction(slot, 0, 1,
-                                     self.token_contract.account.address,
-                                     incl_block=tx_blk_num)
+                                     self.token_contract.account.address)
             exiting_tx.make_mutable()
             exiting_tx.sign(self.key)
             exiting_tx.make_immutable()
@@ -182,9 +180,7 @@ class Client(object):
 
     def send_transaction(self, slot, prev_block, denomination, new_owner):
         new_owner = utils.normalize_address(new_owner)
-        incl_block = self.get_block_number()
-        tx = Transaction(slot, prev_block, denomination, new_owner,
-                         incl_block=incl_block)
+        tx = Transaction(slot, prev_block, denomination, new_owner)
         tx.make_mutable()
         tx.sign(self.key)
         tx.make_immutable()

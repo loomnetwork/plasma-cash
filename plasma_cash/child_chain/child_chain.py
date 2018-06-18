@@ -34,8 +34,8 @@ class ChildChain(object):
         # Currently, denomination is always 1. This may change in the future.
         denomination = event['args']['denomination']
         depositor = event['args']['from']
-        deposit_tx = Transaction(slot, 0, denomination, depositor,
-                                 incl_block=blknum)
+        deposit_tx = Transaction(slot, 0, denomination, depositor)
+
         # create a new plasma block on deposit
         deposit_block = Block([deposit_tx])
         self.blocks[blknum] = deposit_block
