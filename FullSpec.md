@@ -1,36 +1,61 @@
 # Loom SDK - Plasma Cash Integration Spec
 
 ## Glossary:
+
 1. Root Chain: Ethereum Mainnet
 2. RootChain.sol: Plasma Cash smart contract, deployed on the Root Chain
 3. Plasma Chain: Ethereum sidechain, in our case Loom DAppChain
 4. Authority: Owner of the keypair which allows calling privileged functions such as `submitBlock` in RootChain.sol, as well as the operator of the Plasma Chain
-5. UTXO: Unspent Transaction Output. When referring to the slot of a UTXO, we refer to the position of the UTXO in the Merkle Tree that includes it. 
+5. UTXO: Unspent Transaction Output. When referring to the slot of a UTXO, we refer to the position of the UTXO in the Merkle Tree that includes it.
 
 ## Root Chain Interaction
+
+Rootchain interactions come in two varieties: (1) the client calls functions of the `RootChain.sol` contract running on the Ethereum rootchain, or (2) events on the rootchain trigger actions on the Plasma chain.
+
 1. Bindings to all contract functions of [RootChain.sol](https://github.com/loomnetwork/plasma-erc721/blob/master/server/contracts/Core/RootChain.sol). Given the ABI, Address and mainnet node endpoint (infura, localhost:8545 etc.) it should be able to call all the functions of the RootChain.sol contract successfully.
-2. Event handlers: Functionality to make a callback to a function whenever a certain type of event gets emitted from RootChain.sol. 
+
+    - `challengeBefore(slot, prev_tx_bytes, exiting_tx_bytes, prev_tx_inclusion_proof, exiting_tx_inclusion_proof, sig, prev_tx_block_num, exiting_tx_block_num)`: Submit a fraud proof showing that someone is attempting to exit an coin with an invalid history.
+
+    - `respondChallengeBefore(uint64 slot, uint challengingBlockNumber, bytes challengingTransaction, bytes proof)`: Allows a user to respond to a `challengeBefore` by providing information about the child of the transaction which the challenger claims is the last valid transaction involving a particular coin.
+
+    - `challengeBetween(uint64 slot, uint challengingBlockNumber, bytes challengingTransaction, bytes proof)`: This function is used to challenge exists of double-spent coins. A cheat spends a coin deposited in block `n` in both blocks `n + 1` and `n + 2`. If the cheat attempts to exit the coin by referencing the transaction in block `n + 2`, a challenger must provide proof that the coin was also spent in block `n + 1` which is positioned between the deposit block `n` and the block with a second spend `n + 2`. Hence, the function is called `challengeBetween`.
+
+    - `challengeAfter(uint64 slot, uint challengingBlockNumber, bytes challengingTransaction, bytes proof)`: This function is used to challenge exits of already-spent coins. A cheat will try to exit a coin included in block `n` and a challenger must produce a proof that the coin was spent in a later block, e.g. `n + 1` or `n + 2`. Therefore, the function is called `challengeAfter` because it requires a challenger to find a later block containing a spend of particular coin than the one indicated by the cheat.
+
+    - `startExit(slot, previous_tx_blk_num, latest_tx_blk_num)`: Start exiting a coin at a particular UTXO.
+
+    - `finalizeExits()`: Exit all coins whose exists are older than 7 days and have not been successfully challenged. Any successfully challenged coins should have their states changed to DEPOSITED and have their owner's bonds slashed.
+
+    - `withdraw(uint64 slot)`: Withdraws a particular UTXO from `RootChain.sol` contract that has been exited from the Plasma chain.
+
+    - `withdrawBonds()`: Allows a user to withdraw any bonds he was forced to submit along when initiating an exit.
+
+2. Event handlers: Functionality to make a callback to a function whenever a certain type of event gets emitted from RootChain.sol.
 
 ## Data Types
 _All data type sizes (i.e uint64, uint8 etc) are preliminary and may change_.
 
 ### `Transaction`:
+
 Whenever a transaction is created, it gets signed by its owner and gets passed on to a new owner. Each Transaction/UTXO contains the following (ref impl in Python):
 1. `uid(uint64)`:The slot of the UTXO - Currently uint64, subject to change.
 2. `previousBlock(uint256)`: Each time a transaction is created, it MUST refer to a previous block which also included that transaction. A transaction is considered a “deposit transaction”, if it’s the first UTXO after a user deposits their coin in the Plasma Chain. This transaction mints coins from nowhere in the Plasma Chain and as a result its previous block is 0.
-3. `denomination(uint256)`: How many coins are included in that UTXO. Currently this is always 1 since we’re using ERC721 tokens which are unique, however in future iterations this can be any number. 
+3. `denomination(uint256)`: How many coins are included in that UTXO. Currently this is always 1 since we’re using ERC721 tokens which are unique, however in future iterations this can be any number.
 4. `new_owner(address)`: The new owner of the transaction.
 5. `signature(bytes)`: Signature of the block’s hash
 6. `hash(byte32)`: The hash of the RLP encoded unsigned transaction’s bytes. If the transaction is a deposit transaction (it was included in a block which is not a multiple of 1000), its hash is the hash of its uid(ref).
 7. `merkle_hash(byte32)`: The hash of the RLP encoded signed transaction’s bytes
 8. `sender(address)`: The transaction’s sender, derived from the hash and the signature
 
-### `Block`: 
+### `Block`:
+
 1. Transaction Set(`Transaction[]`): List of transactions included in Block
 2. `signature(bytes)`: Signature on the block’s hash
 hash(byte32): The hash of the RLP encoded unsigned block’s bytes.
 3. `merkle_hash(byte32)`: The hash of the RLP encoded signed block’s bytes
 4. Merklized Transaction Set: All transactions in the block get sorted in a Sparse Merkle Tree of depth 64 (ref). The block’s merkle root gets generated, and is to be submitted at a future point to the `RootChain.sol` contract
+
+Multiple spends of the same coin cannot be included in a single block since the Sparse Merkle Tree structure allocates a unique slot for each coin on a plasma chain.
 
 ### Sparse Merkle Tree (SMT)
 
@@ -51,12 +76,13 @@ There are 2 kind of blocks:
 In other words, the Plasma Chain generates Deposit Blocks, in response to deposits, while `RootChain.sol` creates blocks in response to block submissions. The Plasma Chain holds the full information for each block, while `RootChain.sol` just stores a hash, which in the case of a Deposit Block is the hash of the deposit transaction, while in the case of a Plasma Block is the merkle root of the Sparse Merkle Tree which gets created from the block's transactions in the Plasma Chain.
 
 The Plasma Chain generates Deposit Blocks by listening to `Deposit` type events from `RootChain.sol`. This is the event as it appears in the `RootChain.sol` contract:
+
 ```solidity
 event Deposit(uint64 indexed slot, uint256 depositBlockNumber, uint64 denomination, address indexed from);
 ```
 
 As an example, this is the Python source code for the callback which will create a Deposit Block in the Plasma Chain:
-```py
+```python
 # Watch all deposit events, callback to self._send_deposit
     deposit_filter = self.root_chain.watch_event('Deposit', self._send_deposit, 1)
 
@@ -72,12 +98,14 @@ def _send_deposit(self, event):
 ```
 
 After every deposit transaction (previous block = 0), a block is created on the Plasma Chain, based on the parameters of the event emitted from RootChain.sol. That way, both the Plasma Chain state and the `RootChain.sol` contract have the same state for deposit blocks. In order to have separate block numbering between the two, we consider that Plasma Blocks are separated by N blocks, where every block between 2 Plasma Block can be a Deposit Block. As an example for N=1000:
+
 ```
-0 -> 1 -> 2 -> 3 -> 1000 -> 1001 -> 1002 -> ... -> 2000 -> 2001 ... 
+0 -> 1 -> 2 -> 3 -> 1000 -> 1001 -> 1002 -> ... -> 2000 -> 2001 ...
 ```
 Deposit Blocks are the blocks which are non-multiples of the interval N.
 
 ### Communication Protocol
+
 As with all blockchain nodes, the Plasma Chain should also have an API to accept communication. We define the following:
 
 1. `send_transaction`: A Plasma chain user submits a transaction for inclusion in a Plasma block. Transactions are currently limited to spends of a particular coin.
