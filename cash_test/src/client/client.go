@@ -16,7 +16,6 @@ type Client struct {
 
 // Register a new player and grant 5 cards, for demo purposes
 func (c *Client) Register() {
-
 	c.TokenContract.Register()
 }
 

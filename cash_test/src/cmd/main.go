@@ -9,6 +9,7 @@ import (
 func main() {
 
 	plasmaChain := os.Getenv("PLASMA_CHAIN")
+	client.InitClients("http://localhost:8545")
 
 	var svc client.ChainServiceClient
 	if plasmaChain == "LOOM" {
