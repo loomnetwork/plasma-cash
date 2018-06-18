@@ -45,18 +45,18 @@ Whenever a transaction is created, it gets signed by its owner and gets passed o
 2. `previousBlock(uint256)`: Each time a transaction is created, it MUST refer to a previous block which also included that transaction. A transaction is considered a “deposit transaction”, if it’s the first UTXO after a user deposits their coin in the Plasma Chain. This transaction mints coins from nowhere in the Plasma Chain and as a result its previous block is 0.
 3. `denomination(uint256)`: How many coins are included in that UTXO. Currently this is always 1 since we’re using ERC721 tokens which are unique, however in future iterations this can be any number.
 4. `new_owner(address)`: The new owner of the transaction.
-5. `signature(bytes)`: Signature of the block’s hash
-6. `hash(byte32)`: The hash of the RLP encoded unsigned transaction’s bytes. If the transaction is a deposit transaction (it was included in a block which is not a multiple of 1000), its hash is the hash of its uid(ref).
+5. `signature(bytes)`: Signature on the transaction’s hash
+6. `hash(byte32)`: The hash of the RLP encoded unsigned transaction’s bytes. If the transaction is a deposit transaction (its prevblock is 0), its hash is the hash of its uid
 7. `merkle_hash(byte32)`: The hash of the RLP encoded signed transaction’s bytes
 8. `sender(address)`: The transaction’s sender, derived from the hash and the signature
 
 ### `Block`:
 
 1. Transaction Set(`Transaction[]`): List of transactions included in Block
-2. `signature(bytes)`: Signature on the block’s hash
-hash(byte32): The hash of the RLP encoded unsigned block’s bytes.
-3. `merkle_hash(byte32)`: The hash of the RLP encoded signed block’s bytes
-4. Merklized Transaction Set: All transactions in the block get sorted in a Sparse Merkle Tree of depth 64 (ref). The block’s merkle root gets generated, and is to be submitted at a future point to the `RootChain.sol` contract
+2. Merklized Transaction Set: All transactions in the block get sorted in a Sparse Merkle Tree of depth 64. The block’s merkle root gets generated, and is to be submitted at a future point to the `RootChain.sol` contract
+3. `hash(byte32)`: The hash of the RLP encoded unsigned block’s bytes.
+3. `merkle_hash(byte32)`: The block's merkle root from its included transactions
+3. `signature(bytes)`: Signature on the block’s hash
 
 Multiple spends of the same coin cannot be included in a single block since the Sparse Merkle Tree structure allocates a unique slot for each coin on a plasma chain.
 
