@@ -30,7 +30,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
     beforeEach(async function() {
         plasma = await RootChain.new({from: authority});
         cards = await CryptoCards.new(plasma.address);
-        plasma.setCryptoCards(cards.address);
+        plasma.setERC721(cards.address);
         cards.register({from: alice});
         assert.equal(await cards.balanceOf.call(alice), 5);
 

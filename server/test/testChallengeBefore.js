@@ -28,7 +28,7 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
     beforeEach(async function() {
         plasma = await RootChain.new({from: authority});
         cards = await CryptoCards.new(plasma.address);
-        plasma.setCryptoCards(cards.address);
+        plasma.setERC721(cards.address);
         cards.register({from: alice});
         assert.equal(await cards.balanceOf.call(alice), 5);
 

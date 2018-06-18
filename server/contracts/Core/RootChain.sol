@@ -1,9 +1,7 @@
 pragma solidity ^0.4.24;
 
-// Linked contract for withdrawals, import only safeTransferFrom interface for gas efficiency in the future
-import "./Cards.sol";
-
 // Zeppelin Imports
+import "openzeppelin-solidity/contracts/token/ERC721/ERC721.sol";
 import "openzeppelin-solidity/contracts/token/ERC721/ERC721Receiver.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
@@ -15,8 +13,7 @@ import "../Libraries/ECVerify.sol";
 // Sparse Merkle Tree functionalities
 import "./SparseMerkleTree.sol";
 
-
-contract RootChainEvents {
+contract RootChain is ERC721Receiver, SparseMerkleTree {
     event Deposit(uint64 indexed slot, uint256 blockNumber, uint64 denomination, address indexed from, bytes32 hash);
     event SubmittedBlock(uint256 blockNumber, bytes32 root, uint256 timestamp);
 
@@ -28,10 +25,6 @@ contract RootChainEvents {
     event FreedBond(address indexed from, uint256 amount);
     event SlashedBond(address indexed from, address indexed to, uint256 amount);
     event WithdrewBonds(address indexed from, uint256 amount);
-}
-
-
-contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
 
     using SafeMath for uint256;
     using Transaction for bytes;
@@ -118,7 +111,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
 
     uint256 public depositCount;
     mapping(uint256 => childBlock) public childChain;
-    CryptoCards cryptoCards;
+    ERC721 erc721;
 
     constructor () public {
         authority = msg.sender;
@@ -251,7 +244,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
     // Withdraw a UTXO that has been exited
     function withdraw(uint64 slot) external isState(slot, State.EXITED) {
         require(coins[slot].owner == msg.sender, "You do not own that UTXO");
-        cryptoCards.safeTransferFrom(address(this), msg.sender, uint256(coins[slot].uid));
+        erc721.safeTransferFrom(address(this), msg.sender, uint256(coins[slot].uid));
     }
 
     /******************** CHALLENGES ********************/
@@ -453,15 +446,15 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
         public
         returns(bytes4)
     {
-        require(msg.sender == address(cryptoCards)); // can only be called by the associated cryptocards contract.
+        require(msg.sender == address(erc721)); // can only be called by the associated cryptocards contract.
         deposit(_from, uint64(_uid), uint32(1));
         return ERC721_RECEIVED;
     }
 
     /******************** HELPERS ********************/
 
-    function setCryptoCards(CryptoCards _cryptoCards) isAuthority public {
-        cryptoCards = _cryptoCards;
+    function setERC721(ERC721 _erc721) isAuthority public {
+        erc721 = _erc721;
     }
 
     function getIndex(uint64 slot) private view returns (uint256) {

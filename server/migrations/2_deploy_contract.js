@@ -18,7 +18,7 @@ module.exports = async function(deployer, network, accounts) {
             aCryptoCardsInstance = instance;
             console.log('CryptoCards deployed at address: ' + instance.address);
 
-            aRootChainInstance.setCryptoCards(instance.address);
+            aRootChainInstance.setERC721(instance.address);
         });
 };
 
