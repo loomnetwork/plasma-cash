@@ -1,7 +1,6 @@
 CURRENT_DIRECTORY = $(shell pwd)
 
 
-export GOPATH=$(CURRENT_DIRECTORY)/tmpgopath:$(CURRENT_DIRECTORY)
 
 .PHONY: all clean test lint deps proto
 

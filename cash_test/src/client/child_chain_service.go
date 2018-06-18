@@ -31,7 +31,7 @@ func (c *ChildChainService) CurrentBlock() (error, *Block) {
 	return nil, &block
 }
 
-func (c *ChildChainService) BlockNumber() int {
+func (c *ChildChainService) BlockNumber() int64 {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/blocknumber", c.url), nil)
 	if err != nil {
 		fmt.Print(err)
@@ -47,11 +47,11 @@ func (c *ChildChainService) BlockNumber() int {
 	// fmt.Println("BlockNumber Body:", string(body))
 
 	i, _ := strconv.Atoi(string(body))
-	return i
+	return int64(i)
 }
 
-func (c *ChildChainService) Block(blknum int) (error, *Block) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/block/%s", c.url, strconv.Itoa(blknum)), nil)
+func (c *ChildChainService) Block(blknum int64) (error, *Block) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/block/%d", c.url, blknum), nil)
 	if err != nil {
 		fmt.Print(err)
 	}
@@ -68,8 +68,8 @@ func (c *ChildChainService) Block(blknum int) (error, *Block) {
 	return nil, &block
 }
 
-func (c *ChildChainService) Proof(blknum int, uid int) (error, *Proof) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/proof?blknum=%s&uid=%s", c.url, strconv.Itoa(blknum), strconv.Itoa(uid)), nil)
+func (c *ChildChainService) Proof(blknum int64, uid int64) (error, *Proof) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/proof?blknum=%d&uid=%d", c.url, blknum, uid), nil)
 	if err != nil {
 		fmt.Print(err)
 	}

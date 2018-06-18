@@ -188,16 +188,14 @@ func (c *Client) SendTransaction(slot int, prevBlock int, denomination int, newO
 		        incl_block = c.BlockNumber()
 		        tx = Transaction(slot, prev_block, denomination, new_owner,
 		                         incl_block=incl_block)
-		        tx.make_mutable()
 		        tx.sign(c.key)
-		        tx.make_immutable()
 		        c.childChain.SendTransaction(rlp.encode(tx, Transaction).hex())
 				return tx
 	*/
 	return &Tx{}
 }
 
-func (c *Client) BlockNumber() int {
+func (c *Client) BlockNumber() int64 {
 	return c.childChain.BlockNumber()
 }
 

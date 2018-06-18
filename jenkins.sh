@@ -7,7 +7,7 @@ cd cash_test
 make deps
 make
 make test
-#TODO ./plasmascash_tester
+./plasmascash_tester ; true #remove true once finished
 
 
 

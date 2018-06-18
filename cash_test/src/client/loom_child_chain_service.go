@@ -1,66 +1,55 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
+	"log"
+
+	loom "github.com/loomnetwork/go-loom"
+	pctypes "github.com/loomnetwork/go-loom/builtin/types/plasma_cash"
+	"github.com/loomnetwork/go-loom/types"
 )
 
 // LoomChildChainService child client to reference server
 type LoomChildChainService struct {
-	url string
+	url          string
+	ChainID      string
+	WriteURI     string
+	ReadURI      string
+	contractAddr string
+	loomcontract *LoomContract
 }
 
 func (c *LoomChildChainService) CurrentBlock() (error, *Block) {
 	return nil, nil
 }
 
-func (c *LoomChildChainService) BlockNumber() int {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/abci_info", c.url), nil)
-	if err != nil {
-		fmt.Print(err)
-	}
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Print(err)
-	}
-	defer resp.Body.Close()
-
-	body, _ := ioutil.ReadAll(resp.Body)
-
-	type jResponse struct {
-		Last_block_height   int
-		Last_block_app_hash string
-	}
-
-	type jResult struct {
-		Response jResponse
-	}
-
-	type jBlock struct {
-		Jsonrpc string
-		Id      string
-		Result  jResult
-	}
-
-	var jblock jBlock
-
-	err = json.Unmarshal([]byte(body), &jblock)
-	if err != nil {
-		fmt.Print(err)
-	}
-	return jblock.Result.Response.Last_block_height
+func (c *LoomChildChainService) BlockNumber() int64 {
+	return int64(0)
 }
 
-func (c *LoomChildChainService) Block(blknum int) (error, *Block) {
+func (c *LoomChildChainService) Block(blknum int64) (error, *Block) {
+	fmt.Printf("trying to get Block data\n")
+	blk := loom.NewBigUIntFromInt(blknum)
+
+	var result pctypes.GetBlockResponse
+	params := &pctypes.GetBlockRequest{
+		BlockHeight: &types.BigUInt{*blk},
+	}
+
+	if err := c.loomcontract.StaticCallContract("GetBlockRequest", params, &result); err != nil {
+		log.Fatalf("failed getting Block data - %v\n", err)
+
+		return err, nil
+	}
+
+	log.Printf("get block value %v '\n", result)
+
 	return nil, nil
 }
 
-func (c *LoomChildChainService) Proof(blknum int, uid int) (error, *Proof) {
-	return nil, nil
+func (c *LoomChildChainService) Proof(blknum int64, uid int64) (error, *Proof) {
 
+	return nil, nil
 }
 
 func (c *LoomChildChainService) SubmitBlock(*Block) error {
@@ -71,7 +60,7 @@ func (c *LoomChildChainService) SendTransaction() error {
 	return nil
 }
 
-func NewLoomChildChainService(url string) ChainServiceClient {
+func NewLoomChildChainService(readuri, writeuri string) ChainServiceClient {
 	fmt.Printf("Using Loom Service as Plasma Chain\n")
-	return &LoomChildChainService{url}
+	return &LoomChildChainService{loomcontract: NewLoomContract(readuri, writeuri, "plasmacash")}
 }

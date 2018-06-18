@@ -13,10 +13,12 @@ func main() {
 
 	var svc client.ChainServiceClient
 	if plasmaChain == "LOOM" {
-		svc = client.NewLoomChildChainService("http://localhost:8546")
+		svc = client.NewLoomChildChainService("http://localhost:46658/rpc", "http://localhost:46658/query")
 	} else {
 		svc = client.NewChildChainService("http://localhost:8546")
 	}
+
+	svc.Block(1)
 
 	alice := client.NewClient(svc, client.GetRootChain("alice"), client.GetTokenContract("alice"))
 

@@ -32,10 +32,10 @@ type RootChainClient interface {
 
 type ChainServiceClient interface {
 	CurrentBlock() (error, *Block)
-	BlockNumber() int
+	BlockNumber() int64
 
-	Block(blknum int) (error, *Block)
-	Proof(blknum int, uid int) (error, *Proof) //TODO what is the uid?
+	Block(blknum int64) (error, *Block)
+	Proof(blknum int64, uid int64) (error, *Proof) //TODO what is the uid?
 
 	SubmitBlock(*Block) error
 
