@@ -27,7 +27,7 @@ contract("Plasma ERC721 - Multiple Deposits in various blocks", async function(a
     beforeEach(async function() {
         plasma = await RootChain.new({from: authority});
         cards = await CryptoCards.new(plasma.address);
-        plasma.setCryptoCards(cards.address);
+        plasma.setERC721(cards.address);
         cards.register({from: alice});
         cards.register({from: bob});
         assert.equal(await cards.balanceOf.call(alice), 5);
