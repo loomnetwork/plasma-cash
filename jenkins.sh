@@ -1,5 +1,16 @@
 #!/bin/bash
 
+mkdir -p gopath/bin ; true
+export GOPATH=`pwd`/gopath
+
+cd cash_test
+make deps
+make
+make test
+#TODO ./plasmascash_tester
+
+
+
 cd server
 npm install
 npm run lint
