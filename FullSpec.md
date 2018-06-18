@@ -32,7 +32,10 @@ Rootchain interactions come in two varieties: (1) the client calls functions of 
 
 2. Event handlers: Functionality to make a callback to a function whenever a certain type of event gets emitted from RootChain.sol.
 
+This is discussed in more detail in the [Block Structure](#block-structure) section below.
+
 ## Data Types
+
 _All data type sizes (i.e uint64, uint8 etc) are preliminary and may change_.
 
 ### `Transaction`:
@@ -62,7 +65,6 @@ Multiple spends of the same coin cannot be included in a single block since the 
 A N-depth merkle tree where all of its leaves are initialized to H(0), where H is Ethereum’s keccak256. Full description in [ethresearch](https://ethresear.ch/t/plasma-cash-with-sparse-merkle-trees-bloom-filters-and-probabilistic-transfers/2006) and in the [relevant paper](https://eprint.iacr.org/2016/683.pdf). We have 3 implementations, in [Python](https://github.com/loomnetwork/plasma-erc721/blob/master/plasma_cash/utils/merkle/sparse_merkle_tree.py) and [Javascript](https://github.com/loomnetwork/plasma-erc721/blob/master/server/test/SparseMerkleTree.js) for the creation/validation, and additionally a [Solidity Smart Contract](https://github.com/loomnetwork/plasma-erc721/blob/master/server/contracts/Core/SparseMerkleTree.sol) for the on-chain validation.
 
 ## Plasma Chain
-
 
 ### Block Structure
 
@@ -108,7 +110,7 @@ Deposit Blocks are the blocks which are non-multiples of the interval N.
 
 As with all blockchain nodes, the Plasma Chain should also have an API to accept communication. We define the following:
 
-1. `send_transaction`: A Plasma chain user submits a transaction for inclusion in a Plasma block. Transactions are currently limited to spends of a particular coin.
+1. `send_transaction`: A Plasma chain user submits a transaction for inclusion in a Plasma block. Transactions are currently limited to spends of a particular coin which means every transaction involves a user transfering a single coin to another user.
 2. `submit_block` (authority only): Submits the current block root to `RootChain.sol`. Can only be called from the authority.
 3. `get_current_block`: Get the latest block in the Plasma chain.
 4. `get_block`: Get a block with a user-specified number.
@@ -116,7 +118,7 @@ As with all blockchain nodes, the Plasma Chain should also have an API to accept
 
 Reference implementation in Python [[1](https://github.com/loomnetwork/plasma-erc721/blob/master/plasma_cash/child_chain/server.py)][[2](https://github.com/loomnetwork/plasma-erc721/blob/master/plasma_cash/child_chain/child_chain.py)]
 
-In order for a client to communicate with the client, they should be able to send requests that the Plasma Chain understands. We can think of the Plasma Chain an Ethereum Node, and the client as web3.js. As a result, the above should also be implemented for a client that wants to talk to the Plasma Chain.
+In order for a client to communicate with the Plasma chain, the client should send requests that the Plasma Chain understands. We can think of the Plasma Chain an Ethereum Node, and the client as web3.js. Therefore, the above should be implemented for a client that wants to talk to the Plasma Chain.
 
 Reference implementation in Python [[1](https://github.com/loomnetwork/plasma-erc721/blob/master/plasma_cash/client/child_chain_service.py)[[2](https://github.com/loomnetwork/plasma-erc721/blob/master/plasma_cash/client/client.py)]
 
