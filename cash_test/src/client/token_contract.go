@@ -30,9 +30,12 @@ func (d *TContract) Register() error {
 	return err
 }
 
-func (d *TContract) BalanceOf() (int, error) {
-	d.tokenContract.BalanceOf(nil, d.callerAddr)
-	return 0, nil
+func (d *TContract) BalanceOf() (int64, error) {
+	bal, err := d.tokenContract.BalanceOf(nil, d.callerAddr)
+	if err != nil {
+		return 0, err
+	}
+	return bal.Int64(), nil
 }
 
 func (d *TContract) Account() (*Account, error) {

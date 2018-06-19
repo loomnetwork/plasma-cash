@@ -21,7 +21,7 @@ type Account struct {
 type TokenContract interface {
 	Register() error
 	Deposit(int) error
-	BalanceOf() (int, error)
+	BalanceOf() (int64, error)
 
 	Account() (*Account, error)
 }
