@@ -120,5 +120,7 @@ func main() {
 
 // not idiomatic go, but it cleans up this sample
 func exitIfError(err error) {
-	log.Fatal(err)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
