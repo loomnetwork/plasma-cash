@@ -17,7 +17,11 @@ class Client(object):
         self.token_contract = token_contract
         self.child_chain = child_chain
         self.child_block_interval = 1000
-        self.proofs = {}
+
+        # Proof related state
+        self.incl_proofs = {}
+        self.excl_proofs = {}
+        self.txs = {}
 
     # Token Functions
 
@@ -168,13 +172,22 @@ class Client(object):
         return tx_hash
 
     def get_plasma_coin(self, slot):
-        tx_hash = self.root_chain.get_plasma_coin(slot)
-        return tx_hash
+        return self.root_chain.get_plasma_coin(slot)
+
+    def get_block_root(self, blknum):
+        return self.root_chain.get_block_root(blknum)
+
+    def check_inclusion(self, leaf, root, slot, proof):
+        return self.root_chain.check_inclusion(leaf, root, slot, proof)
+
+    def check_exclusion(self, root, slot, proof):
+        return self.root_chain.check_exclusion(root, slot, proof)
 
     # Child Chain Functions
 
-    def get_coin_history(self, slot):
+    def get_block_numbers(self, slot):
         # First get the coin's deposit block
+        # todo efficiency -> start_block should be updated to the last block obtained last time
         start_block = self.get_plasma_coin(slot)['deposit_block']
 
         # Get next non-deposit block
@@ -183,15 +196,56 @@ class Client(object):
 
         # Create a list of indexes with coin's deposit block
         # and all subsequent submitted blocks that followed
-        block_numbers = [start_block] + list(range(next_deposit, end_block + 1, self.child_block_interval))
+        block_numbers = [ start_block ] + list(range(next_deposit, end_block + 1, self.child_block_interval))
+        return block_numbers
 
-        proofs = {}
+    def get_coin_history(self, slot):
+        block_numbers = self.get_block_numbers(slot)
+
+        incl_proofs = {}
+        excl_proofs = {}
+        txs = {}
         for blknum in block_numbers:
-            proofs[blknum] = self.get_proof(blknum, slot)
+            blk_root = self.root_chain.get_block_root(blknum)
+            tx, proof = self.get_tx_and_proof(blknum, slot)
+            txs[blknum] = tx
+            if self.check_inclusion(tx, blk_root, slot, proof):
+                incl_proofs[blknum] = proof
+            else:
+                excl_proofs[blknum] = proof
 
         # Save the proofs to the client's "state", and return
-        self.proofs[slot] = proofs
-        return proofs
+        self.incl_proofs[slot] = incl_proofs
+        self.excl_proofs[slot] = excl_proofs
+        self.txs[slot] = txs
+        return incl_proofs, excl_proofs
+
+    # received_proofs should be a dictionary with merkle branches for each block
+    def verify_coin_history(self, slot, incl_proofs, excl_proofs):
+        # Sanity checks, make sure incl_proofs and excl_proofs have all the correct keys for the coin
+        incl_keys = set(incl_proofs)
+        excl_keys = set(excl_proofs)
+        if len(incl_keys.intersection(excl_keys)) != 0:
+            return False
+
+        block_numbers = self.get_block_numbers(slot) # gets all of the coin's block numbers
+        if incl_keys.union(excl_keys) != set(block_numbers): # ensure that all keys are included
+            return False
+
+        # assert inclusion proofs
+        for blknum, proof in incl_proofs.items():
+            blk_root = self.root_chain.get_block_root(blknum)
+            tx = self.get_tx(blknum, slot) # should we be polling the tx from the operator or trusting the receiver?
+            if not self.check_inclusion(tx, blk_root, slot, proof):
+                return False
+
+        # assert exclusion proof / i.e. leaf at that slot is empty hash
+        for blknum, proof in excl_proofs.items():
+            blk_root = self.root_chain.get_block_root(blknum)
+            if not self.check_exclusion(blk_root, slot, proof):
+                return False
+        # If it does not hit any of the return false branches, it's OK
+        return True
 
     def submit_block(self):
         block = self.get_current_block()
@@ -230,9 +284,6 @@ class Client(object):
         tx = rlp.decode(utils.decode_hex(data['tx']), Transaction)
         proof = utils.decode_hex(data['proof'])
         return tx, proof
-
-    
-
 
     def get_proof(self, blknum, slot):
         return utils.decode_hex(self.child_chain.get_proof(blknum, slot))
