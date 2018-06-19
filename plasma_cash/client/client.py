@@ -178,12 +178,12 @@ class Client(object):
         start_block = self.get_plasma_coin(slot)['deposit_block']
 
         # Get next non-deposit block
-        next_deposit = (start_block+self.child_block_interval) // self.child_block_interval * self.child_block_interval
+        next_deposit = (start_block + self.child_block_interval) // self.child_block_interval * self.child_block_interval
         end_block = self.get_block_number()
 
-        # Create a list of indexes with coin's deposit block 
+        # Create a list of indexes with coin's deposit block
         # and all subsequent submitted blocks that followed
-        block_numbers = [ start_block ] + list(range(next_deposit, end_block + 1, self.child_block_interval))
+        block_numbers = [start_block] + list(range(next_deposit, end_block + 1, self.child_block_interval))
 
         proofs = {}
         for blknum in block_numbers:
@@ -228,3 +228,6 @@ class Client(object):
 
     def get_proof(self, blknum, slot):
         return utils.decode_hex(self.child_chain.get_proof(blknum, slot))
+
+    def get_all_deposits(self):
+        return self.root_chain.get_all_deposits(self.root_chain.account.address)

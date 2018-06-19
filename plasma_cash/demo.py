@@ -1,6 +1,7 @@
 from client.client import Client
 from dependency_config import container
 from utils.utils import increaseTime
+from time import sleep
 
 alice = Client(container.get_root('alice'), container.get_token('alice'))
 bob = Client(container.get_root('bob'), container.get_token('bob'))
@@ -41,6 +42,12 @@ event_data = alice.root_chain.get_event_data('Deposit', tx_hash)
 deposit3_utxo = event_data[0]['args']['slot']
 deposit3_block_number = event_data[0]['args']['slot']
 print('ALICE EVENT DATA3', event_data[0]['args'])
+
+
+# Check that all deposits have registered
+sleep(2)
+registered_deposits = alice.get_all_deposits()
+print("registered deposits: ", registered_deposits)
 
 # Alice to Bob, and Alice to Charlie. We care about the Alice to Bob
 # transaction
