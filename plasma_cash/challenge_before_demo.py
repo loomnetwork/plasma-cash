@@ -13,7 +13,9 @@ authority = Client(container.get_root('authority'),
 dan.register()
 
 # Dan deposits a coin
-dan.deposit(16)
+tx_hash = dan.deposit(16)
+event_data = dan.root_chain.get_event_data('Deposit', tx_hash)
+deposit1_utxo = event_data[0]['args']['slot']
 
 # wait to make sure that events get fired correctly
 time.sleep(2)
@@ -21,38 +23,37 @@ time.sleep(2)
 dan_submit_block = authority.get_block_number()
 danTokensStart = dan.token_contract.balance_of()
 
-utxo_id = 6
-coin = dan.get_plasma_coin(utxo_id)
+coin = dan.get_plasma_coin(deposit1_utxo)
 authority.submit_block()
 
 # Trudy sends her invalid coin to Mallory
 trudy_to_mallory = trudy.send_transaction(
-     utxo_id, coin['deposit_block'], 1,
+     deposit1_utxo, coin['deposit_block'], 1,
      mallory.token_contract.account.address)
 authority.submit_block()
 trudy_to_mallory_block = authority.get_block_number()
 
 # Mallory sends her invalid coin to Trudy
 mallory_to_trudy = mallory.send_transaction(
-     utxo_id, trudy_to_mallory_block, 1, trudy.token_contract.account.address)
+     deposit1_utxo, trudy_to_mallory_block, 1, trudy.token_contract.account.address)
 authority.submit_block()
 mallory_to_trudy_block = authority.get_block_number()
 
 # Trudy attemps to exit her illegitimate coin
-trudy.start_exit(utxo_id, trudy_to_mallory_block, mallory_to_trudy_block)
+trudy.start_exit(deposit1_utxo, trudy_to_mallory_block, mallory_to_trudy_block)
 
 w3 = dan.root_chain.w3
 
 # Dan challenges Trudy's exit
-dan.challenge_before(utxo_id, 0, coin['deposit_block'])
+dan.challenge_before(deposit1_utxo, 0, coin['deposit_block'])
 increaseTime(w3, 8 * 24 * 3600)
 authority.finalize_exits()
-dan.start_exit(utxo_id, 0, coin['deposit_block'])
+dan.start_exit(deposit1_utxo, 0, coin['deposit_block'])
 
 increaseTime(w3, 8 * 24 * 3600)
 authority.finalize_exits()
 
-dan.withdraw(utxo_id)
+dan.withdraw(deposit1_utxo)
 
 dan_balance_before = w3.eth.getBalance(dan.token_contract.account.address)
 dan.withdraw_bonds()
