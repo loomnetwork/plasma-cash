@@ -19,15 +19,25 @@ type LoomChildChainService struct {
 	loomcontract *LoomContract
 }
 
-func (c *LoomChildChainService) CurrentBlock() (error, *Block) {
-	return nil, nil
+func (c *LoomChildChainService) CurrentBlock() (Block, error) {
+	return c.Block(0) //asking for block zero gives latest
 }
 
 func (c *LoomChildChainService) BlockNumber() int64 {
-	return int64(0)
+	request := &pctypes.GetCurrentBlockRequest{}
+	result := &pctypes.GetCurrentBlockResponse{}
+
+	if err := c.loomcontract.StaticCallContract("GetCurrentBlockRequest", request, &result); err != nil {
+		log.Fatalf("failed getting Block number - %v\n", err)
+
+		return 0
+	}
+
+	log.Printf("get block height %v '\n", result.BlockHeight.Value.String())
+	return result.BlockHeight.Value.Int64()
 }
 
-func (c *LoomChildChainService) Block(blknum int64) (error, *Block) {
+func (c *LoomChildChainService) Block(blknum int64) (Block, error) {
 	fmt.Printf("trying to get Block data\n")
 	blk := loom.NewBigUIntFromInt(blknum)
 
@@ -44,15 +54,15 @@ func (c *LoomChildChainService) Block(blknum int64) (error, *Block) {
 
 	log.Printf("get block value %v '\n", result)
 
+	return NewClientBlock(result.Block), nil
+}
+
+func (c *LoomChildChainService) Proof(blknum int64, uid int64) (*Proof, error) {
+
 	return nil, nil
 }
 
-func (c *LoomChildChainService) Proof(blknum int64, uid int64) (error, *Proof) {
-
-	return nil, nil
-}
-
-func (c *LoomChildChainService) SubmitBlock(*Block) error {
+func (c *LoomChildChainService) SubmitBlock() error {
 	return nil
 }
 
@@ -61,6 +71,5 @@ func (c *LoomChildChainService) SendTransaction() error {
 }
 
 func NewLoomChildChainService(readuri, writeuri string) ChainServiceClient {
-	fmt.Printf("Using Loom Service as Plasma Chain\n")
 	return &LoomChildChainService{loomcontract: NewLoomContract(readuri, writeuri, "plasmacash")}
 }

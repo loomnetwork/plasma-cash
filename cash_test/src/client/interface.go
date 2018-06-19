@@ -3,7 +3,10 @@ package client
 type Tx struct {
 }
 
-type Block struct {
+type Block interface {
+}
+
+type DummyBlock struct {
 	blockId string
 }
 
@@ -31,13 +34,13 @@ type RootChainClient interface {
 }
 
 type ChainServiceClient interface {
-	CurrentBlock() (error, *Block)
+	CurrentBlock() (Block, error)
 	BlockNumber() int64
 
-	Block(blknum int64) (error, *Block)
-	Proof(blknum int64, uid int64) (error, *Proof) //TODO what is the uid?
+	Block(blknum int64) (Block, error)
+	Proof(blknum int64, uid int64) (*Proof, error) //TODO what is the uid?
 
-	SubmitBlock(*Block) error
+	SubmitBlock() error
 
 	SendTransaction() error
 }

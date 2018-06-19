@@ -19,8 +19,6 @@ func main() {
 		svc = client.NewChildChainService("http://localhost:8546")
 	}
 
-	svc.Block(1)
-
 	alice := client.NewClient(svc, client.GetRootChain("alice"), client.GetTokenContract("alice"))
 
 	bob := client.NewClient(svc, client.GetRootChain("bob"), client.GetTokenContract("bob"))
