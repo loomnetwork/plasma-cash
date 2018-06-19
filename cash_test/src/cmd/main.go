@@ -10,6 +10,7 @@ func main() {
 
 	plasmaChain := os.Getenv("PLASMA_CHAIN")
 	client.InitClients("http://localhost:8545")
+	client.InitTokenClient("http://localhost:8545")
 
 	var svc client.ChainServiceClient
 	if plasmaChain == "LOOM" {
@@ -28,20 +29,25 @@ func main() {
 		client.GetTokenContract("authority"))
 
 	// Give alice 5 tokens
-	alice.TokenContract.Register()
+	err := alice.TokenContract.Register()
+	if err != nil {
+		log.Fatalf("failed registering -%v\n", err)
+	}
 
-	aliceTokensStart := alice.TokenContract.BalanceOf()
+	aliceTokensStart, err := alice.TokenContract.BalanceOf()
 	log.Printf("Alice has %d tokens\n", aliceTokensStart)
 
 	if aliceTokensStart != 5 {
 		log.Fatalf("START: Alice has incorrect number of tokens")
 	}
-	bobTokensStart := bob.TokenContract.BalanceOf()
+	bobTokensStart, err := bob.TokenContract.BalanceOf()
+	exitIfError(err)
 	log.Printf("Bob has %d tokens\n", bobTokensStart)
 	if bobTokensStart != 0 {
 		log.Fatalf("START: Bob has incorrect number of tokens")
 	}
-	charlieTokensStart := charlie.TokenContract.BalanceOf()
+	charlieTokensStart, err := charlie.TokenContract.BalanceOf()
+	exitIfError(err)
 	log.Printf("Charlie has %d tokens\n", charlieTokensStart)
 	if charlieTokensStart != 0 {
 		log.Fatalf("START: Charlie has incorrect number of tokens")
@@ -58,13 +64,19 @@ func main() {
 	// transaction
 	utxoID := 2
 	blkNum := 3
-	_ = alice.SendTransaction(utxoID, blkNum, 1, bob.TokenContract.Account().Address)         //aliceToBob
-	_ = alice.SendTransaction(utxoID-1, blkNum-1, 1, charlie.TokenContract.Account().Address) //randomTx
+	account, err := bob.TokenContract.Account()
+	exitIfError(err)
+	_ = alice.SendTransaction(utxoID, blkNum, 1, account.Address) //aliceToBob
+	account, err = charlie.TokenContract.Account()
+	exitIfError(err)
+	_ = alice.SendTransaction(utxoID-1, blkNum-1, 1, account.Address) //randomTx
 	authority.SubmitBlock()
 
 	// Bob to Charlie
-	blkNum = 1000                                                                       // the prev transaction was included in block 1000
-	_ = bob.SendTransaction(utxoID, blkNum, 1, charlie.TokenContract.Account().Address) //bobToCharlie
+	blkNum = 1000
+	account, err = charlie.TokenContract.Account() // the prev transaction was included in block 1000
+	exitIfError(err)
+	_ = bob.SendTransaction(utxoID, blkNum, 1, account.Address) //bobToCharlie
 	authority.SubmitBlock()
 
 	// Charlie should be able to submit an exit by referencing blocks 0 and 1 which
@@ -84,18 +96,21 @@ func main() {
 
 	charlie.Withdraw(utxoID)
 
-	aliceTokensEnd := alice.TokenContract.BalanceOf()
+	aliceTokensEnd, err := alice.TokenContract.BalanceOf()
+	exitIfError(err)
 	log.Printf("Alice has %d tokens\n", aliceTokensEnd)
 	if aliceTokensEnd != 2 {
 		log.Fatal("END: Alice has incorrect number of tokens")
 	}
 
-	bobTokensEnd := bob.TokenContract.BalanceOf()
+	bobTokensEnd, err := bob.TokenContract.BalanceOf()
+	exitIfError(err)
 	log.Printf("Bob has %d tokens\n", bobTokensEnd)
 	if bobTokensEnd != 0 {
 		log.Fatal("END: Bob has incorrect number of tokens")
 	}
-	charlieTokensEnd := charlie.TokenContract.BalanceOf()
+	charlieTokensEnd, err := charlie.TokenContract.BalanceOf()
+	exitIfError(err)
 	log.Printf("Charlie has %d  tokens\n", charlieTokensEnd)
 	if charlieTokensEnd != 1 {
 		log.Fatal("END: Charlie has incorrect number of tokens")
@@ -103,4 +118,9 @@ func main() {
 
 	log.Printf("Plasma Cash with ERC721 tokens success :)")
 
+}
+
+// not idiomatic go, but it cleans up this sample
+func exitIfError(err error) {
+	log.Fatal(err)
 }

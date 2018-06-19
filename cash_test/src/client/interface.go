@@ -16,11 +16,11 @@ type Account struct {
 }
 
 type TokenContract interface {
-	Register()
-	Deposit(int)
-	BalanceOf() int
+	Register() error
+	Deposit(int) error
+	BalanceOf() (int, error)
 
-	Account() *Account
+	Account() (*Account, error)
 }
 
 type RootChainClient interface {
