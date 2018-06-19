@@ -73,3 +73,19 @@ class PlasmaCash(Contract):
                 toBlock='latest',
                 argument_filters={'from': address})
         return event_filter.get_all_entries()
+
+    def get_block_root(self, blknum):
+        ret = self.contract.functions.getBlockRoot(blknum).call()
+        return ret
+
+    def check_inclusion(self, tx, root, slot, proof):
+        if tx.prev_block == 0: # deposit tx
+            ret = tx.hash == root
+        else:
+            ret = self.contract.functions.checkMembership(tx.hash, root, slot, proof).call()
+        return ret
+
+    def check_exclusion(self, root, slot, proof):
+        empty_hash = '0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563'
+        ret = self.contract.functions.checkMembership(empty_hash, root, slot, proof).call()
+        return ret

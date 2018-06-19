@@ -66,6 +66,11 @@ class SparseMerkleTree(object):
         index = uid
         proof = b''
         proofbits = 0
+
+        # Edge case of tree being empty
+        if len(self.tree) == 0:
+            return b'\x00\x00\x00\x00\x00\x00\x00\x00'
+
         for level in range(self.depth - 1):
             sibling_index = index + 1 if index % 2 == 0 else index - 1
             index = index // 2
@@ -84,7 +89,10 @@ class SparseMerkleTree(object):
         proofbits = int.from_bytes((proof[0:8]), byteorder='big')
         index = uid
         p = 8
-        computed_hash = self.leaves[index]
+        if index in self.leaves:
+            computed_hash = self.leaves[index]
+        else: # in case the tx is not included, computed_hash is the default leaf
+            computed_hash = self.default_nodes[-1]
 
         for d in range(self.depth-1):
             if (proofbits % 2 == 0):

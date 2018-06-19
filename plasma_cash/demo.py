@@ -56,15 +56,21 @@ alice_to_bob = alice.send_transaction(deposit3_utxo, deposit3_block_number, 1,
                                       bob.token_contract.account.address)
 random_tx = alice.send_transaction(deposit2_utxo, deposit2_block_number, 1,
                                    charlie.token_contract.account.address)
-bob_proof = bob.get_coin_history(deposit3_utxo)
-print(bob_proof)
 plasma_block1 = authority.submit_block()
+
+# Add an empty block in betweeen (for proof of exclusion reasons)
+authority.submit_block()
 
 # Bob to Charlie
 bob_to_charlie = bob.send_transaction(deposit3_utxo, plasma_block1, 1,
                                       charlie.token_contract.account.address)
-charlie_proof = charlie.get_coin_history(deposit3_utxo)
-print(charlie_proof)
+
+# This is the info that bob  is required to send to charlie. This happens on the P2P layer
+incl_proofs, excl_proofs = bob.get_coin_history(deposit3_utxo)
+
+# Charlie receives them, verifies the validity. If found invalid, charlie should not accept 
+# them and the demo fails (similar to how you shouldn't sell a good when you're given counterfeit currency)
+assert charlie.verify_coin_history(deposit3_utxo, incl_proofs, excl_proofs) == True
 
 plasma_block2 = authority.submit_block()
 
@@ -75,9 +81,9 @@ charlie.start_exit(deposit3_utxo, plasma_block1, plasma_block2)
 # After 8 days pass, charlie's exit should be finalizable
 increaseTime(w3, 8 * 24 * 3600)
 authority.finalize_exits()
+
 # Charlie should now be able to withdraw the utxo which included token 2 to his
 # wallet.
-
 charlie.withdraw(deposit3_utxo)
 
 aliceTokensEnd = alice.token_contract.balance_of()

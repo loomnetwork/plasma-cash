@@ -50,7 +50,7 @@ class Block(rlp.Serializable):
         for tx in self.transaction_set:  # replace with better searching
             if tx.uid == uid:
                 return tx
-        return None
+        return Transaction(0, 0, 0, 0)
 
     def sign(self, key):
         self.sig = sign(self.hash, key)
