@@ -25,12 +25,12 @@ class ChildChain(object):
         self.current_block_number = 0
 
         # Watch all deposit events, callback to self._send_deposit
-        self.root_chain.watch_event('Deposit', self._send_deposit, 1)
+        self.root_chain.watch_event('Deposit', self._send_deposit, 0.1)
 
     def _send_deposit(self, event):
         ''' Called by event watcher and creates a deposit block '''
         slot = event['args']['slot']
-        blknum = event['args']['blockNumber']
+        blknum = int(event['args']['blockNumber'])
         # Currently, denomination is always 1. This may change in the future.
         denomination = event['args']['denomination']
         depositor = event['args']['from']
