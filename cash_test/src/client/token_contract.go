@@ -1,16 +1,23 @@
 package client
 
 import (
+	"crypto/ecdsa"
 	"ethcontract"
 	"log"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 type TContract struct {
 	Name          string
 	tokenContract *ethcontract.Cards
+	callerKey     *ecdsa.PrivateKey
+	callerAddr    common.Address
 }
 
 func (d *TContract) Deposit(int) error {
@@ -18,16 +25,20 @@ func (d *TContract) Deposit(int) error {
 }
 
 func (d *TContract) Register() error {
-	_, err := d.tokenContract.Register(nil)
+	auth := bind.NewKeyedTransactor(d.callerKey)
+	_, err := d.tokenContract.Register(auth)
 	return err
 }
 
 func (d *TContract) BalanceOf() (int, error) {
+	d.tokenContract.BalanceOf(nil, d.callerAddr)
 	return 0, nil
 }
 
 func (d *TContract) Account() (*Account, error) {
-	return &Account{}, nil
+	return &Account{
+		Address: d.callerAddr.String(),
+	}, nil
 }
 
 var connToken *ethclient.Client
@@ -40,11 +51,11 @@ func InitTokenClient(connStr string) {
 	}
 }
 
-func GetTokenContract(name string) TokenContract {
-
-	tokenContract, err := ethcontract.NewCards(common.HexToAddress("0x21e6fc92f93c8a1bb41e2be64b4e1f88a54d3576"), conn)
-	if err != nil {
-		log.Fatalf("Failed to instantiate a Token contract: %v", err)
+func NewTokenContract(callerName string, callerKey *ecdsa.PrivateKey, boundContract *ethcontract.Cards) TokenContract {
+	return &TContract{
+		Name:          callerName,
+		tokenContract: boundContract,
+		callerKey:     callerKey,
+		callerAddr:    crypto.PubkeyToAddress(callerKey.PublicKey),
 	}
-	return &TContract{name, tokenContract}
 }
