@@ -181,14 +181,15 @@ class Client(object):
         next_deposit = (start_block+self.child_block_interval) // self.child_block_interval * self.child_block_interval
         end_block = self.get_block_number()
 
+        # Create a list of indexes with coin's deposit block 
+        # and all subsequent submitted blocks that followed
         block_numbers = [ start_block ] + list(range(next_deposit, end_block + 1, self.child_block_interval))
 
         proofs = {}
         for blknum in block_numbers:
-            # Multiple http requests this can be threaded for efficiency
-            print('GETTING PROOF FOR SLOT {} AT BLOCK {}'.format(slot, blknum))
             proofs[blknum] = self.get_proof(blknum, slot)
 
+        # Save the proofs to the client's "state", and return
         self.proofs[slot] = proofs
         return proofs
 
