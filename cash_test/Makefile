@@ -18,12 +18,14 @@ deps:
 		github.com/gogo/protobuf/jsonpb \
 		github.com/gogo/protobuf/proto \
 		github.com/spf13/cobra \
-		github.com/gomodule/redigo/redis \
+		github.com/spf13/viper \
 		github.com/loomnetwork/go-loom \
-		github.com/hashicorp/go-plugin \
 		github.com/pkg/errors \
-		github.com/grpc-ecosystem/go-grpc-prometheus \
-		github.com/go-kit/kit/log
+		github.com/go-kit/kit/log \
+		github.com/ethereum/go-ethereum \
+		github.com/gorilla/mux \
+		github.com/inconshreveable/mousetrap \
+		gopkg.in/check.v1
 
 clean:
 	go clean
