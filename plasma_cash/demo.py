@@ -1,6 +1,7 @@
 from client.client import Client
 from dependency_config import container
 from utils.utils import increaseTime
+from time import sleep
 
 alice = Client(container.get_root('alice'), container.get_token('alice'))
 bob = Client(container.get_root('bob'), container.get_token('bob'))
@@ -32,34 +33,44 @@ print('ALICE EVENT DATA1', event_data[0]['args'])
 
 tx_hash = alice.deposit(tokenId+1)
 event_data = alice.root_chain.get_event_data('Deposit', tx_hash)
+deposit2_utxo = event_data[0]['args']['slot']
+deposit2_block_number = event_data[0]['args']['slot']
 print('ALICE EVENT DATA2', event_data[0]['args'])
 
 tx_hash = alice.deposit(tokenId+2)
 event_data = alice.root_chain.get_event_data('Deposit', tx_hash)
+deposit3_utxo = event_data[0]['args']['slot']
+deposit3_block_number = event_data[0]['args']['slot']
 print('ALICE EVENT DATA3', event_data[0]['args'])
+
+
+# Check that all deposits have registered
+sleep(2)
+registered_deposits = alice.get_all_deposits()
+assert (len(registered_deposits) == 3), \
+        "Alice has incorrect number of deposits"
 
 # Alice to Bob, and Alice to Charlie. We care about the Alice to Bob
 # transaction
-utxo_id = 2
-blk_num = 3
-alice_to_bob = alice.send_transaction(utxo_id, blk_num, 1,
+alice_to_bob = alice.send_transaction(deposit3_utxo, deposit3_block_number, 1,
                                       bob.token_contract.account.address)
-random_tx = alice.send_transaction(utxo_id-1, blk_num-1, 1,
+random_tx = alice.send_transaction(deposit2_utxo, deposit2_block_number, 1,
                                    charlie.token_contract.account.address)
-authority.submit_block()
+bob_proof = bob.get_coin_history(deposit3_utxo)
+print(bob_proof)
+plasma_block1 = authority.submit_block()
 
 # Bob to Charlie
-blk_num = 1000  # the prev transaction was included in block 1000
-bob_to_charlie = bob.send_transaction(utxo_id, blk_num, 1,
+bob_to_charlie = bob.send_transaction(deposit3_utxo, plasma_block1, 1,
                                       charlie.token_contract.account.address)
-authority.submit_block()
+charlie_proof = charlie.get_coin_history(deposit3_utxo)
+print(charlie_proof)
+
+plasma_block2 = authority.submit_block()
 
 # Charlie should be able to submit an exit by referencing blocks 0 and 1 which
 # included his transaction.
-utxo_id = 2
-prev_tx_blk_num = 1000
-exiting_tx_blk_num = 2000
-charlie.start_exit(utxo_id, prev_tx_blk_num, exiting_tx_blk_num)
+charlie.start_exit(deposit3_utxo, plasma_block1, plasma_block2)
 
 # After 8 days pass, charlie's exit should be finalizable
 increaseTime(w3, 8 * 24 * 3600)
@@ -67,7 +78,7 @@ authority.finalize_exits()
 # Charlie should now be able to withdraw the utxo which included token 2 to his
 # wallet.
 
-charlie.withdraw(utxo_id)
+charlie.withdraw(deposit3_utxo)
 
 aliceTokensEnd = alice.token_contract.balance_of()
 print('Alice has {} tokens'.format(aliceTokensEnd))

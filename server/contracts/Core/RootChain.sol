@@ -14,10 +14,10 @@ import "../Libraries/ECVerify.sol";
 import "./SparseMerkleTree.sol";
 
 contract RootChain is ERC721Receiver, SparseMerkleTree {
-    event Deposit(uint64 indexed slot, uint256 blockNumber, uint64 denomination, address indexed from, bytes32 hash);
+    event Deposit(uint64 indexed slot, uint256 blockNumber, uint64 denomination, address indexed from);
     event SubmittedBlock(uint256 blockNumber, bytes32 root, uint256 timestamp);
 
-    event StartedExit(uint64 indexed slot, address indexed owner, uint256 createdAt);
+    event StartedExit(uint64 indexed slot, address indexed owner);
     event ChallengedExit(uint64 indexed slot);
     event RespondedExitChallenge(uint64 indexed slot);
     event FinalizedExit(uint64  indexed slot, address owner);
@@ -167,7 +167,8 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
             createdAt: block.timestamp
         });
 
-        emit Deposit(numCoins, currentBlock, denomination, from, txHash); // create a utxo at slot `numCoins`
+        // create a utxo at slot `numCoins`
+        emit Deposit(numCoins, currentBlock, denomination, from);
 
         numCoins += 1;
     }
@@ -354,7 +355,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
 
         // Update coin state
         c.state = State.EXITING;
-        emit StartedExit(slot, msg.sender, block.timestamp);
+        emit StartedExit(slot, msg.sender);
     }
 
     function setChallenged(uint64 slot) private {
@@ -469,5 +470,10 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
     function getPlasmaCoin(uint64 slot) external view returns(uint64, uint256, uint32, address, State) {
         Coin memory c = coins[slot];
         return (c.uid, c.depositBlock, c.denomination, c.owner, c.state);
+    }
+
+    function getExit(uint64 slot) external view returns(address, uint256, uint256, State) {
+        Exit memory e = coins[slot].exit;
+        return (e.owner, e.prevBlock, e.exitBlock, coins[slot].state);
     }
 }

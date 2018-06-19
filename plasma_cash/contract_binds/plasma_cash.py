@@ -1,5 +1,6 @@
 from .base.contract import Contract
 
+from web3.utils.filters import construct_event_filter_params
 
 class PlasmaCash(Contract):
     '''Plasma Cash bindings for python '''
@@ -64,3 +65,11 @@ class PlasmaCash(Contract):
                'owner': data[3],
                'state': data[4]}
         return ret
+
+    def get_all_deposits(self, address, fromBlock=0):
+        filters = None
+        event_filter = self.contract.events.Deposit.createFilter(
+                fromBlock=fromBlock,
+                toBlock='latest',
+                argument_filters={'from': address})
+        return event_filter.get_all_entries()
