@@ -48,17 +48,17 @@ alice_to_bob = alice.send_transaction(deposit3_utxo, deposit3_block_number, 1,
                                       bob.token_contract.account.address)
 random_tx = alice.send_transaction(deposit2_utxo, deposit2_block_number, 1,
                                    charlie.token_contract.account.address)
-first_plasma_block = int(authority.submit_block())
+plasma_block1 = authority.submit_block()
 
 # Bob to Charlie
-bob_to_charlie = bob.send_transaction(deposit3_utxo, first_plasma_block, 1,
+bob_to_charlie = bob.send_transaction(deposit3_utxo, plasma_block1, 1,
                                       charlie.token_contract.account.address)
 
-second_plasma_block = int(authority.submit_block())
+plasma_block2 = authority.submit_block()
 
 # Charlie should be able to submit an exit by referencing blocks 0 and 1 which
 # included his transaction.
-charlie.start_exit(deposit3_utxo, first_plasma_block, second_plasma_block)
+charlie.start_exit(deposit3_utxo, plasma_block1, plasma_block2)
 
 # After 8 days pass, charlie's exit should be finalizable
 increaseTime(w3, 8 * 24 * 3600)
