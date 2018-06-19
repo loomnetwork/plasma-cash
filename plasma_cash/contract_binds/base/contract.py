@@ -126,12 +126,12 @@ class Contract(object):
 
     def get_event_data(self, event_name, tx_hash):
         tx_logs = self.w3.eth.getTransactionReceipt(tx_hash)['logs']
-        event_abi = self.contract._find_matching_event_abi('Deposit')
+        event_abi = self.contract._find_matching_event_abi(event_name)
         matched = []
         for log in tx_logs:
             try:
                 d = get_event_data(event_abi, log)
-            except: 
+            except:
                 continue
             matched.append(d)
         return matched
