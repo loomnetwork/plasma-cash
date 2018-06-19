@@ -19,12 +19,18 @@ def get_current_block():
 def get_block_number():
     return str(container.get_child_chain().get_block_number())
 
-@bp.route('/tx', methods=['GET'])
+@bp.route('/tx_proof', methods=['GET'])
 def get_tx_and_proof():
     blknum = int(request.args.get('blknum'))
     slot = int(request.args.get('slot'))
     tx, proof = container.get_child_chain().get_tx_and_proof(int(blknum), int(slot))
     return jsonify({ 'tx': tx, 'proof': proof })
+
+@bp.route('/tx', methods=['GET'])
+def get_tx():
+    blknum = int(request.args.get('blknum'))
+    slot = int(request.args.get('slot'))
+    return container.get_child_chain().get_tx(blknum, slot)
 
 @bp.route('/proof', methods=['GET'])
 def get_proof():

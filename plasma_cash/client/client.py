@@ -220,11 +220,19 @@ class Client(object):
         block = self.child_chain.get_block(blknum)
         return rlp.decode(utils.decode_hex(block), Block)
 
+    def get_tx(self, blknum, slot):
+        tx_bytes = self.child_chain.get_tx(blknum, slot)
+        tx = rlp.decode(utils.decode_hex(tx_bytes), Transaction)
+        return tx
+
     def get_tx_and_proof(self, blknum, slot):
         data = json.loads(self.child_chain.get_tx_and_proof(blknum, slot))
         tx = rlp.decode(utils.decode_hex(data['tx']), Transaction)
         proof = utils.decode_hex(data['proof'])
         return tx, proof
+
+    
+
 
     def get_proof(self, blknum, slot):
         return utils.decode_hex(self.child_chain.get_proof(blknum, slot))
