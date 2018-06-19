@@ -44,26 +44,21 @@ print('ALICE EVENT DATA3', event_data[0]['args'])
 
 # Alice to Bob, and Alice to Charlie. We care about the Alice to Bob
 # transaction
-utxo_id = 2
-blk_num = 3
 alice_to_bob = alice.send_transaction(deposit3_utxo, deposit3_block_number, 1,
                                       bob.token_contract.account.address)
 random_tx = alice.send_transaction(deposit2_utxo, deposit2_block_number, 1,
                                    charlie.token_contract.account.address)
-authority.submit_block()
+first_plasma_block = int(authority.submit_block())
 
 # Bob to Charlie
-blk_num = 1000  # the prev transaction was included in block 1000
-bob_to_charlie = bob.send_transaction(utxo_id, blk_num, 1,
+bob_to_charlie = bob.send_transaction(deposit3_utxo, first_plasma_block, 1,
                                       charlie.token_contract.account.address)
-authority.submit_block()
+
+second_plasma_block = int(authority.submit_block())
 
 # Charlie should be able to submit an exit by referencing blocks 0 and 1 which
 # included his transaction.
-utxo_id = 2
-prev_tx_blk_num = 1000
-exiting_tx_blk_num = 2000
-charlie.start_exit(utxo_id, prev_tx_blk_num, exiting_tx_blk_num)
+charlie.start_exit(deposit3_utxo, first_plasma_block, second_plasma_block)
 
 # After 8 days pass, charlie's exit should be finalizable
 increaseTime(w3, 8 * 24 * 3600)
@@ -71,7 +66,7 @@ authority.finalize_exits()
 # Charlie should now be able to withdraw the utxo which included token 2 to his
 # wallet.
 
-charlie.withdraw(utxo_id)
+charlie.withdraw(deposit3_utxo)
 
 aliceTokensEnd = alice.token_contract.balance_of()
 print('Alice has {} tokens'.format(aliceTokensEnd))

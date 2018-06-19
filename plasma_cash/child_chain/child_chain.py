@@ -53,8 +53,7 @@ class ChildChain(object):
 
         self.blocks[self.current_block_number] = self.current_block
         self.current_block = Block()
-
-        return merkle_hash
+        return str(self.current_block_number)
 
     def send_transaction(self, transaction):
         tx = rlp.decode(utils.decode_hex(transaction), Transaction)
