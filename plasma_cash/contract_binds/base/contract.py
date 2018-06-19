@@ -3,6 +3,7 @@ from ..utils.colors import green, red, yellow
 from threading import Thread
 import time
 import json
+from web3.utils.events import get_event_data
 
 
 class Contract(object):
@@ -32,40 +33,42 @@ class Contract(object):
                 args,
                 value,
                 gas  # may need to change gas
-            )
+                )
         self.nonce += 1  # Increment nonce after signing a tx
 
         info = '{}, Args: {}'.format(func.__name__, args)
         try:
-            self._send_raw_tx(signed_tx)
+            tx_hash = self._send_raw_tx(signed_tx)
             # info = 'Success '+info
             # self.logger.debug(green(info))
         except Exception as e:
             print(e)
             info = 'Failed '+info
             # self.logger.debug(red(info))
+        return tx_hash
 
     def send_transaction(self, to, value):
         signed_tx = self._sign_transaction(to, value)
         self.nonce += 1  # Increment nonce after signing a tx
-        self._send_raw_tx(signed_tx)
+        tx_hash = self._send_raw_tx(signed_tx)
 
         info = 'Sent {} to {}'.format(value, to)
         # self.logger.info(green(info))
+        return tx_hash
 
     def _sign_transaction(self, to, value):
         gas = 21000
         gasPrice = self.w3.toWei('10', 'gwei')
 
         raw_tx = {
-            'chainId': int(self.w3.version.network),
-            'to': self.w3.toChecksumAddress(to),
-            'value': value,
-            'gas': gas,
-            'gasPrice': gasPrice,
-            # 'nonce': self.nonce
-            'nonce': self.w3.eth.getTransactionCount(self.account.address)
-        }
+                'chainId': int(self.w3.version.network),
+                'to': self.w3.toChecksumAddress(to),
+                'value': value,
+                'gas': gas,
+                'gasPrice': gasPrice,
+                # 'nonce': self.nonce
+                'nonce': self.w3.eth.getTransactionCount(self.account.address)
+                }
 
         # print(raw_tx)
 
@@ -90,7 +93,7 @@ class Contract(object):
             # 'nonce': self.nonce
             'nonce': self.w3.eth.getTransactionCount(self.account.address)
 
-        })
+            })
         raw_tx['to'] = self.w3.toChecksumAddress(raw_tx['to'])
 
         # info = 'Raw transaction before signing => {}'.format(raw_tx)
@@ -105,8 +108,9 @@ class Contract(object):
         return signed_tx
 
     def _send_raw_tx(self, signed_tx):
-        tx = self.w3.eth.sendRawTransaction(signed_tx.rawTransaction)
-        # Wait until the transaction gets mined
+        tx_hash = self.w3.eth.sendRawTransaction(signed_tx.rawTransaction)
+        return tx_hash
+    # Wait until the transaction gets mined
         # receipt = self.waitForTxReceipt(tx)
         # info = 'Transaction Receipt => {}'.format(receipt)
         # self.logger.debug(yellow(info))
@@ -120,8 +124,20 @@ class Contract(object):
             receipt = self.w3.eth.getTransactionReceipt(tx)
         return receipt
 
+    def get_event_data(self, event_name, tx_hash):
+        tx_logs = self.w3.eth.getTransactionReceipt(tx_hash)['logs']
+        event_abi = self.contract._find_matching_event_abi('Deposit')
+        matched = []
+        for log in tx_logs:
+            try:
+                d = get_event_data(event_abi, log)
+            except: 
+                continue
+            matched.append(d)
+        return matched
+
     def watch_event(self, event_name, callback, interval, fromBlock=0,
-                    toBlock='latest', filters=None):
+                toBlock='latest', filters=None):
         event_filter = self.install_filter(
                 event_name,
                 fromBlock,

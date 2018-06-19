@@ -15,55 +15,46 @@ class PlasmaCash(Contract):
                 prev_tx_inclusion_proof, exiting_tx_inclusion_proof,
                 sig, prev_tx_block_num, exiting_tx_block_num]
 
-        self.sign_and_send(self.contract.functions.challengeBefore, args,
+        return self.sign_and_send(self.contract.functions.challengeBefore, args,
                            value=self.BOND)
-        return self
 
     def respond_challenge_before(self, slot, challenging_block_number,
                                  challenging_transaction, proof):
         args = [slot, challenging_block_number, challenging_transaction, proof]
-        self.sign_and_send(self.contract.functions.respond_challenge_before,
+        return self.sign_and_send(self.contract.functions.respond_challenge_before,
                            args)
-        return self
 
     def challenge_between(self, slot, challenging_block_number,
                           challenging_transaction, proof):
         args = [slot, challenging_block_number, challenging_transaction, proof]
-        self.sign_and_send(self.contract.functions.challengeBetween, args)
-        return self
+        return self.sign_and_send(self.contract.functions.challengeBetween, args)
 
     def challenge_after(self, slot, challenging_block_number,
                         challenging_transaction, proof):
         args = [slot, challenging_block_number, challenging_transaction, proof]
-        self.sign_and_send(self.contract.functions.challengeAfter, args)
-        return self
+        return self.sign_and_send(self.contract.functions.challengeAfter, args)
 
     def start_exit(self, uid, prev_tx, exiting_tx, prev_tx_proof,
                    exiting_tx_proof, sigs, prev_tx_blk_num, tx_blk_num):
         args = [uid, prev_tx, exiting_tx, prev_tx_proof, exiting_tx_proof,
                 sigs, prev_tx_blk_num, tx_blk_num]
-        self.sign_and_send(self.contract.functions.startExit, args,
+        return self.sign_and_send(self.contract.functions.startExit, args,
                            value=self.BOND)
-        return self
 
     def finalize_exits(self):
         args = []
-        self.sign_and_send(self.contract.functions.finalizeExits, args)
-        return self
+        return self.sign_and_send(self.contract.functions.finalizeExits, args)
 
     def withdraw(self, uid):
         args = [uid]
-        self.sign_and_send(self.contract.functions.withdraw, args)
-        return self
+        return self.sign_and_send(self.contract.functions.withdraw, args)
 
     def submit_block(self, root):
         args = [root]
-        self.sign_and_send(self.contract.functions.submitBlock, args)
-        return self
+        return self.sign_and_send(self.contract.functions.submitBlock, args)
 
     def withdraw_bonds(self):
-        self.sign_and_send(self.contract.functions.withdrawBonds, [])
-        return self
+        return self.sign_and_send(self.contract.functions.withdrawBonds, [])
 
     def get_plasma_coin(self, slot):
         data = self.contract.functions.getPlasmaCoin(slot).call()
