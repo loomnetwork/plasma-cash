@@ -68,6 +68,8 @@ class PlasmaCash(Contract):
 
     def get_all_deposits(self, address, fromBlock=0):
         filters = None
-        event_filter = self.contract.events.Deposit.createFilter(fromBlock=fromBlock,
-                                                                 toBlock='latest')
+        event_filter = self.contract.events.Deposit.createFilter(
+                fromBlock=fromBlock,
+                toBlock='latest',
+                argument_filters={'from': address})
         return event_filter.get_all_entries()
