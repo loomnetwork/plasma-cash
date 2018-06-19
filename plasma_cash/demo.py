@@ -47,7 +47,8 @@ print('ALICE EVENT DATA3', event_data[0]['args'])
 # Check that all deposits have registered
 sleep(2)
 registered_deposits = alice.get_all_deposits()
-print("alice's registered deposits: ", registered_deposits)
+assert (len(registered_deposits) == 3), \
+        "Alice has incorrect number of deposits"
 
 # Alice to Bob, and Alice to Charlie. We care about the Alice to Bob
 # transaction

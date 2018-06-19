@@ -29,8 +29,8 @@ mallory.deposit(7)
 # wait to make sure that events get fired correctly
 time.sleep(2)
 registered_deposits = mallory.get_all_deposits()
-print("mallory's registered deposits: ", registered_deposits)
-
+assert (len(registered_deposits) == 2), \
+        "Mallory has incorrect number of deposits"
 
 malloryTokensPostDeposit = mallory.token_contract.balance_of()
 print('Mallory has {} tokens'.format(malloryTokensPostDeposit))
