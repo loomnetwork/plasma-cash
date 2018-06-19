@@ -17,6 +17,7 @@ class Client(object):
         self.token_contract = token_contract
         self.child_chain = child_chain
         self.child_block_interval = 1000
+        self.proofs = {}
 
     # Token Functions
 
@@ -171,6 +172,25 @@ class Client(object):
         return tx_hash
 
     # Child Chain Functions
+
+    def get_coin_history(self, slot):
+        # First get the coin's deposit block
+        start_block = self.get_plasma_coin(slot)['deposit_block']
+
+        # Get next non-deposit block
+        next_deposit = (start_block+self.child_block_interval) // self.child_block_interval * self.child_block_interval
+        end_block = self.get_block_number()
+
+        block_numbers = [ start_block ] + list(range(next_deposit, end_block + 1, self.child_block_interval))
+
+        proofs = {}
+        for blknum in block_numbers:
+            # Multiple http requests this can be threaded for efficiency
+            print('GETTING PROOF FOR SLOT {} AT BLOCK {}'.format(slot, blknum))
+            proofs[blknum] = self.get_proof(blknum, slot)
+
+        self.proofs[slot] = proofs
+        return proofs
 
     def submit_block(self):
         block = self.get_current_block()

@@ -48,11 +48,15 @@ alice_to_bob = alice.send_transaction(deposit3_utxo, deposit3_block_number, 1,
                                       bob.token_contract.account.address)
 random_tx = alice.send_transaction(deposit2_utxo, deposit2_block_number, 1,
                                    charlie.token_contract.account.address)
+bob_proof = bob.get_coin_history(deposit3_utxo)
+print(bob_proof)
 plasma_block1 = authority.submit_block()
 
 # Bob to Charlie
 bob_to_charlie = bob.send_transaction(deposit3_utxo, plasma_block1, 1,
                                       charlie.token_contract.account.address)
+charlie_proof = charlie.get_coin_history(deposit3_utxo)
+print(charlie_proof)
 
 plasma_block2 = authority.submit_block()
 
