@@ -470,4 +470,9 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
         Coin memory c = coins[slot];
         return (c.uid, c.depositBlock, c.denomination, c.owner, c.state);
     }
+
+    function getExit(uint64 slot) external view returns(address, uint256, uint256, State) {
+        Exit memory e = coins[slot].exit;
+        return (e.owner, e.prevBlock, e.exitBlock, coins[slot].state);
+    }
 }
