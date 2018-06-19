@@ -22,13 +22,13 @@ class Client(object):
 
     def register(self):
         ''' Register a new player and grant 5 cards, for demo purposes'''
-        self.token_contract.register()
-        return self
+        tx_hash = self.token_contract.register()
+        return tx_hash
 
     def deposit(self, tokenId):
         ''' Deposit happens by a use calling the erc721 token contract '''
-        self.token_contract.deposit(tokenId)
-        return self
+        tx_hash = self.token_contract.deposit(tokenId)
+        return tx_hash
 
     # Plasma Functions
 
@@ -54,7 +54,7 @@ class Client(object):
             exiting_tx.make_mutable()
             exiting_tx.sign(self.key)
             exiting_tx.make_immutable()
-            self.root_chain.start_exit(
+            tx_hash = self.root_chain.start_exit(
                     slot,
                     b'0x0', rlp.encode(exiting_tx, UnsignedTransaction),
                     b'0x0', b'0x0',
@@ -68,14 +68,14 @@ class Client(object):
             prev_tx, prev_tx_proof = self.get_tx_and_proof(prev_tx_blk_num,
                                                            slot)
 
-            self.root_chain.start_exit(
+            tx_hash = self.root_chain.start_exit(
                     slot,
                     rlp.encode(prev_tx, UnsignedTransaction),
                     rlp.encode(exiting_tx, UnsignedTransaction),
                     prev_tx_proof, exiting_tx_proof,
                     exiting_tx.sig,
                     prev_tx_blk_num, tx_blk_num)
-        return self
+        return tx_hash
 
     def challenge_before(self, slot, prev_tx_blk_num, tx_blk_num):
         if (tx_blk_num % self.child_block_interval != 0):
@@ -89,7 +89,7 @@ class Client(object):
             exiting_tx.make_mutable()
             exiting_tx.sign(self.key)
             exiting_tx.make_immutable()
-            self.root_chain.challenge_before(
+            tx_hash = self.root_chain.challenge_before(
                     slot,
                     b'0x0', rlp.encode(exiting_tx, UnsignedTransaction),
                     b'0x0', b'0x0',
@@ -103,14 +103,14 @@ class Client(object):
             prev_tx, prev_tx_proof = self.get_tx_and_proof(prev_tx_blk_num,
                                                            slot)
 
-            self.root_chain.challenge_before(
+            tx_hash = self.root_chain.challenge_before(
                     slot,
                     rlp.encode(prev_tx, UnsignedTransaction),
                     rlp.encode(exiting_tx, UnsignedTransaction),
                     prev_tx_proof, exiting_tx_proof,
                     exiting_tx.sig,
                     prev_tx_blk_num, tx_blk_num)
-        return self
+        return tx_hash
 
     def respond_challenge_before(self, slot, challenging_block_number):
         '''
@@ -120,11 +120,11 @@ class Client(object):
         challenging_tx, proof = self.get_tx_and_proof(challenging_block_number,
                                                       slot)
 
-        self.root_chain.respond_challenge_before(
+        tx_hash = self.root_chain.respond_challenge_before(
             slot, challenging_block_number,
             rlp.encode(challenging_tx, UnsignedTransaction), proof
         )
-        return self
+        return tx_hash
 
     def challenge_between(self, slot, challenging_block_number):
         '''
@@ -134,11 +134,11 @@ class Client(object):
         challenging_tx, proof = self.get_tx_and_proof(challenging_block_number,
                                                       slot)
 
-        self.root_chain.challenge_between(
+        tx_hash = self.root_chain.challenge_between(
             slot, challenging_block_number,
             rlp.encode(challenging_tx, UnsignedTransaction), proof
         )
-        return self
+        return tx_hash
 
     def challenge_after(self, slot, challenging_block_number):
         '''
@@ -148,26 +148,27 @@ class Client(object):
         challenging_tx, proof = self.get_tx_and_proof(challenging_block_number,
                                                       slot)
 
-        self.root_chain.challenge_after(
+        tx_hash = self.root_chain.challenge_after(
             slot, challenging_block_number,
             rlp.encode(challenging_tx, UnsignedTransaction), proof
         )
-        return self
+        return tx_hash
 
     def finalize_exits(self):
-        self.root_chain.finalize_exits()
-        return self
+        tx_hash = self.root_chain.finalize_exits()
+        return tx_hash
 
     def withdraw(self, slot):
-        self.root_chain.withdraw(slot)
-        return self
+        tx_hash = self.root_chain.withdraw(slot)
+        return tx_hash
 
     def withdraw_bonds(self):
-        self.root_chain.withdraw_bonds()
-        return self
+        tx_hash = self.root_chain.withdraw_bonds()
+        return tx_hash
 
     def get_plasma_coin(self, slot):
-        return self.root_chain.get_plasma_coin(slot)
+        tx_hash = self.root_chain.get_plasma_coin(slot)
+        return tx_hash
 
     # Child Chain Functions
 

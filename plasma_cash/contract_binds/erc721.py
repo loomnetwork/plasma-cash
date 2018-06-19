@@ -8,8 +8,7 @@ class ERC721(Contract):
 
     def register(self):
         args = []
-        self.sign_and_send(self.contract.functions.register, args)
-        return self
+        return self.sign_and_send(self.contract.functions.register, args)
 
     def deposit(self, tokenId):
         '''
@@ -18,11 +17,10 @@ class ERC721(Contract):
         `NUM_COINS` in the plasma contract
         '''
         args = [tokenId]
-        self.sign_and_send(
+        return self.sign_and_send(
                 self.contract.functions.depositToPlasma,
                 args
         )
-        return self
 
     def balance_of(self):
         return self.contract.functions.balanceOf(
