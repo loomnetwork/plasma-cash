@@ -64,7 +64,7 @@ class ChildChainService(object):
 
     def submit_block(self):
         end_point = '/submit_block'
-        response = self.request(end_point, 'GET')
+        response = self.request(end_point, 'POST')
         return int(response.text)
 
     def send_transaction(self, tx):

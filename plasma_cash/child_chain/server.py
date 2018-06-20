@@ -39,7 +39,7 @@ def get_proof():
     return container.get_child_chain().get_proof(blknum, slot)
 
 
-@bp.route('/submit_block', methods=['GET'])
+@bp.route('/submit_block', methods=['POST'])
 def submit_block():
     return container.get_child_chain().submit_block()
 
