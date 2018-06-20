@@ -77,5 +77,4 @@ module.exports = class SparseMerkleTree {
     let total = Buffer.concat([buf, Buffer.from(proof, 'hex')]);
     return '0x' + total.toString('hex');
   }
-
 }

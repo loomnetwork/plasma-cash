@@ -58,7 +58,7 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
 
     describe('Invalid Exit of UTXO 2', function() {
         it("Charlie tries to exit a spent coin. Dylan challenges in time and exits his coin", async function() {
-            let UTXO = {'slot': events[2]['args'].slot.toNumber(), 'block': events[2]['args'].blockNumber.toNumber()};
+            let UTXO = {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()};
             let ret = await charlieExitSpentCoin(UTXO);
             let bob_to_charlie = ret.charlie.data;
             let tree_charlie = ret.charlie.tree;
