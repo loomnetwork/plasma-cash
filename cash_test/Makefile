@@ -13,6 +13,12 @@ test:
 lint:
 	golint ./...
 
+abigen:
+	cat ../server/build/contracts/RootChain.json | jq '.abi' > rootchain_abi.json
+	abigen --abi rootchain_abi.json  --pkg ethcontract --type RootChain --out src/ethcontract/root_chain.go 
+	cat ../server/build/contracts/CryptoCards.json | jq '.abi' > cryptocards_abi.json
+	abigen --abi cryptocards_abi.json  --pkg ethcontract --type Cards --out src/ethcontract/cards.go
+	
 deps:
 	go get \
 		github.com/gogo/protobuf/jsonpb \
