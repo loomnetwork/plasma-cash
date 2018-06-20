@@ -3,6 +3,8 @@ package client
 import (
 	"ethcontract"
 	"log"
+	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -13,10 +15,23 @@ import (
 
 // Loads plasma-config.yml or equivalent from the cwd
 func parseConfig() (*viper.Viper, error) {
+	// When running "go test" the cwd is set to the package dir, not the root dir
+	// where the config is, so gotta do a bit more work to figure out the config dir...
+	_, filename, _, _ := runtime.Caller(0)
+	cfgDir := filepath.Join(filepath.Dir(filename), "../..")
+
 	v := viper.New()
 	v.SetConfigName("plasma-config")
-	v.AddConfigPath(".")
+	v.AddConfigPath(cfgDir)
 	return v, v.ReadInConfig()
+}
+
+func GetTestAccountHexKey(name string) string {
+	cfg, err := parseConfig()
+	if err != nil {
+		log.Fatalf("failed to load config file: %v", err)
+	}
+	return cfg.GetString(name)
 }
 
 func GetTokenContract(name string) TokenContract {
