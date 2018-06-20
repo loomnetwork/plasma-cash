@@ -179,20 +179,20 @@ func (c *Client) ChallengeAfter(slot uint64, challengingBlockNumber int64) ([]by
 	return txHash, err
 }
 
-func (c *Client) FinalizeExits() {
-	c.RootChain.FinalizeExits()
+func (c *Client) FinalizeExits() error {
+	return c.RootChain.FinalizeExits()
 }
 
-func (c *Client) Withdraw(slot uint64) {
-	c.RootChain.Withdraw(slot)
+func (c *Client) Withdraw(slot uint64) error {
+	return c.RootChain.Withdraw(slot)
 }
 
-func (c *Client) WithdrawBonds() {
-	c.RootChain.WithdrawBonds()
+func (c *Client) WithdrawBonds() error {
+	return c.RootChain.WithdrawBonds()
 }
 
-func (c *Client) PlasmaCoin(slot uint64) {
-	c.RootChain.PlasmaCoin(slot)
+func (c *Client) PlasmaCoin(slot uint64) (*PlasmaCoin, error) {
+	return c.RootChain.PlasmaCoin(slot)
 }
 
 // Child Chain Functions

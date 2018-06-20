@@ -2,6 +2,7 @@ package main
 
 import (
 	"client"
+	"fmt"
 	"log"
 	"os"
 )
@@ -85,17 +86,22 @@ func main() {
 	utxoID = uint64(2)
 	prevTxBlkNum := int64(1000)
 	exitingTxBlkNum := int64(2000)
-	charlie.StartExit(utxoID, prevTxBlkNum, exitingTxBlkNum)
+	_, err = charlie.StartExit(utxoID, prevTxBlkNum, exitingTxBlkNum)
+	exitIfError(err)
+	fmt.Printf("After start exit")
 
 	// After 8 days pass, charlie's exit should be finalizable
 	//	w3 = charlie.RootChain().w3 // get w3 instance
 	//increaseTime(w3, 8*24*3600) //TODO ???
 
-	authority.FinalizeExits()
+	err = authority.FinalizeExits()
+	exitIfError(err)
+
 	// Charlie should now be able to withdraw the utxo which included token 2 to his
 	// wallet.
 
-	charlie.Withdraw(utxoID)
+	err = charlie.Withdraw(utxoID)
+	exitIfError(err)
 
 	aliceTokensEnd, err := alice.TokenContract.BalanceOf()
 	exitIfError(err)

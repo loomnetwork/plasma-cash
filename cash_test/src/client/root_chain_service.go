@@ -95,7 +95,8 @@ func (d *RootChainService) FinalizeExits() error {
 }
 
 // TODO: implement for challenge_after_demo
-func (d *RootChainService) WithdrawBonds() {
+func (d *RootChainService) WithdrawBonds() error {
+	return nil
 }
 
 var conn *ethclient.Client

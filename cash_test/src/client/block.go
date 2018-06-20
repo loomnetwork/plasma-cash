@@ -1,6 +1,8 @@
 package client
 
 import (
+	"fmt"
+
 	pctypes "github.com/loomnetwork/go-loom/builtin/types/plasma_cash"
 )
 
@@ -14,7 +16,6 @@ func (pb *PbBlock) Proof() []byte {
 	return pb.proof
 }
 func NewClientBlock(pb *pctypes.PlasmaBlock) Block {
-	return &PbBlock{}
-	//fmt.Printf("proof---%v\n", pb.Proof)
-	//return &PbBlock{pb, pb.Proof}
+	fmt.Printf("proof---%v\n", pb.Proof)
+	return &PbBlock{pb, pb.Proof}
 }

@@ -55,7 +55,7 @@ type PlasmaCoin struct {
 type RootChainClient interface {
 	FinalizeExits() error
 	Withdraw(slot uint64) error
-	WithdrawBonds()
+	WithdrawBonds() error
 	PlasmaCoin(slot uint64) (*PlasmaCoin, error)
 	StartExit(uid uint64, prevTx Tx, exitingTx Tx, prevTxProof Proof,
 		exitingTxProof Proof, sigs []byte, prevTxBlkNum int64, txBlkNum int64) ([]byte, error)
