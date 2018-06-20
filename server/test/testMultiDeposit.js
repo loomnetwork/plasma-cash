@@ -20,6 +20,7 @@ contract("Plasma ERC721 - Multiple Deposits in various blocks", async function(a
 
     let cards;
     let plasma;
+    let events;
     let t0;
 
     let [authority, alice, bob, charlie, dylan, elliot, random_guy, random_guy2, challenger] = accounts;
@@ -43,7 +44,7 @@ contract("Plasma ERC721 - Multiple Deposits in various blocks", async function(a
         assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), ALICE_DEPOSITED_COINS);
 
         const depositEvent = plasma.Deposit({}, {fromBlock: 0, toBlock: 'latest'});
-        const events = await txlib.Promisify(cb => depositEvent.get(cb));
+        events = await txlib.Promisify(cb => depositEvent.get(cb));
 
         // Check that events were emitted properly
         let coin;
@@ -58,35 +59,34 @@ contract("Plasma ERC721 - Multiple Deposits in various blocks", async function(a
     });
 
     describe('Exit of UTXO 2 and 7 (UTXO 7 added at 1000-2000 block interval)', function() {
-        let UTXO = { 'slot' : 2, 'block' : 3 };
-
         it("Alice sends Bob UTXO 2, submits it, Bob deposits his coin and sends Alice UTXO 4, submits it, both exit", async function() {
+            let UTXO = {'slot': events[2]['args'].slot.toNumber(), 'block': events[2]['args'].blockNumber.toNumber()};
             let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, 1000, alice, bob);
-            let txs = [ alice_to_bob.leaf ];
+            let txs = [alice_to_bob.leaf];
             let tree_1000 = await txlib.submitTransactions(authority, plasma, txs);
-            
+
             // Bob deposits Coin 7, which generates a new UTXO in the Plasma chain.
             await cards.depositToPlasma(7, {from: bob});
             let slot = 3; // or from plasma.numCoins()-1
             let block = await plasma.getPlasmaCoin.call(3); block = block[1].toNumber();
 
             let bob_to_alice = txlib.createUTXO(slot, block, 2000, bob, alice);
-            txs = [ bob_to_alice.leaf ];
+            txs = [bob_to_alice.leaf];
             let tree_2000 = await txlib.submitTransactions(authority, plasma, txs);
 
             // Bob exits his coin as usual, referencing block `UTXO.block` and 1000
             let sig = alice_to_bob.sig;
             let utxo = alice_to_bob.tx;
             let proof = tree_1000.createMerkleProof(UTXO.slot);
-            
+
             let prev_tx = txlib.createUTXO(UTXO.slot, 0, UTXO.block, alice, alice).tx;
 
             await plasma.startExit(
-                UTXO.slot, 
-                prev_tx, utxo, 
+                UTXO.slot,
+                prev_tx, utxo,
                 '0x0', proof,
                 sig,
-                3, 1000, 
+                3, 1000,
                 {'from': bob, 'value': web3.toWei(0.1, 'ether')}
             );
 
@@ -94,30 +94,30 @@ contract("Plasma ERC721 - Multiple Deposits in various blocks", async function(a
             sig = bob_to_alice.sig;
             utxo = bob_to_alice.tx;
             proof = tree_2000.createMerkleProof(slot);
-            
+
             prev_tx = txlib.createUTXO(slot, 0, block, bob, bob).tx;
 
             await plasma.startExit(
-                slot, 
-                prev_tx, utxo, 
+                slot,
+                prev_tx, utxo,
                 '0x0', proof,
                 sig,
-                block, 2000, 
+                block, 2000,
                 {'from': alice, 'value': web3.toWei(0.1, 'ether')}
             );
 
             t0 = (await web3.eth.getBlock('latest')).timestamp;
 
             await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2 });
-            await plasma.withdraw(UTXO.slot, {from : bob });
-            await plasma.withdraw(slot, {from : alice });
+            await plasma.finalizeExits({from: random_guy2});
+            await plasma.withdraw(UTXO.slot, {from: bob});
+            await plasma.withdraw(slot, {from: alice});
 
             assert.equal(await cards.ownerOf(3), bob);
             assert.equal(await cards.ownerOf(7), alice);
 
-            await plasma.withdrawBonds({'from' : bob });
-            await plasma.withdrawBonds({'from' : alice });
+            await plasma.withdrawBonds({'from': bob});
+            await plasma.withdrawBonds({'from': alice});
             let withdrewBonds = plasma.WithdrewBonds({}, {fromBlock: 0, toBlock: 'latest'});
             let e = await txlib.Promisify(cb => withdrewBonds.get(cb));
             let withdraw = e[0].args;

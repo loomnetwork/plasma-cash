@@ -20,6 +20,7 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
 
     let cards;
     let plasma;
+    let events;
     let t0;
 
     let [authority, alice, bob, charlie, dylan, elliot, random_guy, random_guy2, challenger] = accounts;
@@ -41,7 +42,7 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
         assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), ALICE_DEPOSITED_COINS);
 
         const depositEvent = plasma.Deposit({}, {fromBlock: 0, toBlock: 'latest'});
-        const events = await txlib.Promisify(cb => depositEvent.get(cb));
+        events = await txlib.Promisify(cb => depositEvent.get(cb));
 
         // Check that events were emitted properly
         let coin;
@@ -57,9 +58,8 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
 
 
     describe('Invalid Exit of UTXO 2', function() {
-        let UTXO = { 'slot' : 2, 'block': 3 };
-
         it("Bob/Dylan tries to double spend a coin that was supposed to be given to Charlie. Gets Challenged and charlie exits that coin", async function() {
+            let UTXO = {'slot': events[2]['args'].slot.toNumber(), 'block': events[2]['args'].blockNumber.toNumber()};
             let ret = await bobDoubleSpend(UTXO);
             let alice_to_bob = ret.bob.data;
             let tree_bob = ret.bob.tree;
@@ -108,6 +108,7 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
         });
 
         it("Bob/Dylan double spend a coin that was supposed to be given to Charlie since nobody challenged", async function() {
+            let UTXO = {'slot': events[2]['args'].slot.toNumber(), 'block': events[2]['args'].blockNumber.toNumber()};
             await bobDoubleSpend(UTXO);
             t0 = (await web3.eth.getBlock('latest')).timestamp;
             await increaseTimeTo(t0 + t1 + t2);
