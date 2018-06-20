@@ -1,6 +1,6 @@
 package client
 
-type Tx struct {
+type Tx interface {
 }
 
 type Block interface {
@@ -42,5 +42,5 @@ type ChainServiceClient interface {
 
 	SubmitBlock() error
 
-	SendTransaction() error
+	SendTransaction(slot int, prevBlock int, denomination int, newOwner string) (Tx, error)
 }

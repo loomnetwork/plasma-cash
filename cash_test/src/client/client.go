@@ -1,11 +1,6 @@
 package client
 
 type Client struct {
-	/*
-			        c.RootChain = rootChain
-		        c.key = token_contract.account.privateKey
-		        c.token_contract = token_contract
-	*/
 	childChain         ChainServiceClient
 	RootChain          RootChainClient
 	TokenContract      TokenContract
@@ -172,27 +167,12 @@ func (c *Client) PlasmaCoin(slot int) {
 
 // Child Chain Functions
 
-func (c *Client) SubmitBlock() {
-	/*
-		block = c.GetCurrentBlock()
-		block.make_mutable() // mutex for mutability?
-		block.sign(c.key)
-		block.make_immutable()
-		return c.childChain.submit_block(rlp.encode(block, Block).hex())
-	*/
+func (c *Client) SubmitBlock() error {
+	return c.childChain.SubmitBlock()
 }
 
-func (c *Client) SendTransaction(slot int, prevBlock int, denomination int, newOwner string) *Tx {
-	/*
-		        new_owner = utils.normalize_address(new_owner)
-		        incl_block = c.BlockNumber()
-		        tx = Transaction(slot, prev_block, denomination, new_owner,
-		                         incl_block=incl_block)
-		        tx.sign(c.key)
-		        c.childChain.SendTransaction(rlp.encode(tx, Transaction).hex())
-				return tx
-	*/
-	return &Tx{}
+func (c *Client) SendTransaction(slot int, prevBlock int, denomination int, newOwner string) (Tx, error) {
+	return c.childChain.SendTransaction(slot, prevBlock, denomination, newOwner)
 }
 
 func (c *Client) BlockNumber() int64 {

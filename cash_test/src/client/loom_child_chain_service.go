@@ -63,11 +63,25 @@ func (c *LoomChildChainService) Proof(blknum int64, uid int64) (*Proof, error) {
 }
 
 func (c *LoomChildChainService) SubmitBlock() error {
+	fmt.Printf("submitting block\n")
+	request := &pctypes.SubmitBlockToMainnetRequest{}
+	//	params := &pctypes.GetBlockRequest{}
+
+	if err := c.loomcontract.StaticCallContract("SubmitBlockToMainnet", request, nil); err != nil {
+		log.Fatalf("failed submitting block - %v\n", err)
+
+		return err
+	}
+
+	log.Println("succeeded submitting a block ")
+
 	return nil
 }
 
-func (c *LoomChildChainService) SendTransaction() error {
-	return nil
+type LoomTx struct{}
+
+func (c *LoomChildChainService) SendTransaction(slot int, prevBlock int, denomination int, newOwner string) (Tx, error) {
+	return &LoomTx{}, nil
 }
 
 func NewLoomChildChainService(readuri, writeuri string) ChainServiceClient {

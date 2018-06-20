@@ -100,9 +100,19 @@ func (c *ChildChainService) SubmitBlock() error {
 	return err
 }
 
-func (c *ChildChainService) SendTransaction() error {
+type ChildChainTx struct {
+}
 
-	return nil
+func (c *ChildChainService) SendTransaction(slot int, prevBlock int, denomination int, newOwner string) (Tx, error) {
+	/*
+	   new_owner = utils.normalize_address(new_owner)
+	   incl_block = c.BlockNumber()
+	   tx = Transaction(slot, prev_block, denomination, new_owner,
+	                    incl_block=incl_block)
+	   tx.sign(c.key)
+	*/
+
+	return &ChildChainTx{}, nil
 }
 
 func NewChildChainService(url string) ChainServiceClient {

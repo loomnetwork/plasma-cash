@@ -64,17 +64,20 @@ func main() {
 	blkNum := 3
 	account, err := bob.TokenContract.Account()
 	exitIfError(err)
-	_ = alice.SendTransaction(utxoID, blkNum, 1, account.Address) //aliceToBob
+	_, err = alice.SendTransaction(utxoID, blkNum, 1, account.Address) //aliceToBob
+	exitIfError(err)
 	account, err = charlie.TokenContract.Account()
 	exitIfError(err)
-	_ = alice.SendTransaction(utxoID-1, blkNum-1, 1, account.Address) //randomTx
+	_, err = alice.SendTransaction(utxoID-1, blkNum-1, 1, account.Address) //randomTx
+	exitIfError(err)
 	authority.SubmitBlock()
 
 	// Bob to Charlie
 	blkNum = 1000
 	account, err = charlie.TokenContract.Account() // the prev transaction was included in block 1000
 	exitIfError(err)
-	_ = bob.SendTransaction(utxoID, blkNum, 1, account.Address) //bobToCharlie
+	_, err = bob.SendTransaction(utxoID, blkNum, 1, account.Address) //bobToCharlie
+	exitIfError(err)
 	authority.SubmitBlock()
 
 	// Charlie should be able to submit an exit by referencing blocks 0 and 1 which
