@@ -16,7 +16,7 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
     // Alice registers and has 5 coins, and she deposits 3 of them.
     const ALICE_INITIAL_COINS = 5;
     const ALICE_DEPOSITED_COINS = 3;
-    const COINS = [ 1, 2, 3];
+    const COINS = [1, 2, 3];
 
     let cards;
     let plasma;
@@ -33,7 +33,7 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
         assert.equal(await cards.balanceOf.call(alice), 5);
 
         let ret;
-        for (let i = 0; i < ALICE_DEPOSITED_COINS; i ++) {
+        for (let i = 0; i < ALICE_DEPOSITED_COINS; i++) {
             await cards.depositToPlasma(COINS[i], {from: alice});
         }
 
@@ -59,7 +59,7 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
 
     describe('Invalid Exit of UTXO 2', function() {
         it("Bob/Dylan tries to double spend a coin that was supposed to be given to Charlie. Gets Challenged and charlie exits that coin", async function() {
-            let UTXO = {'slot': events[2]['args'].slot.toNumber(), 'block': events[2]['args'].blockNumber.toNumber()};
+            let UTXO = {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()};
             let ret = await bobDoubleSpend(UTXO);
             let alice_to_bob = ret.bob.data;
             let tree_bob = ret.bob.tree;
@@ -91,11 +91,11 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
             );
             t0 = (await web3.eth.getBlock('latest')).timestamp;
             await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2 });
+            await plasma.finalizeExits({from: random_guy2});
 
             // Dylan shouldn't be able to withdraw the coin.
-            assertRevert( plasma.withdraw(UTXO.slot, {from : dylan }));
-            plasma.withdraw(UTXO.slot, {from : charlie });
+            assertRevert(plasma.withdraw(UTXO.slot, {from : dylan}));
+            plasma.withdraw(UTXO.slot, {from : charlie});
 
             assert.equal(await cards.balanceOf.call(alice), 2);
             assert.equal(await cards.balanceOf.call(bob), 0);
@@ -104,18 +104,18 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
             assert.equal(await cards.balanceOf.call(plasma.address), 2);
 
             // On the contrary, his bond must be slashed, and `challenger` must be able to claim it
-            await txlib.withdrawBonds(plasma, challenger, 0.1 );
+            await txlib.withdrawBonds(plasma, challenger, 0.1);
         });
 
         it("Bob/Dylan double spend a coin that was supposed to be given to Charlie since nobody challenged", async function() {
-            let UTXO = {'slot': events[2]['args'].slot.toNumber(), 'block': events[2]['args'].blockNumber.toNumber()};
+            let UTXO = {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()};
             await bobDoubleSpend(UTXO);
             t0 = (await web3.eth.getBlock('latest')).timestamp;
             await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2 });
+            await plasma.finalizeExits({from: random_guy2});
 
             // Dylan successfully stole Charlie's coin since noone challenged
-            plasma.withdraw(UTXO.slot, {from : dylan });
+            plasma.withdraw(UTXO.slot, {from : dylan});
 
             assert.equal(await cards.balanceOf.call(alice), 2);
             assert.equal(await cards.balanceOf.call(bob), 0);
@@ -165,10 +165,9 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
             );
 
             return {
-                'bob' : {'data': alice_to_bob, 'tree':  tree_bob},
-                'charlie' : {'data' : bob_to_charlie, 'tree': tree_charlie}
+                'bob' : {'data': alice_to_bob, 'tree': tree_bob},
+                'charlie' : {'data': bob_to_charlie, 'tree': tree_charlie}
             };
         }
-
     });
 });
