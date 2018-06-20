@@ -22,14 +22,6 @@ func (c *Client) Deposit(tokenId int64) {
 // Plasma Functions
 
 //Placeholder
-func rlpEncode(i interface{}, t string) Tx {
-	return &LoomTx{}
-}
-func rlpEncodeBytes(i interface{}, t string) []byte {
-	return []byte{}
-}
-
-//Placeholder
 func Transaction(slot uint64, prevTxBlkNum int64, domination int64, address string) Tx {
 	return &LoomTx{}
 }
@@ -59,7 +51,7 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]b
 		//		exitingTx.sign(c.key)  //????
 		txHash, err = c.RootChain.StartExit(
 			slot,
-			nil, rlpEncode(exitingTx, "UnsignedTransaction"),
+			nil, exitingTx,
 			nil, nil, //proofs?
 			exitingTx.Sig(),
 			0, txBlkNum)
@@ -85,8 +77,7 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]b
 
 	txHash, err = c.RootChain.StartExit(
 		slot,
-		rlpEncode(prevTx, "UnsignedTransaction"),
-		rlpEncode(exitingTx, "UnsignedTransaction"),
+		prevTx, exitingTx,
 		prevTxProof, exitingTxProof,
 		exitingTx.Sig(),
 		prevTxBlkNum, txBlkNum)
@@ -110,7 +101,7 @@ func (c *Client) ChallengeBefore(slot uint64, prevTxBlkNum int64, txBlkNum int64
 		//		exitingTx.sign(c.key) // todo??
 		txHash, err := c.RootChain.ChallengeBefore(
 			slot,
-			nil, rlpEncodeBytes(exitingTx, "UnsignedTransaction"),
+			nil, exitingTx,
 			nil, nil,
 			exitingTx.Sig(),
 			0, txBlkNum)
@@ -132,8 +123,7 @@ func (c *Client) ChallengeBefore(slot uint64, prevTxBlkNum int64, txBlkNum int64
 
 	txHash, err := c.RootChain.ChallengeBefore(
 		slot,
-		rlpEncodeBytes(prevTx, "UnsignedTransaction"),
-		rlpEncodeBytes(exitingTx, "UnsignedTransaction"),
+		prevTx, exitingTx,
 		prevTxProof, exitingTxProof,
 		exitingTx.Sig(),
 		prevTxBlkNum, txBlkNum)
@@ -152,7 +142,7 @@ func (c *Client) RespondChallengeBefore(slot uint64, challengingBlockNumber int6
 
 	txHash, err := c.RootChain.RespondChallengeBefore(slot,
 		challengingBlockNumber,
-		rlpEncode(challengingTx, "UnsignedTransaction"),
+		challengingTx,
 		proof)
 	return txHash, err
 }
@@ -168,7 +158,7 @@ func (c *Client) ChallengeBetween(slot uint64, challengingBlockNumber int64) ([]
 	txHash, err := c.RootChain.ChallengeBetween(
 		slot,
 		challengingBlockNumber,
-		rlpEncode(challengingTx, "UnsignedTransaction"),
+		challengingTx,
 		proof)
 	return txHash, err
 }
@@ -184,7 +174,7 @@ func (c *Client) ChallengeAfter(slot uint64, challengingBlockNumber int64) ([]by
 
 	txHash, err := c.RootChain.ChallengeAfter(
 		slot, challengingBlockNumber,
-		rlpEncode(challengingTx, "UnsignedTransaction"),
+		challengingTx,
 		proof)
 	return txHash, err
 }

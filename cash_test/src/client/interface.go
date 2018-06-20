@@ -2,7 +2,7 @@ package client
 
 type Tx interface {
 	Sig() []byte
-	Bytes() []byte
+	RlpEncode() ([]byte, error)
 }
 
 type Block interface {
@@ -60,7 +60,7 @@ type RootChainClient interface {
 	StartExit(uid uint64, prevTx Tx, exitingTx Tx, prevTxProof Proof,
 		exitingTxProof Proof, sigs []byte, prevTxBlkNum int64, txBlkNum int64) ([]byte, error)
 
-	ChallengeBefore(slot uint64, prevTxBytes []byte, exitingTxBytes []byte,
+	ChallengeBefore(slot uint64, prevTx Tx, exitingTx Tx,
 		prevTxInclusionProof Proof, exitingTxInclusionProof Proof,
 		sig []byte, prevTxBlockNum int64, exitingTxBlockNum int64) ([]byte, error)
 

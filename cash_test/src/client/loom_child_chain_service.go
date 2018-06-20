@@ -3,7 +3,10 @@ package client
 import (
 	"fmt"
 	"log"
+	"math/big"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/rlp"
 	loom "github.com/loomnetwork/go-loom"
 	pctypes "github.com/loomnetwork/go-loom/builtin/types/plasma_cash"
 	"github.com/loomnetwork/go-loom/types"
@@ -79,14 +82,24 @@ func (c *LoomChildChainService) SubmitBlock() error {
 	return nil
 }
 
-type LoomTx struct{}
+type LoomTx struct {
+	Slot         uint64
+	Denomination uint32
+	Owner        common.Address
+	PrevBlock    *big.Int
+}
 
 func (l *LoomTx) Sig() []byte {
 	return []byte{}
 }
 
-func (l *LoomTx) Bytes() []byte {
-	return []byte{}
+func (l *LoomTx) RlpEncode() ([]byte, error) {
+	return rlp.EncodeToBytes([]interface{}{
+		l.Slot,
+		l.PrevBlock,
+		l.Denomination,
+		l.Owner,
+	})
 }
 
 func (c *LoomChildChainService) SendTransaction(slot uint64, prevBlock int64, denomination int64, newOwner string) (Tx, error) {

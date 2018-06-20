@@ -113,8 +113,8 @@ func (c *ChildChainTx) Sig() []byte {
 	return []byte{}
 }
 
-func (c *ChildChainTx) Bytes() []byte {
-	return []byte{}
+func (c *ChildChainTx) RlpEncode() ([]byte, error) {
+	return []byte{}, nil
 }
 
 func (c *ChildChainService) SendTransaction(slot uint64, prevBlock int64, denomination int64, newOwner string) (Tx, error) {

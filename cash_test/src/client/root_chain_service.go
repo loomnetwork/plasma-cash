@@ -41,7 +41,7 @@ func (d *RootChainService) Withdraw(slot uint64) error {
 	return err
 }
 
-func (d *RootChainService) ChallengeBefore(slot uint64, prevTxBytes []byte, exitingTxBytes []byte,
+func (d *RootChainService) ChallengeBefore(slot uint64, prevTx Tx, exitingTx Tx,
 	prevTxInclusionProof Proof, exitingTxInclusionProof Proof,
 	sig []byte, prevTxBlockNum int64, exitingTxBlockNum int64) ([]byte, error) {
 
@@ -72,9 +72,17 @@ func (d *RootChainService) StartExit(
 	slot uint64, prevTx Tx, exitingTx Tx, prevTxInclusion Proof, exitingTxInclusion Proof,
 	sigs []byte, prevTxIncBlock int64, exitingTxIncBlock int64) ([]byte, error) {
 	auth := bind.NewKeyedTransactor(d.callerKey)
-	_, err := d.plasmaContract.StartExit(
+	prevTxBytes, err := prevTx.RlpEncode()
+	if err != nil {
+		return nil, err
+	}
+	exitingTxBytes, err := exitingTx.RlpEncode()
+	if err != nil {
+		return nil, err
+	}
+	_, err = d.plasmaContract.StartExit(
 		auth, slot,
-		prevTx.Bytes(), exitingTx.Bytes(), prevTxInclusion.Bytes(), exitingTxInclusion.Bytes(),
+		prevTxBytes, exitingTxBytes, prevTxInclusion.Bytes(), exitingTxInclusion.Bytes(),
 		sigs, big.NewInt(prevTxIncBlock), big.NewInt(exitingTxIncBlock))
 	return []byte{}, err
 }
