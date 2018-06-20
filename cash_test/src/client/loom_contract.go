@@ -26,7 +26,7 @@ func NewLoomContract(readAddr string, writeAddr string, contractAddr string) *Lo
 		ReadURI:      writeAddr,
 		ContractAddr: contractAddr,
 		ChainID:      "",
-		PrivFile:     "",
+		PrivFile:     "test.key",
 	}
 }
 

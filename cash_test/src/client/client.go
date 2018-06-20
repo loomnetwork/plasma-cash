@@ -223,7 +223,7 @@ func (c *Client) getTxAndProof(blknum int64, slot uint64) (Tx, Proof, error) {
 	//	data = json.loads(c.child_chain.getTxAndProof(blknum, slot))
 	//	tx = rlp.decode(utils.decode_hex(data['tx']), Transaction)
 	//	proof = utils.decode_hex(data['proof'])
-	return nil, &SimpleProof{}, nil
+	return &LoomTx{}, &SimpleProof{}, nil
 }
 
 /*

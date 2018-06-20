@@ -63,11 +63,10 @@ func (c *LoomChildChainService) Proof(blknum int64, uid uint64) (Proof, error) {
 }
 
 func (c *LoomChildChainService) SubmitBlock() error {
-	fmt.Printf("submitting block\n")
 	request := &pctypes.SubmitBlockToMainnetRequest{}
 	//	params := &pctypes.GetBlockRequest{}
 
-	if err := c.loomcontract.StaticCallContract("SubmitBlockToMainnet", request, nil); err != nil {
+	if err := c.loomcontract.CallContract("SubmitBlockToMainnet", request, nil); err != nil {
 		log.Fatalf("failed submitting block - %v\n", err)
 
 		return err
@@ -85,9 +84,9 @@ func (l *LoomTx) Sig() []byte {
 }
 
 func (c *LoomChildChainService) SendTransaction(slot uint64, prevBlock int64, denomination int64, newOwner string) (Tx, error) {
-	fmt.Printf("trying to get send transaction\n")
+	loomAddress := fmt.Sprintf("chain:%s", newOwner)
 
-	address := loom.MustParseAddress(newOwner)
+	address := loom.MustParseAddress(loomAddress)
 	tx := &pctypes.PlasmaTx{
 		Slot:          uint64(slot),
 		PreviousBlock: &types.BigUInt{*loom.NewBigUIntFromInt(prevBlock)},
@@ -99,7 +98,7 @@ func (c *LoomChildChainService) SendTransaction(slot uint64, prevBlock int64, de
 		Plasmatx: tx,
 	}
 
-	if err := c.loomcontract.StaticCallContract("PlasmaTxRequest", params, nil); err != nil {
+	if err := c.loomcontract.CallContract("PlasmaTxRequest", params, nil); err != nil {
 		log.Fatalf("failed trying to send transaction - %v\n", err)
 
 		return nil, err

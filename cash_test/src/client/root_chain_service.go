@@ -82,7 +82,9 @@ func (d *RootChainService) StartExit(
 }
 
 func (d *RootChainService) FinalizeExits() error {
-	_, err := d.plasmaContract.FinalizeExits(nil)
+	auth := bind.NewKeyedTransactor(d.callerKey)
+
+	_, err := d.plasmaContract.FinalizeExits(auth)
 	return err
 }
 
