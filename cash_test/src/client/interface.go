@@ -1,6 +1,7 @@
 package client
 
 type Tx interface {
+	Sig() []byte
 }
 
 type Block interface {
@@ -10,7 +11,11 @@ type DummyBlock struct {
 	blockId string
 }
 
-type Proof struct {
+type Proof interface {
+}
+
+//TODO not sure what this struct looks like
+type SimpleProof struct {
 	proofstring string
 }
 
@@ -31,6 +36,8 @@ type RootChainClient interface {
 	Withdraw(uint64)
 	WithdrawBonds()
 	PlasmaCoin(uint64)
+	StartExit(uid uint64, prevTx Tx, exiting_tx Tx, prevTxProof Proof,
+		exitingTxProof Proof, sigs []byte, prevTxBlkNum int64, txBlkNum int64) ([]byte, error)
 }
 
 type ChainServiceClient interface {
@@ -38,7 +45,7 @@ type ChainServiceClient interface {
 	BlockNumber() int64
 
 	Block(blknum int64) (Block, error)
-	Proof(blknum int64, uid int64) (*Proof, error) //TODO what is the uid?
+	Proof(blknum int64, uid int64) (Proof, error) //TODO what is the uid?
 
 	SubmitBlock() error
 

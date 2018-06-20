@@ -4,7 +4,7 @@ type Client struct {
 	childChain         ChainServiceClient
 	RootChain          RootChainClient
 	TokenContract      TokenContract
-	childBlockInterval int
+	childBlockInterval int64
 }
 
 // Token Functions
@@ -21,82 +21,95 @@ func (c *Client) Deposit(tokenId int64) {
 
 // Plasma Functions
 
-func (c *Client) StartExit(slot uint64, prevTxBlkNum int64, txBlkNum int64) {
+//Placeholder
+func rlpEncode(i interface{}, t string) Tx {
+	return &LoomTx{}
+}
+
+//Placeholder
+func Transaction(slot uint64, prevTxBlkNum int64, domination int64, address string) Tx {
+	return &LoomTx{}
+}
+
+func (c *Client) StartExit(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]byte, error) {
 	// As a user, you declare that you want to exit a coin at slot `slot`
-	//at the state which happened at block `tx_blk_num` and you also need to
+	//at the state which happened at block `txBlkNum` and you also need to
 	// reference a previous block
 
 	// TODO The actual proof information should be passed to a user from its
 	// previous owners, this is a hacky way of getting the info from the
 	// operator which sould be changed in the future after the exiting
 	// process is more standardized
-	/*
-	   if (tx_blk_num % c.child_block_interval != 0 and
-	           prev_tx_blk_num == 0):
-	       # In case the sender is exiting a Deposit transaction, they should
-	       # just create a signed transaction to themselves. There is no need
-	       # for a merkle proof.
+	var txHash []byte
 
-	       # prevBlockehw = 0 , denomination = 1
-	       exiting_tx = Transaction(slot, 0, 1,
-	                                c.token_contract.account.address,
-	                                incl_block=tx_blk_num)
-	       exiting_tx.make_mutable()
-	       exiting_tx.sign(c.key)
-	       exiting_tx.make_immutable()
-	       c.RootChain.start_exit(
-	               slot,
-	               b'0x0', rlp.encode(exiting_tx, UnsignedTransaction),
-	               b'0x0', b'0x0',
-	               exiting_tx.sig,
-	               0, tx_blk_num
-	       )
-	   else:
-	       # Otherwise, they should get the raw tx info from the block
-	       # And the merkle proof and submit these
-	       block = c.get_block(tx_blk_num)
-	       exiting_tx = block.get_tx_by_uid(slot)
-	       exiting_tx_proof = c.get_proof(tx_blk_num, slot)
+	if txBlkNum%c.childBlockInterval != 0 {
+		// In case the sender is exiting a Deposit transaction, they should
+		// just create a signed transaction to themselves. There is no need
+		// for a merkle proof.
 
-	       prev_block = c.get_block(prev_tx_blk_num)
-	       prev_tx = prev_block.get_tx_by_uid(slot)
-	       if (prev_tx_blk_num % c.child_block_interval != 0):
-	           # After 1 off-chain transfer, referencing a deposit
-	           # transaction, no need for proof
-	           prev_tx_proof = b'0x0000000000000000'
-	       else:
-	           prev_tx_proof = c.get_proof(prev_tx_blk_num, slot)
-	       c.RootChain.start_exit(
-	               slot,
-	               rlp.encode(prev_tx, UnsignedTransaction),
-	               rlp.encode(exiting_tx, UnsignedTransaction),
-	               prev_tx_proof, exiting_tx_proof,
-	               exiting_tx.sig,
-	               prev_tx_blk_num, tx_blk_num
-	       )
-	*/
-	return
+		account, err := c.TokenContract.Account()
+		if err != nil {
+			return nil, err
+		}
+		// prev_block = 0 , denomination = 1
+		exitingTx := Transaction(slot, 0, 1, account.Address)
+		//		exiting_tx.sign(c.key)  //????
+		txHash, err = c.RootChain.StartExit(
+			slot,
+			nil, rlpEncode(exitingTx, "UnsignedTransaction"),
+			nil, nil, //proofs?
+			exitingTx.Sig(),
+			0, txBlkNum)
+		if err != nil {
+			return nil, err
+		}
+		return txHash, nil
+
+	}
+
+	// Otherwise, they should get the raw tx info from the block
+	// And the merkle proof and submit these
+	exitingTx, exitingTxProof, err := c.getTxAndProof(txBlkNum,
+		slot)
+	if err != nil {
+		return nil, err
+	}
+	prevTx, prevTxProof, err := c.getTxAndProof(prevTxBlkNum,
+		slot)
+	if err != nil {
+		return nil, err
+	}
+
+	txHash, err = c.RootChain.StartExit(
+		slot,
+		rlpEncode(prevTx, "UnsignedTransaction"),
+		rlpEncode(exitingTx, "UnsignedTransaction"),
+		prevTxProof, exitingTxProof,
+		exitingTx.Sig(),
+		prevTxBlkNum, txBlkNum)
+	return txHash, nil
+
 }
 
-func (c *Client) ChallengeBefore() { //slot, prev_tx_blk_num, tx_blk_num
+func (c *Client) ChallengeBefore() { //slot, prev_txBlkNum, txBlkNum
 	/*
-	   		block = c.get_block(tx_blk_num)
+	   		block = c.get_block(txBlkNum)
 	           tx = block.get_tx_by_uid(slot)
-	           tx_proof = c.get_proof(tx_blk_num, slot)
+	           tx_proof = c.get_proof(txBlkNum, slot)
 
 	           # If the referenced transaction is a deposit transaction then no need
 	           prev_tx = Transaction(0, 0, 0,
 	                                 0x0000000000000000000000000000000000000000)
 	           prev_tx_proof = '0x0000000000000000'
-	           if prev_tx_blk_num % c.child_block_interval == 0:
-	               prev_block = c.get_block(prev_tx_blk_num)
+	           if prev_txBlkNum % c.child_block_interval == 0:
+	               prev_block = c.get_block(prev_txBlkNum)
 	               prev_tx = prev_block.get_tx_by_uid(slot)
-	               prev_tx_proof = c.get_proof(prev_tx_blk_num, slot)
+	               prev_tx_proof = c.get_proof(prev_txBlkNum, slot)
 
 	           c.RootChain.challenge_before(
 	               slot, rlp.encode(prev_tx, UnsignedTransaction),
 	               rlp.encode(tx, UnsignedTransaction), prev_tx_proof,
-	               tx_proof, tx.sig, prev_tx_blk_num, tx_blk_num
+	               tx_proof, tx.sig, prev_txBlkNum, txBlkNum
 	           )
 	   		return
 	*/
@@ -177,6 +190,13 @@ func (c *Client) SendTransaction(slot uint64, prevBlock int64, denomination int6
 
 func (c *Client) BlockNumber() int64 {
 	return c.childChain.BlockNumber()
+}
+
+func (c *Client) getTxAndProof(blknum int64, slot uint64) (Tx, Proof, error) {
+	//	data = json.loads(self.child_chain.get_tx_and_proof(blknum, slot))
+	//	tx = rlp.decode(utils.decode_hex(data['tx']), Transaction)
+	//	proof = utils.decode_hex(data['proof'])
+	return nil, &SimpleProof{}, nil
 }
 
 func (c *Client) CurrentBlock() {

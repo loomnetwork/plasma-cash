@@ -25,6 +25,11 @@ func (d *RootChainService) FinalizeExits() {
 func (d *RootChainService) WithdrawBonds() {
 }
 
+func (d *RootChainService) StartExit(uid uint64, prevTx Tx, exiting_tx Tx, prevTxProof Proof,
+	exitingTxProof Proof, sigs []byte, prevTxBlkNum int64, txBlkNum int64) ([]byte, error) {
+	return []byte{}, nil
+}
+
 var conn *ethclient.Client
 
 func InitClients(connStr string) {

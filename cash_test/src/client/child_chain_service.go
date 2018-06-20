@@ -68,7 +68,7 @@ func (c *ChildChainService) Block(blknum int64) (Block, error) {
 	return block, nil
 }
 
-func (c *ChildChainService) Proof(blknum int64, uid int64) (*Proof, error) {
+func (c *ChildChainService) Proof(blknum int64, uid int64) (Proof, error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/proof?blknum=%d&uid=%d", c.url, blknum, uid), nil)
 	if err != nil {
 		fmt.Print(err)
@@ -81,8 +81,8 @@ func (c *ChildChainService) Proof(blknum int64, uid int64) (*Proof, error) {
 	defer resp.Body.Close()
 
 	body, _ := ioutil.ReadAll(resp.Body)
-	proof := Proof{proofstring: string(body)}
-	return &proof, nil
+	proof := SimpleProof{proofstring: string(body)}
+	return proof, nil
 }
 
 func (c *ChildChainService) SubmitBlock() error {
@@ -101,6 +101,10 @@ func (c *ChildChainService) SubmitBlock() error {
 }
 
 type ChildChainTx struct {
+}
+
+func (c *ChildChainTx) Sig() []byte {
+	return []byte{}
 }
 
 func (c *ChildChainService) SendTransaction(slot uint64, prevBlock int64, denomination int64, newOwner string) (Tx, error) {

@@ -57,7 +57,7 @@ func (c *LoomChildChainService) Block(blknum int64) (Block, error) {
 	return NewClientBlock(result.Block), nil
 }
 
-func (c *LoomChildChainService) Proof(blknum int64, uid int64) (*Proof, error) {
+func (c *LoomChildChainService) Proof(blknum int64, uid int64) (Proof, error) {
 
 	return nil, nil
 }
@@ -80,6 +80,10 @@ func (c *LoomChildChainService) SubmitBlock() error {
 
 type LoomTx struct{}
 
+func (l *LoomTx) Sig() []byte {
+	return []byte{}
+}
+
 func (c *LoomChildChainService) SendTransaction(slot uint64, prevBlock int64, denomination int64, newOwner string) (Tx, error) {
 	fmt.Printf("trying to get send transaction\n")
 
@@ -98,7 +102,7 @@ func (c *LoomChildChainService) SendTransaction(slot uint64, prevBlock int64, de
 	if err := c.loomcontract.StaticCallContract("PlasmaTxRequest", params, nil); err != nil {
 		log.Fatalf("failed trying to send transaction - %v\n", err)
 
-		return err, nil
+		return nil, err
 	}
 
 	log.Printf("Transaction succeeded")
