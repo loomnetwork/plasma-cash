@@ -6,13 +6,13 @@ const BN = require('bn.js');
 
 const Promisify = (inner) =>
 new Promise((resolve, reject) =>
-        inner((err, res) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(res);
-            }
-        })
+    inner((err, res) => {
+        if (err) {
+            reject(err);
+        } else {
+            resolve(res);
+        }
+    })
 );
 
 
