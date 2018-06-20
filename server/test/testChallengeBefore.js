@@ -20,6 +20,7 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
 
     let cards;
     let plasma;
+    let events;
     let t0;
 
     let [authority, alice, bob, charlie, dylan, elliot, random_guy, random_guy2, challenger] = accounts;
@@ -42,7 +43,7 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
         assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), ALICE_DEPOSITED_COINS);
 
         const depositEvent = plasma.Deposit({}, {fromBlock: 0, toBlock: 'latest'});
-        const events = await txlib.Promisify(cb => depositEvent.get(cb));
+        events = await txlib.Promisify(cb => depositEvent.get(cb));
 
         // Check that events were emitted properly
         let coin;
@@ -57,9 +58,8 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
     });
 
     describe('Invalid Exit of UTXO 2', function() {
-        let UTXO = {'slot': 2, 'block': 3};
-
         it("Elliot tries to exit a coin that has invalid history. Elliot's exit gets challenged with challengeBefore w/o response as there is no valid transaction to respond with", async function() {
+            let UTXO = {'slot': events[2]['args'].slot.toNumber(), 'block': events[2]['args'].blockNumber.toNumber()};
             let ret = await elliotInvalidHistoryExit(UTXO);
             let alice_to_bob = ret.data;
             let tree_bob = ret.tree;
@@ -105,6 +105,7 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
         });
 
         it("Elliot makes a valid exit which gets challenged, however he responds with `respondChallengeBefore`", async function() {
+            let UTXO = {'slot': events[2]['args'].slot.toNumber(), 'block': events[2]['args'].blockNumber.toNumber()};
             let ret = await elliotValidHistoryExit(UTXO);
             let alice_to_bob = ret.bob.data;
             let tree_bob = ret.bob.tree;
@@ -158,7 +159,7 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
             await txlib.withdrawBonds(plasma, elliot, 0.2);
         });
 
-        async function elliotInvalidHistoryExit() {
+        async function elliotInvalidHistoryExit(UTXO) {
             let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, 1000, alice, bob);
             let txs = [alice_to_bob.leaf]
             let tree_bob = await txlib.submitTransactions(authority, plasma, txs);
