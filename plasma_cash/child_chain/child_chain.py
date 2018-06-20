@@ -19,6 +19,7 @@ class ChildChain(object):
     def __init__(self, root_chain):
         self.root_chain = root_chain  # PlasmaCash object from plasma_cash.py
         self.authority = self.root_chain.account.address
+        self.key = self.root_chain.account.privateKey
         self.blocks = {}
         self.current_block = Block()
         self.child_block_interval = 1000
@@ -40,13 +41,12 @@ class ChildChain(object):
         deposit_block = Block([deposit_tx])
         self.blocks[blknum] = deposit_block
 
-    def submit_block(self, block):
+    def submit_block(self):
         ''' Submit the merkle root to the chain from the authority '''
-        block = rlp.decode(utils.decode_hex(block), Block)
-        signature = block.sig
-        if (get_sender(block.hash, signature) != self.authority):
-            raise InvalidBlockSignatureException('failed to submit a block')
-
+        block = self.current_block
+        block.make_mutable()
+        block.sign(self.key)
+        block.make_immutable()
         self.current_block_number += self.child_block_interval
         merkle_hash = w3.toHex(block.merklize_transaction_set())
         self.root_chain.submit_block(merkle_hash)
