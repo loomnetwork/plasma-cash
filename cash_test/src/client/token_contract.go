@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"ethcontract"
 	"log"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -20,8 +21,11 @@ type TContract struct {
 	callerAddr    common.Address
 }
 
-func (d *TContract) Deposit(int) error {
-	return nil
+func (d *TContract) Deposit(tokenID int) error {
+	auth := bind.NewKeyedTransactor(d.callerKey)
+	auth.GasLimit = uint64(3141592)
+	_, err := d.tokenContract.DepositToPlasma(auth, big.NewInt(int64(tokenID)))
+	return err
 }
 
 func (d *TContract) Register() error {
