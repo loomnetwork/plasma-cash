@@ -6,6 +6,7 @@ type Tx interface {
 }
 
 type Block interface {
+	Proof() []byte
 }
 
 type Proof interface {
