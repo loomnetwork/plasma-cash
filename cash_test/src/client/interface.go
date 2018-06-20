@@ -29,7 +29,7 @@ type TokenContract interface {
 
 type RootChainClient interface {
 	FinalizeExits() error
-	Withdraw(uint64)
+	Withdraw(slot uint64) error
 	WithdrawBonds()
 	PlasmaCoin(uint64)
 	StartExit(uid uint64, prevTx Tx, exiting_tx Tx, prevTxProof Proof,

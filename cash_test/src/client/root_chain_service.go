@@ -20,8 +20,10 @@ type RootChainService struct {
 func (d *RootChainService) PlasmaCoin(uint64) {
 }
 
-// TODO: implement for challenge_after_demo
-func (d *RootChainService) Withdraw(uint64) {
+func (d *RootChainService) Withdraw(slot uint64) error {
+	auth := bind.NewKeyedTransactor(d.callerKey)
+	_, err := d.plasmaContract.Withdraw(auth, slot)
+	return err
 }
 
 func (d *RootChainService) StartExit(
