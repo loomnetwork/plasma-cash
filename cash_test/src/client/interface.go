@@ -69,7 +69,7 @@ type RootChainClient interface {
 
 type ChainServiceClient interface {
 	CurrentBlock() (Block, error)
-	BlockNumber() int64
+	BlockNumber() (int64, error)
 
 	Block(blknum int64) (Block, error)
 	//Proof(blknum int64, uid uint64) (Proof, error) //TODO what is the uid?

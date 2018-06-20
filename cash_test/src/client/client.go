@@ -215,10 +215,6 @@ func (c *Client) SendTransaction(slot uint64, prevBlock int64, denomination int6
 	return c.childChain.SendTransaction(slot, prevBlock, denomination, newOwner)
 }
 
-func (c *Client) BlockNumber() int64 {
-	return c.childChain.BlockNumber()
-}
-
 func (c *Client) getTxAndProof(blknum int64, slot uint64) (Tx, Proof, error) {
 	//	data = json.loads(c.child_chain.getTxAndProof(blknum, slot))
 	//	tx = rlp.decode(utils.decode_hex(data['tx']), Transaction)
@@ -227,7 +223,7 @@ func (c *Client) getTxAndProof(blknum int64, slot uint64) (Tx, Proof, error) {
 }
 
 func (c *Client) GetBlockNumber() (int64, error) {
-	return 0, nil
+	return c.childChain.BlockNumber()
 }
 
 func (c *Client) GetBlock(blkHeight int64) (Block, error) {

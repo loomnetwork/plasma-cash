@@ -23,18 +23,18 @@ func (c *LoomChildChainService) CurrentBlock() (Block, error) {
 	return c.Block(0) //asking for block zero gives latest
 }
 
-func (c *LoomChildChainService) BlockNumber() int64 {
+func (c *LoomChildChainService) BlockNumber() (int64, error) {
 	request := &pctypes.GetCurrentBlockRequest{}
 	result := &pctypes.GetCurrentBlockResponse{}
 
 	if err := c.loomcontract.StaticCallContract("GetCurrentBlockRequest", request, &result); err != nil {
 		log.Fatalf("failed getting Block number - %v\n", err)
 
-		return 0
+		return 0, err
 	}
 
 	log.Printf("get block height %v '\n", result.BlockHeight.Value.String())
-	return result.BlockHeight.Value.Int64()
+	return result.BlockHeight.Value.Int64(), nil
 }
 
 func (c *LoomChildChainService) Block(blknum int64) (Block, error) {

@@ -34,7 +34,7 @@ func (c *ChildChainService) CurrentBlock() (Block, error) {
 	return &DummyBlock{blockId: string(body)}, nil
 }
 
-func (c *ChildChainService) BlockNumber() int64 {
+func (c *ChildChainService) BlockNumber() (int64, error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/blocknumber", c.url), nil)
 	if err != nil {
 		fmt.Print(err)
@@ -50,7 +50,7 @@ func (c *ChildChainService) BlockNumber() int64 {
 	// fmt.Println("BlockNumber Body:", string(body))
 
 	i, _ := strconv.Atoi(string(body))
-	return int64(i)
+	return int64(i), nil
 }
 
 func (c *ChildChainService) Block(blknum int64) (Block, error) {
