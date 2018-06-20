@@ -1,4 +1,3 @@
-from client.client import Client
 from dependency_config import container
 from utils.utils import increaseTime
 
