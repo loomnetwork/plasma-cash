@@ -28,7 +28,7 @@ function signHash(from, hash) {
 };
 
 function createUTXO(slot, block, incBlock, from, to) {
-    let data = [ slot, block, 1, to ];
+    let data = [slot, block, 1, to];
     data = '0x' + RLP.encode(data).toString('hex');
 
     // If it's a deposit transaction txHash = hash of the slot

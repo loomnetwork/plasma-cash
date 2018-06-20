@@ -57,14 +57,14 @@ module.exports = class SparseMerkleTree {
   }
 
   createMerkleProof(uid) {
-    let index = uid;
+    let index = web3.toBigNumber(uid)
     let proof = '';
     let proofbits = new BN(0);
     let siblingIndex;
     let siblingHash;
     for (let level=0; level < this.depth - 1; level++) {
-      siblingIndex = index % 2 === 0 ? index + 1 : index -1;
-      index = Math.floor(index / 2);
+      siblingIndex = index.mod(2).eq(0) ? index.add(1) : index.sub(1);
+      index = index.dividedToIntegerBy(2);
 
       siblingHash = this.tree[level][siblingIndex];
       if (siblingHash) {

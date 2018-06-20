@@ -79,10 +79,10 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
             t0 = (await web3.eth.getBlock('latest')).timestamp;
 
             await increaseTimeTo( t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2 });
+            await plasma.finalizeExits({from: random_guy2});
 
             // The exit was deleted so Charlie is not able to withdraw the coin
-            assertRevert( plasma.withdraw(UTXO.slot, {from : charlie }));
+            assertRevert(plasma.withdraw(UTXO.slot, {from: charlie}));
 
             // Dylan will exit his coin now. This is the same as the cooperative exit case
             let prev_tx_proof = tree_charlie.createMerkleProof(UTXO.slot)
@@ -187,9 +187,10 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
     })
 
     describe('Invalid Exit of UTXO 0', function() {
-        let UTXO = [{'slot' : 0, 'block' : 1}, {'slot' : 2, 'block' : 3}];
-
         it("Alice gives a coin to Bob and Charlie and immediately tries to exit Bob's coin. Gets Challenged.", async function() {
+
+            let UTXO = [{'slot': events[0]['args'].slot.toNumber(), 'block': events[0]['args'].blockNumber.toNumber()},
+                        {'slot': events[2]['args'].slot.toNumber(), 'block': events[2]['args'].blockNumber.toNumber()}];
             let alice_to_bob = txlib.createUTXO(UTXO[0].slot, UTXO[0].block, 1000, alice, bob);
             let alice_to_charlie = txlib.createUTXO(UTXO[1].slot, UTXO[1].block, 1000, alice, charlie);
             let txs = [ alice_to_bob.leaf, alice_to_charlie.leaf ]
@@ -227,6 +228,8 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
         });
 
         it("Alice gives a coin to Bob and Charlie. Bob gives a coin to Charlie and immediately tries to exit it. Gets Challenged", async function() {
+            let UTXO = [{'slot': events[0]['args'].slot.toNumber(), 'block': events[0]['args'].blockNumber.toNumber()},
+                        {'slot': events[2]['args'].slot.toNumber(), 'block': events[2]['args'].blockNumber.toNumber()}];
             let alice_to_bob = txlib.createUTXO(UTXO[0].slot, UTXO[0].block, 1000, alice, bob);
             let alice_to_charlie = txlib.createUTXO(UTXO[1].slot, UTXO[1].block, 1000, alice, charlie);
             let txs = [ alice_to_bob.leaf, alice_to_charlie.leaf ]
