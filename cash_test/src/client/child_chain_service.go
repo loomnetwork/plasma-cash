@@ -83,7 +83,7 @@ func (c *ChildChainService) Proof(blknum int64, uid uint64) (Proof, error) {
 	defer resp.Body.Close()
 
 	body, _ := ioutil.ReadAll(resp.Body)
-	proof := SimpleProof{proofstring: string(body)}
+	proof := SimpleProof{proofdata: body}
 	return proof, nil
 }
 
@@ -106,6 +106,10 @@ type ChildChainTx struct {
 }
 
 func (c *ChildChainTx) Sig() []byte {
+	return []byte{}
+}
+
+func (c *ChildChainTx) Bytes() []byte {
 	return []byte{}
 }
 

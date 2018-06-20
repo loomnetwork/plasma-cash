@@ -2,17 +2,23 @@ package client
 
 type Tx interface {
 	Sig() []byte
+	Bytes() []byte
 }
 
 type Block interface {
 }
 
 type Proof interface {
+	Bytes() []byte
 }
 
 //TODO not sure what this struct looks like
 type SimpleProof struct {
-	proofstring string
+	proofdata []byte
+}
+
+func (s SimpleProof) Bytes() []byte {
+	return s.proofdata
 }
 
 type Account struct {

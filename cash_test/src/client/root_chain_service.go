@@ -72,11 +72,9 @@ func (d *RootChainService) StartExit(
 	slot uint64, prevTx Tx, exitingTx Tx, prevTxInclusion Proof, exitingTxInclusion Proof,
 	sigs []byte, prevTxIncBlock int64, exitingTxIncBlock int64) ([]byte, error) {
 	auth := bind.NewKeyedTransactor(d.callerKey)
-	// TODO: encode params into bytes...
-	var prevTxBytes, exitingTxBytes, prevTxInclusionProof, exitingTxInclusionProof []byte
 	_, err := d.plasmaContract.StartExit(
 		auth, slot,
-		prevTxBytes, exitingTxBytes, prevTxInclusionProof, exitingTxInclusionProof,
+		prevTx.Bytes(), exitingTx.Bytes(), prevTxInclusion.Bytes(), exitingTxInclusion.Bytes(),
 		sigs, big.NewInt(prevTxIncBlock), big.NewInt(exitingTxIncBlock))
 	return []byte{}, err
 }

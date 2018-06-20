@@ -85,6 +85,10 @@ func (l *LoomTx) Sig() []byte {
 	return []byte{}
 }
 
+func (l *LoomTx) Bytes() []byte {
+	return []byte{}
+}
+
 func (c *LoomChildChainService) SendTransaction(slot uint64, prevBlock int64, denomination int64, newOwner string) (Tx, error) {
 	loomAddress := fmt.Sprintf("chain:%s", newOwner)
 
