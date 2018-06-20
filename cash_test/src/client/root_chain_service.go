@@ -7,6 +7,8 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
@@ -14,10 +16,23 @@ type RootChainService struct {
 	Name           string
 	plasmaContract *ethcontract.RootChain
 	callerKey      *ecdsa.PrivateKey
+	callerAddr     common.Address
 }
 
-// TODO: implement for challenge_after_demo
-func (d *RootChainService) PlasmaCoin(uint64) {
+func (d *RootChainService) PlasmaCoin(slot uint64) (*PlasmaCoin, error) {
+	uid, depositBlockNum, denom, ownerAddr, state, err := d.plasmaContract.GetPlasmaCoin(&bind.CallOpts{
+		From: d.callerAddr,
+	}, slot)
+	if err != nil {
+		return nil, err
+	}
+	return &PlasmaCoin{
+		UID:             uid,
+		DepositBlockNum: depositBlockNum.Int64(),
+		Denomination:    denom,
+		Owner:           ownerAddr.Hex(),
+		State:           PlasmaCoinState(state),
+	}, nil
 }
 
 func (d *RootChainService) Withdraw(slot uint64) error {
@@ -89,6 +104,7 @@ func NewRootChainService(callerName string, callerKey *ecdsa.PrivateKey, boundCo
 	return &RootChainService{
 		Name:           callerName,
 		callerKey:      callerKey,
+		callerAddr:     crypto.PubkeyToAddress(callerKey.PublicKey),
 		plasmaContract: boundContract,
 	}
 }

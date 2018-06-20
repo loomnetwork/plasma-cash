@@ -27,11 +27,29 @@ type TokenContract interface {
 	Account() (*Account, error)
 }
 
+type PlasmaCoinState uint8
+
+const (
+	PlasmaCoinDeposited PlasmaCoinState = iota
+	PlasmaCoinExiting
+	PlasmaCoinChallenged
+	PlasmaCoinResponded
+	PlasmaCoinExited
+)
+
+type PlasmaCoin struct {
+	UID             uint64
+	DepositBlockNum int64
+	Denomination    uint32
+	Owner           string
+	State           PlasmaCoinState
+}
+
 type RootChainClient interface {
 	FinalizeExits() error
 	Withdraw(slot uint64) error
 	WithdrawBonds()
-	PlasmaCoin(uint64)
+	PlasmaCoin(slot uint64) (*PlasmaCoin, error)
 	StartExit(uid uint64, prevTx Tx, exitingTx Tx, prevTxProof Proof,
 		exitingTxProof Proof, sigs []byte, prevTxBlkNum int64, txBlkNum int64) ([]byte, error)
 
