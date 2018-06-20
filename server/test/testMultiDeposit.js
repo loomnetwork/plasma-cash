@@ -60,7 +60,7 @@ contract("Plasma ERC721 - Multiple Deposits in various blocks", async function(a
 
     describe('Exit of UTXO 2 and 7 (UTXO 7 added at 1000-2000 block interval)', function() {
         it("Alice sends Bob UTXO 2, submits it, Bob deposits his coin and sends Alice UTXO 4, submits it, both exit", async function() {
-            let UTXO = {'slot': events[2]['args'].slot.toNumber(), 'block': events[2]['args'].blockNumber.toNumber()};
+            let UTXO = {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()};
             let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, 1000, alice, bob);
             let txs = [alice_to_bob.leaf];
             let tree_1000 = await txlib.submitTransactions(authority, plasma, txs);
