@@ -124,7 +124,7 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
         });
 
         it("Charlie tries to exit a spent coin. Dylan does not challenge in time", async function() {
-            let UTXO = {'slot': events[2]['args'].slot.toNumber(), 'block': events[2]['args'].blockNumber.toNumber()};
+            let UTXO = {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()};
             await charlieExitSpentCoin(UTXO);
 
             t0 = (await web3.eth.getBlock('latest')).timestamp;
