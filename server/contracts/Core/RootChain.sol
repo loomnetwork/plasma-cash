@@ -167,7 +167,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
             createdAt: block.timestamp
         });
 
-        // create a utxo at slot `numCoins`
+        // create a utxo at `slot`
         emit Deposit(slot, currentBlock, denomination, from);
 
         numCoins += 1;

@@ -1,8 +1,5 @@
 const CryptoCards = artifacts.require("CryptoCards");
 const RootChain = artifacts.require("RootChain");
-
-const SparseMerkleTree = require('./SparseMerkleTree.js');
-
 import {increaseTimeTo, duration} from './helpers/increaseTime'
 import assertRevert from './helpers/assertRevert.js';
 
