@@ -2,6 +2,7 @@ const RLP = require('rlp')
 const utils = require('web3-utils');
 const SparseMerkleTree = require('./SparseMerkleTree.js');
 const ethutil = require('ethereumjs-util');
+const BN = require('bn.js');
 
 const Promisify = (inner) =>
 new Promise((resolve, reject) =>
@@ -28,7 +29,8 @@ function signHash(from, hash) {
 };
 
 function createUTXO(slot, block, incBlock, from, to) {
-    let data = [ slot, block, 1, to ];
+    let rlpSlot = slot instanceof web3.BigNumber ? (new BN(slot.toString())).toBuffer() : slot;
+    let data = [rlpSlot, block, 1, to];
     data = '0x' + RLP.encode(data).toString('hex');
 
     // If it's a deposit transaction txHash = hash of the slot

@@ -59,7 +59,7 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
 
     describe('Invalid Exit of UTXO 2', function() {
         it("Elliot tries to exit a coin that has invalid history. Elliot's exit gets challenged with challengeBefore w/o response as there is no valid transaction to respond with", async function() {
-            let UTXO = {'slot': events[2]['args'].slot.toNumber(), 'block': events[2]['args'].blockNumber.toNumber()};
+            let UTXO = {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()};
             let ret = await elliotInvalidHistoryExit(UTXO);
             let alice_to_bob = ret.data;
             let tree_bob = ret.tree;
@@ -88,10 +88,10 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
 
             t0 = (await web3.eth.getBlock('latest')).timestamp;
             await increaseTimeTo( t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2 });
+            await plasma.finalizeExits({from: random_guy2});
 
             // Charlie shouldn't be able to withdraw the coin.
-            assertRevert(plasma.withdraw(UTXO.slot, {from : elliot }));
+            assertRevert(plasma.withdraw(UTXO.slot, {from : elliot}));
 
             assert.equal(await cards.balanceOf.call(alice), 2);
             assert.equal(await cards.balanceOf.call(bob), 0);
@@ -105,7 +105,7 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
         });
 
         it("Elliot makes a valid exit which gets challenged, however he responds with `respondChallengeBefore`", async function() {
-            let UTXO = {'slot': events[2]['args'].slot.toNumber(), 'block': events[2]['args'].blockNumber.toNumber()};
+            let UTXO = {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()};
             let ret = await elliotValidHistoryExit(UTXO);
             let alice_to_bob = ret.bob.data;
             let tree_bob = ret.bob.tree;
