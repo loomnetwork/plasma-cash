@@ -49,7 +49,6 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
         let coin;
         for (let i = 0; i < events.length; i++) {
             coin = events[i].args;
-            assert.equal(coin.slot.toNumber(), i);
             assert.equal(coin.blockNumber.toNumber(), i+1);
             assert.equal(coin.denomination.toNumber(), 1);
             assert.equal(coin.from, alice);

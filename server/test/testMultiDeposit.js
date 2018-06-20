@@ -50,7 +50,7 @@ contract("Plasma ERC721 - Multiple Deposits in various blocks", async function(a
         let coin;
         for (let i = 0; i < events.length; i++) {
             coin = events[i].args;
-            assert.equal(coin.slot.toNumber(), i);
+            // assert.equal(coin.slot.toNumber(), i);
             assert.equal(coin.blockNumber.toNumber(), i+1);
             assert.equal(coin.denomination.toNumber(), 1);
             assert.equal(coin.from, alice);
@@ -67,8 +67,12 @@ contract("Plasma ERC721 - Multiple Deposits in various blocks", async function(a
 
             // Bob deposits Coin 7, which generates a new UTXO in the Plasma chain.
             await cards.depositToPlasma(7, {from: bob});
-            let slot = 3; // or from plasma.numCoins()-1
-            let block = await plasma.getPlasmaCoin.call(3); block = block[1].toNumber();
+            const depositEvent = plasma.Deposit({}, {fromBlock: 0, toBlock: 'latest'});
+            events = await txlib.Promisify(cb => depositEvent.get(cb));
+            let bobCoin = events[events.length - 1].args;
+            let slot = bobCoin.slot;
+            let block = await plasma.getPlasmaCoin.call(slot);
+            block = block[1].toNumber();
 
             let bob_to_alice = txlib.createUTXO(slot, block, 2000, bob, alice);
             txs = [bob_to_alice.leaf];
