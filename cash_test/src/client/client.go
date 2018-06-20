@@ -226,6 +226,8 @@ func (c *Client) getTxAndProof(blknum int64, slot uint64) (Tx, Proof, error) {
 	return nil, &SimpleProof{}, nil
 }
 
+/*
+//These methods exist in python but are unused so we dont need them
 func (c *Client) CurrentBlock() (Block, error) {
 	return c.childChain.CurrentBlock()
 	//	return rlp.decode(utils.decode_hex(block), Block)
@@ -240,6 +242,7 @@ func (c *Client) Proof(blkHeight int64, slot uint64) (Proof, error) {
 	return c.childChain.Proof(blkHeight, slot)
 	//	return base64.b64decode(c.childChain.get_proof(blknum, slot))
 }
+*/
 
 func NewClient(childChainServer ChainServiceClient, rootChain RootChainClient, tokenContract TokenContract) *Client {
 	return &Client{childChain: childChainServer, childBlockInterval: 1000, RootChain: rootChain, TokenContract: tokenContract}
