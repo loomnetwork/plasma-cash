@@ -72,7 +72,7 @@ type ChainServiceClient interface {
 	BlockNumber() int64
 
 	Block(blknum int64) (Block, error)
-	Proof(blknum int64, uid uint64) (Proof, error) //TODO what is the uid?
+	//Proof(blknum int64, uid uint64) (Proof, error) //TODO what is the uid?
 
 	SubmitBlock() error
 
