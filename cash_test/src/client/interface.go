@@ -7,10 +7,6 @@ type Tx interface {
 type Block interface {
 }
 
-type DummyBlock struct {
-	blockId string
-}
-
 type Proof interface {
 }
 
@@ -32,7 +28,7 @@ type TokenContract interface {
 }
 
 type RootChainClient interface {
-	FinalizeExits()
+	FinalizeExits() error
 	Withdraw(uint64)
 	WithdrawBonds()
 	PlasmaCoin(uint64)
@@ -45,7 +41,7 @@ type ChainServiceClient interface {
 	BlockNumber() int64
 
 	Block(blknum int64) (Block, error)
-	Proof(blknum int64, uid int64) (Proof, error) //TODO what is the uid?
+	Proof(blknum int64, uid uint64) (Proof, error) //TODO what is the uid?
 
 	SubmitBlock() error
 

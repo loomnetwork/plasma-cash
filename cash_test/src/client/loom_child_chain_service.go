@@ -49,7 +49,7 @@ func (c *LoomChildChainService) Block(blknum int64) (Block, error) {
 	if err := c.loomcontract.StaticCallContract("GetBlockRequest", params, &result); err != nil {
 		log.Fatalf("failed getting Block data - %v\n", err)
 
-		return err, nil
+		return &PbBlock{}, nil
 	}
 
 	log.Printf("get block value %v '\n", result)
@@ -57,7 +57,7 @@ func (c *LoomChildChainService) Block(blknum int64) (Block, error) {
 	return NewClientBlock(result.Block), nil
 }
 
-func (c *LoomChildChainService) Proof(blknum int64, uid int64) (Proof, error) {
+func (c *LoomChildChainService) Proof(blknum int64, uid uint64) (Proof, error) {
 
 	return nil, nil
 }

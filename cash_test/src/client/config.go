@@ -36,3 +36,21 @@ func GetTokenContract(name string) TokenContract {
 	}
 	return NewTokenContract(name, privKey, tokenContract)
 }
+
+func GetRootChain(name string) RootChainClient {
+	cfg, err := parseConfig()
+	if err != nil {
+		log.Fatalf("failed to load config file: %v", err)
+	}
+	contractAddr := common.HexToAddress(cfg.GetString("root_chain"))
+	privKeyHexStr := cfg.GetString(name)
+	privKey, err := crypto.HexToECDSA(strings.TrimPrefix(privKeyHexStr, "0x"))
+	if err != nil {
+		log.Fatalf("failed to load private key for %s: %v", name, err)
+	}
+	plasmaContract, err := ethcontract.NewRootChain(contractAddr, conn)
+	if err != nil {
+		log.Fatalf("Failed to instantiate a Token contract: %v", err)
+	}
+	return NewRootChainService(name, privKey, plasmaContract)
+}

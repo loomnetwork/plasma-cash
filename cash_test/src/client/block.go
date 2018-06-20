@@ -10,5 +10,5 @@ type PbBlock struct {
 }
 
 func NewClientBlock(pb *pctypes.PlasmaBlock) Block {
-	return PbBlock{pb}
+	return &PbBlock{pb}
 }

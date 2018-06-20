@@ -14,6 +14,10 @@ type ChildChainService struct {
 	url string
 }
 
+type DummyBlock struct {
+	blockId string
+}
+
 func (c *ChildChainService) CurrentBlock() (Block, error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/block", c.url), nil)
 	if err != nil {
@@ -27,8 +31,7 @@ func (c *ChildChainService) CurrentBlock() (Block, error) {
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
 	// fmt.Println("CurrentBlock Body:", string(body))
-	block := DummyBlock{blockId: string(body)}
-	return block, nil
+	return &DummyBlock{blockId: string(body)}, nil
 }
 
 func (c *ChildChainService) BlockNumber() int64 {
@@ -64,11 +67,10 @@ func (c *ChildChainService) Block(blknum int64) (Block, error) {
 
 	body, _ := ioutil.ReadAll(resp.Body)
 	// fmt.Println("Block Body:", string(body))
-	block := DummyBlock{blockId: string(body)}
-	return block, nil
+	return &DummyBlock{blockId: string(body)}, nil
 }
 
-func (c *ChildChainService) Proof(blknum int64, uid int64) (Proof, error) {
+func (c *ChildChainService) Proof(blknum int64, uid uint64) (Proof, error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/proof?blknum=%d&uid=%d", c.url, blknum, uid), nil)
 	if err != nil {
 		fmt.Print(err)

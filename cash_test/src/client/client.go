@@ -199,17 +199,18 @@ func (c *Client) getTxAndProof(blknum int64, slot uint64) (Tx, Proof, error) {
 	return nil, &SimpleProof{}, nil
 }
 
-func (c *Client) CurrentBlock() {
-	//	block = c.childChain.CurrentBlock()
+func (c *Client) CurrentBlock() (Block, error) {
+	return c.childChain.CurrentBlock()
 	//	return rlp.decode(utils.decode_hex(block), Block)
 }
 
-func (c *Client) Block(blkHeight int) {
-	//	block = c.childChain.get_block(blknum)
-	//	return rlp.decode(utils.decode_hex(block), Block)
+func (c *Client) Block(blkHeight int64) (Block, error) {
+	return c.childChain.Block(blkHeight)
+	//return rlp.decode(utils.decode_hex(block), Block)
 }
 
-func (c *Client) Proof(blkHeight int, slot int) {
+func (c *Client) Proof(blkHeight int64, slot uint64) (Proof, error) {
+	return c.childChain.Proof(blkHeight, slot)
 	//	return base64.b64decode(c.childChain.get_proof(blknum, slot))
 }
 

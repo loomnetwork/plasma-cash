@@ -1,33 +1,49 @@
 package client
 
 import (
+	"crypto/ecdsa"
 	"ethcontract"
-
 	"log"
+	"math/big"
 
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 type RootChainService struct {
-	Name              string
-	rootchainContract *ethcontract.RootChain
+	Name           string
+	plasmaContract *ethcontract.RootChain
+	callerKey      *ecdsa.PrivateKey
 }
 
+// TODO: implement for challenge_after_demo
 func (d *RootChainService) PlasmaCoin(uint64) {
 }
 
+// TODO: implement for challenge_after_demo
 func (d *RootChainService) Withdraw(uint64) {
 }
 
-func (d *RootChainService) FinalizeExits() {
-}
-func (d *RootChainService) WithdrawBonds() {
+func (d *RootChainService) StartExit(
+	slot uint64, prevTx Tx, exitingTx Tx, prevTxInclusion Proof, exitingTxInclusion Proof,
+	sigs []byte, prevTxIncBlock int64, exitingTxIncBlock int64) ([]byte, error) {
+	auth := bind.NewKeyedTransactor(d.callerKey)
+	// TODO: encode params into bytes...
+	var prevTxBytes, exitingTxBytes, prevTxInclusionProof, exitingTxInclusionProof []byte
+	_, err := d.plasmaContract.StartExit(
+		auth, slot,
+		prevTxBytes, exitingTxBytes, prevTxInclusionProof, exitingTxInclusionProof,
+		sigs, big.NewInt(prevTxIncBlock), big.NewInt(exitingTxIncBlock))
+	return []byte{}, err
 }
 
-func (d *RootChainService) StartExit(uid uint64, prevTx Tx, exiting_tx Tx, prevTxProof Proof,
-	exitingTxProof Proof, sigs []byte, prevTxBlkNum int64, txBlkNum int64) ([]byte, error) {
-	return []byte{}, nil
+func (d *RootChainService) FinalizeExits() error {
+	_, err := d.plasmaContract.FinalizeExits(nil)
+	return err
+}
+
+// TODO: implement for challenge_after_demo
+func (d *RootChainService) WithdrawBonds() {
 }
 
 var conn *ethclient.Client
@@ -40,22 +56,10 @@ func InitClients(connStr string) {
 	}
 }
 
-func GetRootChain(name string) RootChainClient {
-
-	// Instantiate the contract and display its name
-	rootchainContract, err := ethcontract.NewRootChain(common.HexToAddress("0x21e6fc92f93c8a1bb41e2be64b4e1f88a54d3576"), conn)
-	if err != nil {
-		log.Fatalf("Failed to instantiate a Token contract: %v", err)
+func NewRootChainService(callerName string, callerKey *ecdsa.PrivateKey, boundContract *ethcontract.RootChain) *RootChainService {
+	return &RootChainService{
+		Name:           callerName,
+		callerKey:      callerKey,
+		plasmaContract: boundContract,
 	}
-	/*
-		name, err := token.Name(nil)
-		if err != nil {
-			log.Fatalf("Failed to retrieve token name: %v", err)
-		}
-		fmt.Println("Token name:", name)
-	*/
-	// (plasma_config[key], self.root_chain_abi,
-	//	plasma_config['root_chain'], self.endpoint)
-
-	return &RootChainService{name, rootchainContract}
 }
