@@ -20,6 +20,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
 
     let cards;
     let plasma;
+    let events;
     let t0;
 
     let [authority, alice, bob, charlie, dylan, elliot, random_guy, random_guy2, challenger] = accounts;
@@ -44,7 +45,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
         assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), ALICE_DEPOSITED_COINS);
 
         const depositEvent = plasma.Deposit({}, {fromBlock: 0, toBlock: 'latest'});
-        const events = await txlib.Promisify(cb => depositEvent.get(cb));
+        events = await txlib.Promisify(cb => depositEvent.get(cb));
 
         // Check that events were emitted properly
         let coin;
@@ -59,9 +60,8 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
     });
 
     describe('Exit of UTXO 2 (Coin 3)', async function() {
-        let UTXO = {'slot': 2, 'block': 3};
-
         it('Directly after its deposit', async function() {
+            let UTXO = {'slot': events[2]['args'].slot.toNumber(), 'block': events[2]['args'].blockNumber.toNumber()};
             // Prevblock = 0 because we're exiting a tx
             // directly after being minted in the plasma chain
             let prevBlock = 0;
@@ -97,10 +97,11 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
         });
 
         it('After 1 Plasma-Chain transfer', async function() {
+            let UTXO = {'slot': events[2]['args'].slot.toNumber(), 'block': events[2]['args'].blockNumber.toNumber()};
             let prevBlock = UTXO.block;
             // Create a UTXO to Bob from Alice and sign it. Refer to Alice's deposit transaction at block 3
             let alice_to_bob = txlib.createUTXO(UTXO.slot, prevBlock, 1000, alice, bob);
-            let txs = [ alice_to_bob.leaf ]
+            let txs = [alice_to_bob.leaf]
             // Authority submits a block to plasma with that transaction included
             let tree_bob = await txlib.submitTransactions(authority, plasma, txs);
             let submittedBlock = 1000;
@@ -147,6 +148,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
         });
 
         it("After 2 Plasma-Chain transfers", async function() {
+            let UTXO = {'slot': events[2]['args'].slot.toNumber(), 'block': events[2]['args'].blockNumber.toNumber()};
             let alice_to_bob = txlib.createUTXO(UTXO.slot, 3, 1000, alice, bob);
             let txs = [alice_to_bob.leaf];
             let tree_bob = await txlib.submitTransactions(authority, plasma, txs);
