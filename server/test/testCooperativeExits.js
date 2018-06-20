@@ -212,8 +212,9 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
 
     // If it works for 2 coins, proof by induction it will work for N coins >2
     describe('Exit of UTXO 1 and 2', async function() {
-        let UTXO = [{'slot': 1, 'block': 2}, {'slot': 2, 'block': 3}];
         it('Alice gives Bob 2 coins who exits both', async function() {
+            let UTXO = [{'slot': events[1]['args'].slot.toNumber(), 'block': events[1]['args'].blockNumber.toNumber()},
+                        {'slot': events[2]['args'].slot.toNumber(), 'block': events[2]['args'].blockNumber.toNumber()}];
             let alice_to_bob = {};
             let txs = [];
             let tx;
@@ -285,6 +286,9 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
         });
 
         it('Alice gives Bob 2 coins, he exits 1 and gives another to Charlie who also exits it', async function() {
+            let UTXO = [{'slot': events[1]['args'].slot.toNumber(), 'block': events[1]['args'].blockNumber.toNumber()},
+                        {'slot': events[2]['args'].slot.toNumber(), 'block': events[2]['args'].blockNumber.toNumber()}];
+
             let alice_to_bob = {};
             let txs = [];
             let tx;
@@ -361,6 +365,8 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
         });
 
         it('Alice gives Bob 2 coins, who gives both to Charlie who exits both', async function() {
+            let UTXO = [{'slot': events[1]['args'].slot.toNumber(), 'block': events[1]['args'].blockNumber.toNumber()},
+                        {'slot': events[2]['args'].slot.toNumber(), 'block': events[2]['args'].blockNumber.toNumber()}];
             let alice_to_bob = {};
             let txs = [];
             let tx;
@@ -426,6 +432,8 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
         });
 
         it('Alice gives Bob and Charlie 1 coin, they both exit them', async function() {
+            let UTXO = [{'slot': events[1]['args'].slot.toNumber(), 'block': events[1]['args'].blockNumber.toNumber()},
+                        {'slot': events[2]['args'].slot.toNumber(), 'block': events[2]['args'].blockNumber.toNumber()}];
             let txs = [];
             let alice_to_bob = txlib.createUTXO(UTXO[0].slot, UTXO[0].block, 1000, alice, bob);
             let alice_to_charlie = txlib.createUTXO(UTXO[1].slot, UTXO[1].block, 1000, alice, charlie);
@@ -489,6 +497,8 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
         });
 
         it('Alice gives Bob and Charlie 1 coin, Bob gives Charlie his coin and Charlie exits it', async function() {
+            let UTXO = [{'slot': events[1]['args'].slot.toNumber(), 'block': events[1]['args'].blockNumber.toNumber()},
+                        {'slot': events[2]['args'].slot.toNumber(), 'block': events[2]['args'].blockNumber.toNumber()}];
             let txs = [];
             let alice_to_bob = txlib.createUTXO(UTXO[0].slot, UTXO[0].block, 1000, alice, bob);
             let alice_to_charlie = txlib.createUTXO(UTXO[1].slot, UTXO[1].block, 1000, alice, charlie);
