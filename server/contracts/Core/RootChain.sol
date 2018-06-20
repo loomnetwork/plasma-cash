@@ -98,7 +98,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree, RootChainEvents {
 
     // tracking of NFTs deposited in each slot
     uint64 public numCoins;
-    mapping (uint64 => Coin) public coins;
+    mapping (uint64 => Coin) coins;
     struct Coin {
         uint64 uid; // there are up to 2^64 cards, can probably make it less
         uint32 denomination; // an owner cannot own more than 256 of a card. Currently set to 1 always, subject to change once the token changes
