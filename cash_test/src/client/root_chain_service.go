@@ -26,6 +26,33 @@ func (d *RootChainService) Withdraw(slot uint64) error {
 	return err
 }
 
+func (d *RootChainService) ChallengeBefore(slot uint64, prevTxBytes []byte, exitingTxBytes []byte,
+	prevTxInclusionProof Proof, exitingTxInclusionProof Proof,
+	sig []byte, prevTxBlockNum int64, exitingTxBlockNum int64) ([]byte, error) {
+
+	//return self.sign_and_send(self.contract.functions.challengeBefore, args,	  value=self.BOND)
+	return []byte{}, nil
+}
+
+func (d *RootChainService) RespondChallengeBefore(slot uint64, challengingBlockNumber int64,
+	challenging_transaction Tx, proof Proof) ([]byte, error) {
+
+	//return self.sign_and_send(self.contract.functions.respond_challenge_before,					args)
+	return []byte{}, nil
+}
+
+func (d *RootChainService) ChallengeBetween(slot uint64, challengingBlockNumber int64,
+	challengingTransaction Tx, proof Proof) ([]byte, error) {
+	//return self.sign_and_send(self.contract.functions.challengeBetween, args)
+	return []byte{}, nil
+}
+
+func (d *RootChainService) ChallengeAfter(slot uint64, challengingBlockNumber int64,
+	challengingTransaction Tx, proof Proof) ([]byte, error) {
+	//return self.sign_and_send(self.contract.functions.challengeAfter, args)
+	return []byte{}, nil
+}
+
 func (d *RootChainService) StartExit(
 	slot uint64, prevTx Tx, exitingTx Tx, prevTxInclusion Proof, exitingTxInclusion Proof,
 	sigs []byte, prevTxIncBlock int64, exitingTxIncBlock int64) ([]byte, error) {

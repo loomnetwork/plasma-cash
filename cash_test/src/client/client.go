@@ -25,6 +25,9 @@ func (c *Client) Deposit(tokenId int64) {
 func rlpEncode(i interface{}, t string) Tx {
 	return &LoomTx{}
 }
+func rlpEncodeBytes(i interface{}, t string) []byte {
+	return []byte{}
+}
 
 //Placeholder
 func Transaction(slot uint64, prevTxBlkNum int64, domination int64, address string) Tx {
@@ -92,7 +95,6 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]b
 }
 
 func (c *Client) ChallengeBefore(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]byte, error) {
-
 	if txBlkNum%c.childBlockInterval != 0 {
 		// In case the sender is exiting a Deposit transaction, they should
 		// just create a signed transaction to themselves. There is no need
@@ -106,19 +108,19 @@ func (c *Client) ChallengeBefore(slot uint64, prevTxBlkNum int64, txBlkNum int64
 		//  prev_block = 0 , denomination = 1
 		exitingTx := Transaction(slot, 0, 1, account.Address)
 		//		exitingTx.sign(c.key) // todo??
-		txHash := c.RootChain.ChallengeBefore(
+		txHash, err := c.RootChain.ChallengeBefore(
 			slot,
-			nil, rlpEncode(exitingTx, "UnsignedTransaction"),
+			nil, rlpEncodeBytes(exitingTx, "UnsignedTransaction"),
 			nil, nil,
 			exitingTx.Sig(),
 			0, txBlkNum)
 
-		return nil, txHash
+		return txHash, err
 	}
 
 	// Otherwise, they should get the raw tx info from the block
 	// And the merkle proof and submit these
-	exitingTx, exitingTx_proof, err := c.getTxAndProof(txBlkNum, slot)
+	exitingTx, exitingTxProof, err := c.getTxAndProof(txBlkNum, slot)
 	if err != nil {
 		return nil, err
 	}
@@ -128,14 +130,14 @@ func (c *Client) ChallengeBefore(slot uint64, prevTxBlkNum int64, txBlkNum int64
 		return nil, err
 	}
 
-	txHash := c.RootChain.ChallengeBefore(
+	txHash, err := c.RootChain.ChallengeBefore(
 		slot,
-		rlpEncode(prevTx, "UnsignedTransaction"),
-		rlpEncode(exitingTx, "UnsignedTransaction"),
-		prevTxProof, exitingTx_proof,
+		rlpEncodeBytes(prevTx, "UnsignedTransaction"),
+		rlpEncodeBytes(exitingTx, "UnsignedTransaction"),
+		prevTxProof, exitingTxProof,
 		exitingTx.Sig(),
 		prevTxBlkNum, txBlkNum)
-	return nil, txHash
+	return txHash, err
 
 }
 
@@ -148,11 +150,11 @@ func (c *Client) RespondChallengeBefore(slot uint64, challengingBlockNumber int6
 		return nil, err
 	}
 
-	txHash := c.RootChain.RespondChallengeBefore(slot,
+	txHash, err := c.RootChain.RespondChallengeBefore(slot,
 		challengingBlockNumber,
 		rlpEncode(challengingTx, "UnsignedTransaction"),
 		proof)
-	return txHash, nil
+	return txHash, err
 }
 
 // ChallengeBetween - `Double Spend Challenge`: Challenge a double spend of a coin
@@ -163,12 +165,12 @@ func (c *Client) ChallengeBetween(slot uint64, challengingBlockNumber int64) ([]
 		return nil, err
 	}
 
-	txHash := c.RootChain.ChallengeBetween(
+	txHash, err := c.RootChain.ChallengeBetween(
 		slot,
 		challengingBlockNumber,
 		rlpEncode(challengingTx, "UnsignedTransaction"),
 		proof)
-	return txHash, nil
+	return txHash, err
 }
 
 // ChallengeAfter - `Exit Spent Coin Challenge`: Challenge an exit with a spend
@@ -180,11 +182,11 @@ func (c *Client) ChallengeAfter(slot uint64, challengingBlockNumber int64) ([]by
 		return nil, err
 	}
 
-	txHash := c.RootChain.ChallengeAfter(
+	txHash, err := c.RootChain.ChallengeAfter(
 		slot, challengingBlockNumber,
 		rlpEncode(challengingTx, "UnsignedTransaction"),
 		proof)
-	return txHash, nil
+	return txHash, err
 }
 
 func (c *Client) FinalizeExits() {
