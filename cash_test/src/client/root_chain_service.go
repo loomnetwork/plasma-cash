@@ -14,10 +14,10 @@ type RootChainService struct {
 	rootchainContract *ethcontract.RootChain
 }
 
-func (d *RootChainService) PlasmaCoin(int) {
+func (d *RootChainService) PlasmaCoin(uint64) {
 }
 
-func (d *RootChainService) Withdraw(int) {
+func (d *RootChainService) Withdraw(uint64) {
 }
 
 func (d *RootChainService) FinalizeExits() {

@@ -39,11 +39,11 @@ func (c *LoomChildChainService) BlockNumber() int64 {
 
 func (c *LoomChildChainService) Block(blknum int64) (Block, error) {
 	fmt.Printf("trying to get Block data\n")
-	blk := loom.NewBigUIntFromInt(blknum)
+	blk := &types.BigUInt{*loom.NewBigUIntFromInt(blknum)}
 
 	var result pctypes.GetBlockResponse
 	params := &pctypes.GetBlockRequest{
-		BlockHeight: &types.BigUInt{*blk},
+		BlockHeight: blk,
 	}
 
 	if err := c.loomcontract.StaticCallContract("GetBlockRequest", params, &result); err != nil {
@@ -80,7 +80,29 @@ func (c *LoomChildChainService) SubmitBlock() error {
 
 type LoomTx struct{}
 
-func (c *LoomChildChainService) SendTransaction(slot int, prevBlock int, denomination int, newOwner string) (Tx, error) {
+func (c *LoomChildChainService) SendTransaction(slot uint64, prevBlock int64, denomination int64, newOwner string) (Tx, error) {
+	fmt.Printf("trying to get send transaction\n")
+
+	address := loom.MustParseAddress(newOwner)
+	tx := &pctypes.PlasmaTx{
+		Slot:          uint64(slot),
+		PreviousBlock: &types.BigUInt{*loom.NewBigUIntFromInt(prevBlock)},
+		Denomination:  &types.BigUInt{*loom.NewBigUIntFromInt(denomination)},
+		NewOwner:      address.MarshalPB(),
+	}
+
+	params := &pctypes.PlasmaTxRequest{
+		Plasmatx: tx,
+	}
+
+	if err := c.loomcontract.StaticCallContract("PlasmaTxRequest", params, nil); err != nil {
+		log.Fatalf("failed trying to send transaction - %v\n", err)
+
+		return err, nil
+	}
+
+	log.Printf("Transaction succeeded")
+
 	return &LoomTx{}, nil
 }
 

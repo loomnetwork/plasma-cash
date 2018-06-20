@@ -21,7 +21,7 @@ type TContract struct {
 	callerAddr    common.Address
 }
 
-func (d *TContract) Deposit(tokenID int) error {
+func (d *TContract) Deposit(tokenID int64) error {
 	auth := bind.NewKeyedTransactor(d.callerKey)
 	auth.GasLimit = uint64(3141592)
 	_, err := d.tokenContract.DepositToPlasma(auth, big.NewInt(int64(tokenID)))

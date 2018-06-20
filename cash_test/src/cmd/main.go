@@ -53,15 +53,15 @@ func main() {
 
 	// Alice deposits 3 of her coins to the plasma contract and gets 3 plasma nft
 	// utxos in return
-	tokenID := 1
+	tokenID := int64(1)
 	alice.Deposit(tokenID)
 	alice.Deposit(tokenID + 1)
 	alice.Deposit(tokenID + 2)
 
 	//Alice to Bob, and Alice to Charlie. We care about the Alice to Bob
 	// transaction
-	utxoID := 2
-	blkNum := 3
+	utxoID := uint64(2)
+	blkNum := int64(3)
 	account, err := bob.TokenContract.Account()
 	exitIfError(err)
 	_, err = alice.SendTransaction(utxoID, blkNum, 1, account.Address) //aliceToBob
@@ -82,9 +82,9 @@ func main() {
 
 	// Charlie should be able to submit an exit by referencing blocks 0 and 1 which
 	// included his transaction.
-	utxoID = 2
-	prevTxBlkNum := 1000
-	exitingTxBlkNum := 2000
+	utxoID = uint64(2)
+	prevTxBlkNum := int64(1000)
+	exitingTxBlkNum := int64(2000)
 	charlie.StartExit(utxoID, prevTxBlkNum, exitingTxBlkNum)
 
 	// After 8 days pass, charlie's exit should be finalizable

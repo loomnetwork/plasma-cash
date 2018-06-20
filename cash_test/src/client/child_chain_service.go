@@ -103,7 +103,7 @@ func (c *ChildChainService) SubmitBlock() error {
 type ChildChainTx struct {
 }
 
-func (c *ChildChainService) SendTransaction(slot int, prevBlock int, denomination int, newOwner string) (Tx, error) {
+func (c *ChildChainService) SendTransaction(slot uint64, prevBlock int64, denomination int64, newOwner string) (Tx, error) {
 	/*
 	   new_owner = utils.normalize_address(new_owner)
 	   incl_block = c.BlockNumber()

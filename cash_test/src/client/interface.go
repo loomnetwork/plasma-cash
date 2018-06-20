@@ -20,7 +20,7 @@ type Account struct {
 
 type TokenContract interface {
 	Register() error
-	Deposit(int) error
+	Deposit(int64) error
 	BalanceOf() (int64, error)
 
 	Account() (*Account, error)
@@ -28,9 +28,9 @@ type TokenContract interface {
 
 type RootChainClient interface {
 	FinalizeExits()
-	Withdraw(int)
+	Withdraw(uint64)
 	WithdrawBonds()
-	PlasmaCoin(int)
+	PlasmaCoin(uint64)
 }
 
 type ChainServiceClient interface {
@@ -42,5 +42,5 @@ type ChainServiceClient interface {
 
 	SubmitBlock() error
 
-	SendTransaction(slot int, prevBlock int, denomination int, newOwner string) (Tx, error)
+	SendTransaction(slot uint64, prevBlock int64, denomination int64, newOwner string) (Tx, error)
 }

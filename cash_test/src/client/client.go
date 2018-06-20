@@ -15,13 +15,13 @@ func (c *Client) Register() {
 }
 
 // Deposit happens by a use calling the erc721 token contract
-func (c *Client) Deposit(tokenId int) {
+func (c *Client) Deposit(tokenId int64) {
 	c.TokenContract.Deposit(tokenId)
 }
 
 // Plasma Functions
 
-func (c *Client) StartExit(slot int, prevTxBlkNum int, txBlkNum int) {
+func (c *Client) StartExit(slot uint64, prevTxBlkNum int64, txBlkNum int64) {
 	// As a user, you declare that you want to exit a coin at slot `slot`
 	//at the state which happened at block `tx_blk_num` and you also need to
 	// reference a previous block
@@ -153,7 +153,7 @@ func (c *Client) FinalizeExits() {
 	c.RootChain.FinalizeExits()
 }
 
-func (c *Client) Withdraw(slot int) {
+func (c *Client) Withdraw(slot uint64) {
 	c.RootChain.Withdraw(slot)
 }
 
@@ -161,7 +161,7 @@ func (c *Client) WithdrawBonds() {
 	c.RootChain.WithdrawBonds()
 }
 
-func (c *Client) PlasmaCoin(slot int) {
+func (c *Client) PlasmaCoin(slot uint64) {
 	c.RootChain.PlasmaCoin(slot)
 }
 
@@ -171,7 +171,7 @@ func (c *Client) SubmitBlock() error {
 	return c.childChain.SubmitBlock()
 }
 
-func (c *Client) SendTransaction(slot int, prevBlock int, denomination int, newOwner string) (Tx, error) {
+func (c *Client) SendTransaction(slot uint64, prevBlock int64, denomination int64, newOwner string) (Tx, error) {
 	return c.childChain.SendTransaction(slot, prevBlock, denomination, newOwner)
 }
 
