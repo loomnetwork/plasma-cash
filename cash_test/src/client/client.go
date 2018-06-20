@@ -53,7 +53,7 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]b
 		}
 		// prev_block = 0 , denomination = 1
 		exitingTx := Transaction(slot, 0, 1, account.Address)
-		//		exiting_tx.sign(c.key)  //????
+		//		exitingTx.sign(c.key)  //????
 		txHash, err = c.RootChain.StartExit(
 			slot,
 			nil, rlpEncode(exitingTx, "UnsignedTransaction"),
@@ -91,75 +91,100 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]b
 
 }
 
-func (c *Client) ChallengeBefore() { //slot, prev_txBlkNum, txBlkNum
-	/*
-	   		block = c.get_block(txBlkNum)
-	           tx = block.get_tx_by_uid(slot)
-	           tx_proof = c.get_proof(txBlkNum, slot)
+func (c *Client) ChallengeBefore(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]byte, error) {
 
-	           # If the referenced transaction is a deposit transaction then no need
-	           prev_tx = Transaction(0, 0, 0,
-	                                 0x0000000000000000000000000000000000000000)
-	           prev_tx_proof = '0x0000000000000000'
-	           if prev_txBlkNum % c.child_block_interval == 0:
-	               prev_block = c.get_block(prev_txBlkNum)
-	               prev_tx = prev_block.get_tx_by_uid(slot)
-	               prev_tx_proof = c.get_proof(prev_txBlkNum, slot)
+	if txBlkNum%c.childBlockInterval != 0 {
+		// In case the sender is exiting a Deposit transaction, they should
+		// just create a signed transaction to themselves. There is no need
+		// for a merkle proof.
 
-	           c.RootChain.challenge_before(
-	               slot, rlp.encode(prev_tx, UnsignedTransaction),
-	               rlp.encode(tx, UnsignedTransaction), prev_tx_proof,
-	               tx_proof, tx.sig, prev_txBlkNum, txBlkNum
-	           )
-	   		return
-	*/
+		account, err := c.TokenContract.Account()
+		if err != nil {
+			return nil, err
+		}
+
+		//  prev_block = 0 , denomination = 1
+		exitingTx := Transaction(slot, 0, 1, account.Address)
+		//		exitingTx.sign(c.key) // todo??
+		txHash := c.RootChain.ChallengeBefore(
+			slot,
+			nil, rlpEncode(exitingTx, "UnsignedTransaction"),
+			nil, nil,
+			exitingTx.Sig(),
+			0, txBlkNum)
+
+		return nil, txHash
+	}
+
+	// Otherwise, they should get the raw tx info from the block
+	// And the merkle proof and submit these
+	exitingTx, exitingTx_proof, err := c.getTxAndProof(txBlkNum, slot)
+	if err != nil {
+		return nil, err
+	}
+
+	prevTx, prevTxProof, err := c.getTxAndProof(prevTxBlkNum, slot)
+	if err != nil {
+		return nil, err
+	}
+
+	txHash := c.RootChain.ChallengeBefore(
+		slot,
+		rlpEncode(prevTx, "UnsignedTransaction"),
+		rlpEncode(exitingTx, "UnsignedTransaction"),
+		prevTxProof, exitingTx_proof,
+		exitingTx.Sig(),
+		prevTxBlkNum, txBlkNum)
+	return nil, txHash
+
 }
 
 // RespondChallengeBefore - Respond to an exit with invalid history challenge by proving that
 // you were given the coin under question
-func (c *Client) RespondChallengeBefore() { //slot, challenging_block_number
+func (c *Client) RespondChallengeBefore(slot uint64, challengingBlockNumber int64) ([]byte, error) {
+	challengingTx, proof, err := c.getTxAndProof(challengingBlockNumber,
+		slot)
+	if err != nil {
+		return nil, err
+	}
 
-	/*
-	   block = c.get_block(challenging_block_number)
-	   challenging_tx = block.get_tx_by_uid(slot)
-	   proof = c.get_proof(challenging_block_number, slot)
-
-	   c.RootChain.respond_challenge_before(
-	       slot, challenging_block_number,
-	       rlp.encode(challenging_tx, UnsignedTransaction), proof
-	   )
-	   return
-	*/
+	txHash := c.RootChain.RespondChallengeBefore(slot,
+		challengingBlockNumber,
+		rlpEncode(challengingTx, "UnsignedTransaction"),
+		proof)
+	return txHash, nil
 }
 
 // ChallengeBetween - `Double Spend Challenge`: Challenge a double spend of a coin
 // with a spend between the exit's blocks
-func (c *Client) ChallengeBetween() { //slot, challenging_block_number
-	/*
-		        block = c.get_block(challenging_block_number)
-		        challenging_tx = block.get_tx_by_uid(slot)
-		        proof = c.get_proof(challenging_block_number, slot)
+func (c *Client) ChallengeBetween(slot uint64, challengingBlockNumber int64) ([]byte, error) {
+	challengingTx, proof, err := c.getTxAndProof(challengingBlockNumber, slot)
+	if err != nil {
+		return nil, err
+	}
 
-		        c.RootChain.challenge_between(
-		            slot, challenging_block_number,
-		            rlp.encode(challenging_tx, UnsignedTransaction), proof
-		        )
-		        return self
-			}
+	txHash := c.RootChain.ChallengeBetween(
+		slot,
+		challengingBlockNumber,
+		rlpEncode(challengingTx, "UnsignedTransaction"),
+		proof)
+	return txHash, nil
+}
 
-		        // `Exit Spent Coin Challenge`: Challenge an exit with a spend
-		        // after the exit's blocks
-				func (c *Client) challenge_after(self, slot, challenging_block_number) {
-		        block = c.get_block(challenging_block_number)
-		        challenging_tx = block.get_tx_by_uid(slot)
-		        proof = c.get_proof(challenging_block_number, slot)
+// ChallengeAfter - `Exit Spent Coin Challenge`: Challenge an exit with a spend
+// after the exit's blocks
+func (c *Client) ChallengeAfter(slot uint64, challengingBlockNumber int64) ([]byte, error) { //
+	challengingTx, proof, err := c.getTxAndProof(challengingBlockNumber,
+		slot)
+	if err != nil {
+		return nil, err
+	}
 
-		        c.RootChain.challenge_after(
-		            slot, challenging_block_number,
-		            rlp.encode(challenging_tx, UnsignedTransaction), proof
-		        )
-				return self
-	*/
+	txHash := c.RootChain.ChallengeAfter(
+		slot, challengingBlockNumber,
+		rlpEncode(challengingTx, "UnsignedTransaction"),
+		proof)
+	return txHash, nil
 }
 
 func (c *Client) FinalizeExits() {
@@ -193,7 +218,7 @@ func (c *Client) BlockNumber() int64 {
 }
 
 func (c *Client) getTxAndProof(blknum int64, slot uint64) (Tx, Proof, error) {
-	//	data = json.loads(self.child_chain.get_tx_and_proof(blknum, slot))
+	//	data = json.loads(c.child_chain.getTxAndProof(blknum, slot))
 	//	tx = rlp.decode(utils.decode_hex(data['tx']), Transaction)
 	//	proof = utils.decode_hex(data['proof'])
 	return nil, &SimpleProof{}, nil
