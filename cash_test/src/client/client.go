@@ -226,16 +226,20 @@ func (c *Client) getTxAndProof(blknum int64, slot uint64) (Tx, Proof, error) {
 	return &LoomTx{}, &SimpleProof{}, nil
 }
 
+func (c *Client) GetBlockNumber() (int64, error) {
+	return 0, nil
+}
+
+func (c *Client) GetBlock(blkHeight int64) (Block, error) {
+	return c.childChain.Block(blkHeight)
+	//return rlp.decode(utils.decode_hex(block), Block)
+}
+
 /*
 //These methods exist in python but are unused so we dont need them
 func (c *Client) CurrentBlock() (Block, error) {
 	return c.childChain.CurrentBlock()
 	//	return rlp.decode(utils.decode_hex(block), Block)
-}
-
-func (c *Client) Block(blkHeight int64) (Block, error) {
-	return c.childChain.Block(blkHeight)
-	//return rlp.decode(utils.decode_hex(block), Block)
 }
 
 func (c *Client) Proof(blkHeight int64, slot uint64) (Proof, error) {
