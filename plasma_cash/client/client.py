@@ -248,11 +248,7 @@ class Client(object):
         return True
 
     def submit_block(self):
-        block = self.get_current_block()
-        block.make_mutable()  # mutex for mutability?
-        block.sign(self.key)
-        block.make_immutable()
-        return self.child_chain.submit_block(rlp.encode(block, Block).hex())
+        return self.child_chain.submit_block()
 
     def send_transaction(self, slot, prev_block, denomination, new_owner):
         new_owner = utils.normalize_address(new_owner)

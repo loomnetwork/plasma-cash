@@ -41,8 +41,7 @@ def get_proof():
 
 @bp.route('/submit_block', methods=['POST'])
 def submit_block():
-    block = request.form['block']
-    return container.get_child_chain().submit_block(block)
+    return container.get_child_chain().submit_block()
 
 
 @bp.route('/send_tx', methods=['POST'])
