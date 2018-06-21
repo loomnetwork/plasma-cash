@@ -152,11 +152,10 @@ class Client(object):
         '''
         challenging_tx, proof = self.get_tx_and_proof(challenging_block_number,
                                                       slot)
-
         tx_hash = self.root_chain.challenge_after(
             slot, challenging_block_number,
-            rlp.encode(challenging_tx, UnsignedTransaction), proof
-        )
+            rlp.encode(challenging_tx, UnsignedTransaction), proof,
+            challenging_tx.sig)
         return tx_hash
 
     def finalize_exits(self):

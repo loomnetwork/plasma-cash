@@ -31,8 +31,9 @@ class PlasmaCash(Contract):
                                   args)
 
     def challenge_after(self, slot, challenging_block_number,
-                        challenging_transaction, proof):
-        args = [slot, challenging_block_number, challenging_transaction, proof]
+                        challenging_transaction, proof, sig):
+        args = [slot, challenging_block_number,
+                challenging_transaction, proof, sig]
         return self.sign_and_send(self.contract.functions.challengeAfter, args)
 
     def start_exit(self, uid, prev_tx, exiting_tx, prev_tx_proof,
