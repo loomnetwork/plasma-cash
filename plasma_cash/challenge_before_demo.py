@@ -35,7 +35,8 @@ trudy_to_mallory_block = authority.get_block_number()
 
 # Mallory sends her invalid coin to Trudy
 mallory_to_trudy = mallory.send_transaction(
-     deposit1_utxo, trudy_to_mallory_block, 1, trudy.token_contract.account.address)
+     deposit1_utxo, trudy_to_mallory_block,
+     1, trudy.token_contract.account.address)
 authority.submit_block()
 mallory_to_trudy_block = authority.get_block_number()
 

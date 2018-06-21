@@ -187,16 +187,19 @@ class Client(object):
 
     def get_block_numbers(self, slot):
         # First get the coin's deposit block
-        # todo efficiency -> start_block should be updated to the last block obtained last time
+        # todo efficiency -> start_block should be updated to the last block
+        # obtained last time
         start_block = self.get_plasma_coin(slot)['deposit_block']
 
         # Get next non-deposit block
-        next_deposit = (start_block + self.child_block_interval) // self.child_block_interval * self.child_block_interval
+        next_deposit = ((start_block + self.child_block_interval) //
+                        self.child_block_interval * self.child_block_interval)
         end_block = self.get_block_number()
 
         # Create a list of indexes with coin's deposit block
         # and all subsequent submitted blocks that followed
-        block_numbers = [ start_block ] + list(range(next_deposit, end_block + 1, self.child_block_interval))
+        block_numbers = [start_block] + list(range(next_deposit, end_block + 1,
+                                                   self.child_block_interval))
         return block_numbers
 
     def get_coin_history(self, slot):
@@ -220,22 +223,28 @@ class Client(object):
         self.txs[slot] = txs
         return incl_proofs, excl_proofs
 
-    # received_proofs should be a dictionary with merkle branches for each block
+    # received_proofs should be a dictionary with merkle branches for each
+    # block
     def verify_coin_history(self, slot, incl_proofs, excl_proofs):
-        # Sanity checks, make sure incl_proofs and excl_proofs have all the correct keys for the coin
+        # Sanity checks, make sure incl_proofs and excl_proofs have all the
+        # correct keys for the coin
         incl_keys = set(incl_proofs)
         excl_keys = set(excl_proofs)
         if len(incl_keys.intersection(excl_keys)) != 0:
             return False
 
-        block_numbers = self.get_block_numbers(slot) # gets all of the coin's block numbers
-        if incl_keys.union(excl_keys) != set(block_numbers): # ensure that all keys are included
+        # gets all of the coin's block numbers
+        block_numbers = self.get_block_numbers(slot)
+        # ensure that all keys are included
+        if incl_keys.union(excl_keys) != set(block_numbers):
             return False
 
         # assert inclusion proofs
         for blknum, proof in incl_proofs.items():
             blk_root = self.root_chain.get_block_root(blknum)
-            tx = self.get_tx(blknum, slot) # should we be polling the tx from the operator or trusting the receiver?
+            # should we be polling the tx from the operator or trusting the
+            # receiver?
+            tx = self.get_tx(blknum, slot)
             if not self.check_inclusion(tx, blk_root, slot, proof):
                 return False
 
@@ -285,4 +294,5 @@ class Client(object):
         return utils.decode_hex(self.child_chain.get_proof(blknum, slot))
 
     def get_all_deposits(self):
-        return self.root_chain.get_all_deposits(self.root_chain.account.address)
+        return self.root_chain.get_all_deposits(
+                    self.root_chain.account.address)

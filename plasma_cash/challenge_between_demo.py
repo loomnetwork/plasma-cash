@@ -26,13 +26,15 @@ time.sleep(2)
 # TODO stop manually setting these UTXOs
 coin = eve.get_plasma_coin(deposit1_utxo)
 eve_to_bob = eve.send_transaction(
-         deposit1_utxo, coin['deposit_block'], 1, bob.token_contract.account.address)
+         deposit1_utxo, coin['deposit_block'],
+         1, bob.token_contract.account.address)
 authority.submit_block()
 eve_to_bob_block = authority.get_block_number()
 
 # Eve sends this same plasma coin to Alice
 eve_to_alice = eve.send_transaction(
-      deposit1_utxo, coin['deposit_block'], 1, alice.token_contract.account.address)
+      deposit1_utxo, coin['deposit_block'],
+      1, alice.token_contract.account.address)
 authority.submit_block()
 
 eve_to_alice_block = authority.get_block_number()
