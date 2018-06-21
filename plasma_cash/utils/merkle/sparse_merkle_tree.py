@@ -37,24 +37,22 @@ class SparseMerkleTree(object):
         tree_level = ordered_leaves
         for level in range(depth - 1):
             next_level = {}
-            prev_index = -1
             for index, value in tree_level.items():
                 if index % 2 == 0:
-                    # If the node is a left node, assume the right sibling is
-                    # a default node. In the case right sibling is not default
-                    # node, it would override on next round
-                    next_level[index // 2] = keccak(value
-                                                    + default_nodes[level])
+                    co_index = index + 1
+                    if co_index in tree_level:
+                        next_level[index // 2] = keccak(value +
+                                                        tree_level[co_index])
+                    else:
+                        next_level[index // 2] = keccak(value +
+                                                        default_nodes[level])
                 else:
                     # If the node is a right node, check if its left sibling is
                     # a default node.
-                    if index == prev_index + 1:
-                        next_level[index // 2] = keccak(tree_level[prev_index]
-                                                        + value)
-                    else:
-                        next_level[index // 2] = keccak(default_nodes[level]
-                                                        + value)
-                prev_index = index
+                    co_index = index - 1
+                    if co_index not in tree_level:
+                        next_level[index // 2] = keccak(default_nodes[level] +
+                                                        value)
             tree_level = next_level
             tree.append(tree_level)
         return tree
@@ -91,7 +89,8 @@ class SparseMerkleTree(object):
         p = 8
         if index in self.leaves:
             computed_hash = self.leaves[index]
-        else: # in case the tx is not included, computed_hash is the default leaf
+        # in case the tx is not included, computed_hash is the default leaf
+        else:
             computed_hash = self.default_nodes[-1]
 
         for d in range(self.depth-1):
