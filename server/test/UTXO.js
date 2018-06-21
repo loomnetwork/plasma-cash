@@ -62,7 +62,7 @@ async function submitTransactions(from, plasma, txs) {
 }
 
 async function withdrawBonds(plasma, withdrawer, amount) {
-    await plasma.withdrawBonds({from: withdrawer });
+    await plasma.withdrawBonds({from: withdrawer});
     let withdrewBonds = plasma.WithdrewBonds({}, {fromBlock: 0, toBlock: 'latest'});
     let e = await Promisify(cb => withdrewBonds.get(cb));
     let withdraw = e[0].args;

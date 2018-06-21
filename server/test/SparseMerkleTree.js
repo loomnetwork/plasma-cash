@@ -10,8 +10,8 @@ module.exports = class SparseMerkleTree {
         this.leaves = leaves;
 
         if (leaves) {
-            this.tree = this.createTree(this.leaves, this.depth, this.defaultNodes)
-            this.root = this.tree[this.depth-1][0]
+            this.tree = this.createTree(this.leaves, this.depth, this.defaultNodes);
+            this.root = this.tree[this.depth-1]['0'] || this.tree[this.depth-1]['1'];
         } else {
             this.tree = [];
             this.root = this.defaultNodes[this.depth-1];
@@ -34,13 +34,14 @@ module.exports = class SparseMerkleTree {
         let nextLevel = {};
         let prevIndex;
         let halfIndex;
-        let item;
-        for (let level = 0; level < depth -1; level ++) {
+        let value;
+
+        for (let level = 0; level < depth - 1; level++) {
             nextLevel = {};
             prevIndex = -1;
-            for (var index in treeLevel) {
+            for (let index in treeLevel) {
                 halfIndex = web3.toBigNumber(index).dividedToIntegerBy(2).toString();
-                var value = treeLevel[index];
+                value = treeLevel[index];
                 if (web3.toBigNumber(index).mod(2).isZero()) {
                     nextLevel[halfIndex] =
                         utils.soliditySha3(value, defaultNodes[level]);

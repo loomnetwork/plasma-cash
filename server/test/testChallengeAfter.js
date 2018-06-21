@@ -149,12 +149,12 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
 
             // Tx to Charlie from Bob referencing Bob's UTXO at block 1000
             let bob_to_charlie = txlib.createUTXO(UTXO.slot, 1000, 2000, bob, charlie);
-            txs = [ bob_to_charlie.leaf ]
+            txs = [bob_to_charlie.leaf]
             let tree_charlie = await txlib.submitTransactions(authority, plasma, txs);
 
             // Tx to Dylan from Charlie referencing Charlie's UTXO at block 2000
             let charlie_to_dylan = txlib.createUTXO(UTXO.slot, 2000, 3000, charlie, dylan);
-            txs = [ charlie_to_dylan.leaf ]
+            txs = [charlie_to_dylan.leaf]
             let tree_dylan = await txlib.submitTransactions(authority, plasma, txs);
 
             // Concatenate the 2 signatures
