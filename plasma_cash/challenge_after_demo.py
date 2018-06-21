@@ -44,7 +44,8 @@ plasma_block2 = authority.submit_block()
 # Coin 6 was the first deposit of
 coin = mallory.get_plasma_coin(deposit1_utxo)
 mallory_to_dan = mallory.send_transaction(
-         deposit1_utxo, coin['deposit_block'], 1, dan.token_contract.account.address)
+         deposit1_utxo, coin['deposit_block'],
+         1, dan.token_contract.account.address)
 plasma_block3 = authority.submit_block()
 
 # Mallory attempts to exit spent coin (the one sent to Dan)

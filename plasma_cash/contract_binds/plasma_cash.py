@@ -1,6 +1,5 @@
 from .base.contract import Contract
 
-from web3.utils.filters import construct_event_filter_params
 
 class PlasmaCash(Contract):
     '''Plasma Cash bindings for python '''
@@ -16,19 +15,20 @@ class PlasmaCash(Contract):
                 prev_tx_inclusion_proof, exiting_tx_inclusion_proof,
                 sig, prev_tx_block_num, exiting_tx_block_num]
 
-        return self.sign_and_send(self.contract.functions.challengeBefore, args,
-                           value=self.BOND)
+        return self.sign_and_send(self.contract.functions.challengeBefore,
+                                  args, value=self.BOND)
 
     def respond_challenge_before(self, slot, challenging_block_number,
                                  challenging_transaction, proof):
         args = [slot, challenging_block_number, challenging_transaction, proof]
-        return self.sign_and_send(self.contract.functions.respond_challenge_before,
-                           args)
+        return self.sign_and_send(
+                    self.contract.functions.respond_challenge_before, args)
 
     def challenge_between(self, slot, challenging_block_number,
                           challenging_transaction, proof):
         args = [slot, challenging_block_number, challenging_transaction, proof]
-        return self.sign_and_send(self.contract.functions.challengeBetween, args)
+        return self.sign_and_send(self.contract.functions.challengeBetween,
+                                  args)
 
     def challenge_after(self, slot, challenging_block_number,
                         challenging_transaction, proof):
@@ -40,7 +40,7 @@ class PlasmaCash(Contract):
         args = [uid, prev_tx, exiting_tx, prev_tx_proof, exiting_tx_proof,
                 sigs, prev_tx_blk_num, tx_blk_num]
         return self.sign_and_send(self.contract.functions.startExit, args,
-                           value=self.BOND)
+                                  value=self.BOND)
 
     def finalize_exits(self):
         args = []
@@ -67,7 +67,6 @@ class PlasmaCash(Contract):
         return ret
 
     def get_all_deposits(self, address, fromBlock=0):
-        filters = None
         event_filter = self.contract.events.Deposit.createFilter(
                 fromBlock=fromBlock,
                 toBlock='latest',
@@ -79,13 +78,16 @@ class PlasmaCash(Contract):
         return ret
 
     def check_inclusion(self, tx, root, slot, proof):
-        if tx.prev_block == 0: # deposit tx
+        if tx.prev_block == 0:  # deposit tx
             ret = tx.hash == root
         else:
-            ret = self.contract.functions.checkMembership(tx.hash, root, slot, proof).call()
+            ret = self.contract.functions.checkMembership(tx.hash, root, slot,
+                                                          proof).call()
         return ret
 
     def check_exclusion(self, root, slot, proof):
-        empty_hash = '0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563'
-        ret = self.contract.functions.checkMembership(empty_hash, root, slot, proof).call()
+        empty_hash = ('0x290decd9548b62a8d60345a988386' +
+                      'fc84ba6bc95484008f6362f93160ef3e563')
+        ret = self.contract.functions.checkMembership(empty_hash, root, slot,
+                                                      proof).call()
         return ret

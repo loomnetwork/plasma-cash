@@ -65,12 +65,14 @@ authority.submit_block()
 bob_to_charlie = bob.send_transaction(deposit3_utxo, plasma_block1, 1,
                                       charlie.token_contract.account.address)
 
-# This is the info that bob  is required to send to charlie. This happens on the P2P layer
+# This is the info that bob is required to send to charlie. This happens on
+# the P2P layer
 incl_proofs, excl_proofs = bob.get_coin_history(deposit3_utxo)
 
-# Charlie receives them, verifies the validity. If found invalid, charlie should not accept 
-# them and the demo fails (similar to how you shouldn't sell a good when you're given counterfeit currency)
-assert charlie.verify_coin_history(deposit3_utxo, incl_proofs, excl_proofs) == True
+# Charlie receives them, verifies the validity. If found invalid, charlie
+# should not accept them and the demo fails (similar to how you shouldn't sell
+# a good when you're given counterfeit currency)
+assert charlie.verify_coin_history(deposit3_utxo, incl_proofs, excl_proofs)
 
 plasma_block2 = authority.submit_block()
 

@@ -1,10 +1,8 @@
 import rlp
 from web3.auto import w3
 from ethereum import utils
-from utils.utils import get_sender
 from .block import Block
-from .exceptions import (InvalidBlockSignatureException,
-                         InvalidTxSignatureException,
+from .exceptions import (InvalidTxSignatureException,
                          CoinAlreadyIncludedException,
                          PreviousTxNotFoundException, TxAlreadySpentException)
 from .transaction import Transaction
