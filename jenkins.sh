@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euxo pipefail
+
 cd server
 npm install
 npm run lint
