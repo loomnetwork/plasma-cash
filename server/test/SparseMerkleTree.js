@@ -71,7 +71,7 @@ module.exports = class SparseMerkleTree {
             siblingIndex = index.mod(2).eq(0) ? index.add(1) : index.sub(1);
             index = index.dividedToIntegerBy(2);
 
-            siblingHash = this.tree[level][siblingIndex];
+            siblingHash = this.tree[level][siblingIndex.toString()];
             if (siblingHash) {
                 proof += siblingHash.replace('0x', '');
                 proofbits = proofbits.bincn(level);
