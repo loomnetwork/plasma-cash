@@ -157,18 +157,18 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
         coin.depositBlock = currentBlock;
         coin.owner = from;
         coin.state = State.DEPOSITED;
-        coins[numCoins] = coin;
-
-        bytes32 txHash = keccak256(abi.encodePacked(numCoins)); // hash for deposit transactions is the hash of its slot
+        uint64 slot = numCoins * 2 + 1; // uint64(bytes8(keccak256(abi.encodePacked(numCoins, address(erc721), msg.sender)));
+        coins[slot] = coin;
 
         childChain[currentBlock] = childBlock({
             // save signed transaction hash as root
-            root: txHash,
+            // hash for deposit transactions is the hash of its slot
+            root: keccak256(abi.encodePacked(slot)),
             createdAt: block.timestamp
         });
 
-        // create a utxo at slot `numCoins`
-        emit Deposit(numCoins, currentBlock, denomination, from);
+        // create a utxo at `slot`
+        emit Deposit(slot, currentBlock, denomination, from);
 
         numCoins += 1;
     }

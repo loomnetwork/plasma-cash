@@ -1,8 +1,5 @@
 const CryptoCards = artifacts.require("CryptoCards");
 const RootChain = artifacts.require("RootChain");
-
-const SparseMerkleTree = require('./SparseMerkleTree.js');
-
 import {increaseTimeTo, duration} from './helpers/increaseTime'
 import assertRevert from './helpers/assertRevert.js';
 
@@ -49,7 +46,6 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
         let coin;
         for (let i = 0; i < events.length; i++) {
             coin = events[i].args;
-            assert.equal(coin.slot.toNumber(), i);
             assert.equal(coin.blockNumber.toNumber(), i+1);
             assert.equal(coin.denomination.toNumber(), 1);
             assert.equal(coin.from, alice);
@@ -68,7 +64,7 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
             let sig = alice_to_bob.sig;
             let tx_proof = tree_bob.createMerkleProof(UTXO.slot)
 
-            let prev_tx = txlib.createUTXO(UTXO.slot, 0, UTXO.block, alice, alice).tx;
+            let prev_tx = txlib.createUTXO(UTXO.slot, 0, alice, alice).tx;
             let tx = alice_to_bob.tx;
 
             // Challenge before is essentially a challenge where the challenger
@@ -118,7 +114,7 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
             let sig = alice_to_bob.sig;
             let proof = tree_bob.createMerkleProof(UTXO.slot)
 
-            let prev_tx = txlib.createUTXO(UTXO.slot, 0, UTXO.block, alice, alice).tx;
+            let prev_tx = txlib.createUTXO(UTXO.slot, 0, alice, alice).tx;
             let tx = alice_to_bob.tx;
 
             // Challenge before is essentially a challenge where the challenger
@@ -160,7 +156,7 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
         });
 
         async function elliotInvalidHistoryExit(UTXO) {
-            let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, 1000, alice, bob);
+            let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, alice, bob);
             let txs = [alice_to_bob.leaf]
             let tree_bob = await txlib.submitTransactions(authority, plasma, txs);
 
@@ -170,12 +166,12 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
             // Nevertheless, Charlie pretends he received the coin, and by
             // colluding with the chain operator he is able to include his
             // invalid transaction in a block.
-            let charlie_to_dylan = txlib.createUTXO(UTXO.slot, 2000, 3000, charlie, dylan);
+            let charlie_to_dylan = txlib.createUTXO(UTXO.slot, 2000, charlie, dylan);
             txs = [charlie_to_dylan.leaf]
             let tree_dylan = await txlib.submitTransactions(authority, plasma, txs);
 
             // Dylan having received the coin, gives it to Elliot.
-            let dylan_to_elliot = txlib.createUTXO(UTXO.slot, 3000, 4000, dylan, elliot);
+            let dylan_to_elliot = txlib.createUTXO(UTXO.slot, 3000, dylan, elliot);
             txs = [dylan_to_elliot.leaf]
             let tree_elliot = await txlib.submitTransactions(authority, plasma, txs);
 
@@ -207,24 +203,24 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
         }
 
         async function elliotValidHistoryExit(UTXO) {
-            let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, 1000, alice, bob);
+            let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, alice, bob);
             let txs = [alice_to_bob.leaf]
             let tree_bob = await txlib.submitTransactions(authority, plasma, txs);
 
             // The authority submits a block, but there is no transaction from Bob to Charlie
-            let bob_to_charlie = txlib.createUTXO(UTXO.slot, 1000, 2000, bob, charlie);
+            let bob_to_charlie = txlib.createUTXO(UTXO.slot, 1000, bob, charlie);
             txs = [bob_to_charlie.leaf]
             let tree_charlie = await txlib.submitTransactions(authority, plasma, txs);
 
             // Nevertheless, Charlie pretends he received the coin, and by
             // colluding with the chain operator he is able to include his
             // invalid transaction in a block.
-            let charlie_to_dylan = txlib.createUTXO(UTXO.slot, 2000, 3000, charlie, dylan);
+            let charlie_to_dylan = txlib.createUTXO(UTXO.slot, 2000, charlie, dylan);
             txs = [charlie_to_dylan.leaf]
             let tree_dylan = await txlib.submitTransactions(authority, plasma, txs);
 
             // Dylan having received the coin, gives it to Elliot.
-            let dylan_to_elliot = txlib.createUTXO(UTXO.slot, 3000, 4000, dylan, elliot);
+            let dylan_to_elliot = txlib.createUTXO(UTXO.slot, 3000, dylan, elliot);
             txs = [dylan_to_elliot.leaf]
             let tree_elliot = await txlib.submitTransactions(authority, plasma, txs);
 

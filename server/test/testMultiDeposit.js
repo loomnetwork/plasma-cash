@@ -1,8 +1,5 @@
 const CryptoCards = artifacts.require("CryptoCards");
 const RootChain = artifacts.require("RootChain");
-
-const SparseMerkleTree = require('./SparseMerkleTree.js');
-
 import {increaseTimeTo, duration} from './helpers/increaseTime'
 import assertRevert from './helpers/assertRevert.js';
 
@@ -50,7 +47,7 @@ contract("Plasma ERC721 - Multiple Deposits in various blocks", async function(a
         let coin;
         for (let i = 0; i < events.length; i++) {
             coin = events[i].args;
-            assert.equal(coin.slot.toNumber(), i);
+            // assert.equal(coin.slot.toNumber(), i);
             assert.equal(coin.blockNumber.toNumber(), i+1);
             assert.equal(coin.denomination.toNumber(), 1);
             assert.equal(coin.from, alice);
@@ -61,16 +58,20 @@ contract("Plasma ERC721 - Multiple Deposits in various blocks", async function(a
     describe('Exit of UTXO 2 and 7 (UTXO 7 added at 1000-2000 block interval)', function() {
         it("Alice sends Bob UTXO 2, submits it, Bob deposits his coin and sends Alice UTXO 4, submits it, both exit", async function() {
             let UTXO = {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()};
-            let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, 1000, alice, bob);
+            let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, alice, bob);
             let txs = [alice_to_bob.leaf];
             let tree_1000 = await txlib.submitTransactions(authority, plasma, txs);
 
             // Bob deposits Coin 7, which generates a new UTXO in the Plasma chain.
             await cards.depositToPlasma(7, {from: bob});
-            let slot = 3; // or from plasma.numCoins()-1
-            let block = await plasma.getPlasmaCoin.call(3); block = block[1].toNumber();
+            const depositEvent = plasma.Deposit({}, {fromBlock: 0, toBlock: 'latest'});
+            events = await txlib.Promisify(cb => depositEvent.get(cb));
+            let bobCoin = events[events.length - 1].args;
+            let slot = bobCoin.slot;
+            let block = await plasma.getPlasmaCoin.call(slot);
+            block = block[1].toNumber();
 
-            let bob_to_alice = txlib.createUTXO(slot, block, 2000, bob, alice);
+            let bob_to_alice = txlib.createUTXO(slot, block, bob, alice);
             txs = [bob_to_alice.leaf];
             let tree_2000 = await txlib.submitTransactions(authority, plasma, txs);
 
@@ -79,7 +80,7 @@ contract("Plasma ERC721 - Multiple Deposits in various blocks", async function(a
             let utxo = alice_to_bob.tx;
             let proof = tree_1000.createMerkleProof(UTXO.slot);
 
-            let prev_tx = txlib.createUTXO(UTXO.slot, 0, UTXO.block, alice, alice).tx;
+            let prev_tx = txlib.createUTXO(UTXO.slot, 0, alice, alice).tx;
 
             await plasma.startExit(
                 UTXO.slot,
@@ -95,7 +96,7 @@ contract("Plasma ERC721 - Multiple Deposits in various blocks", async function(a
             utxo = bob_to_alice.tx;
             proof = tree_2000.createMerkleProof(slot);
 
-            prev_tx = txlib.createUTXO(slot, 0, block, bob, bob).tx;
+            prev_tx = txlib.createUTXO(slot, 0, bob, bob).tx;
 
             await plasma.startExit(
                 slot,

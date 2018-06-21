@@ -1,8 +1,5 @@
 const CryptoCards = artifacts.require("CryptoCards");
 const RootChain = artifacts.require("RootChain");
-
-const SparseMerkleTree = require('./SparseMerkleTree.js');
-
 import {increaseTimeTo, duration} from './helpers/increaseTime'
 import assertRevert from './helpers/assertRevert.js';
 
@@ -48,7 +45,6 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
         let coin;
         for (let i = 0; i < events.length; i++) {
             coin = events[i].args;
-            assert.equal(coin.slot.toNumber(), i);
             assert.equal(coin.blockNumber.toNumber(), i+1);
             assert.equal(coin.denomination.toNumber(), 1);
             assert.equal(coin.from, alice);
@@ -131,18 +127,18 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
             // Block 2000: Transaction from Bob to Charlie
             // Block 3000: Transaction from Bob to Dylan
 
-            let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, 1000, alice, bob);
+            let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, alice, bob);
             let txs = [ alice_to_bob.leaf ];
             let tree_bob = await txlib.submitTransactions(authority, plasma, txs);
 
             // Tx to Charlie from Bob referencing Bob's UTXO at block 1000
-            let bob_to_charlie = txlib.createUTXO(UTXO.slot, 1000, 2000, bob, charlie);
+            let bob_to_charlie = txlib.createUTXO(UTXO.slot, 1000, bob, charlie);
             txs = [ bob_to_charlie.leaf ];
             let tree_charlie = await txlib.submitTransactions(authority, plasma, txs);
 
             // Tx to Dylan from Bob referencing Charlie's UTXO at block 2000
             // Dylan is an address which is controlled by Bob or colludes by Bob to steal Charlie's coin
-            let bob_to_dylan = txlib.createUTXO(UTXO.slot, 1000, 3000, bob, dylan);
+            let bob_to_dylan = txlib.createUTXO(UTXO.slot, 1000, bob, dylan);
             txs = [ bob_to_dylan.leaf ];
             let tree_dylan = await txlib.submitTransactions(authority, plasma, txs);
 
