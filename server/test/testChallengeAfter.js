@@ -143,17 +143,17 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
 
         async function charlieExitSpentCoin(UTXO) {
 
-            let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, 1000, alice, bob);
+            let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, alice, bob);
             let txs = [alice_to_bob.leaf]
             let tree_bob = await txlib.submitTransactions(authority, plasma, txs);
 
             // Tx to Charlie from Bob referencing Bob's UTXO at block 1000
-            let bob_to_charlie = txlib.createUTXO(UTXO.slot, 1000, 2000, bob, charlie);
+            let bob_to_charlie = txlib.createUTXO(UTXO.slot, 1000, bob, charlie);
             txs = [bob_to_charlie.leaf]
             let tree_charlie = await txlib.submitTransactions(authority, plasma, txs);
 
             // Tx to Dylan from Charlie referencing Charlie's UTXO at block 2000
-            let charlie_to_dylan = txlib.createUTXO(UTXO.slot, 2000, 3000, charlie, dylan);
+            let charlie_to_dylan = txlib.createUTXO(UTXO.slot, 2000, charlie, dylan);
             txs = [charlie_to_dylan.leaf]
             let tree_dylan = await txlib.submitTransactions(authority, plasma, txs);
 
@@ -188,13 +188,13 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
 
             let UTXO = [{'slot': events[0]['args'].slot, 'block': events[0]['args'].blockNumber.toNumber()},
                         {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()}];
-            let alice_to_bob = txlib.createUTXO(UTXO[0].slot, UTXO[0].block, 1000, alice, bob);
-            let alice_to_charlie = txlib.createUTXO(UTXO[1].slot, UTXO[1].block, 1000, alice, charlie);
+            let alice_to_bob = txlib.createUTXO(UTXO[0].slot, UTXO[0].block, alice, bob);
+            let alice_to_charlie = txlib.createUTXO(UTXO[1].slot, UTXO[1].block, alice, charlie);
             let txs = [ alice_to_bob.leaf, alice_to_charlie.leaf ]
             let tree = await txlib.submitTransactions(authority, plasma, txs);
 
             let slot = UTXO[0].slot;
-            let ret = txlib.createUTXO(slot, 0, 3, alice, alice);
+            let ret = txlib.createUTXO(slot, 0, alice, alice);
             let utxo = ret.tx;
             let sig = ret.sig
 
@@ -227,12 +227,12 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
         it("Alice gives a coin to Bob and Charlie. Bob gives a coin to Charlie and immediately tries to exit it. Gets Challenged", async function() {
             let UTXO = [{'slot': events[0]['args'].slot, 'block': events[0]['args'].blockNumber.toNumber()},
                         {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()}];
-            let alice_to_bob = txlib.createUTXO(UTXO[0].slot, UTXO[0].block, 1000, alice, bob);
-            let alice_to_charlie = txlib.createUTXO(UTXO[1].slot, UTXO[1].block, 1000, alice, charlie);
+            let alice_to_bob = txlib.createUTXO(UTXO[0].slot, UTXO[0].block, alice, bob);
+            let alice_to_charlie = txlib.createUTXO(UTXO[1].slot, UTXO[1].block, alice, charlie);
             let txs = [alice_to_bob.leaf, alice_to_charlie.leaf]
             let tree1 = await txlib.submitTransactions(authority, plasma, txs);
 
-            let bob_to_charlie = txlib.createUTXO(UTXO[0].slot, 1000, 2000, bob, charlie);
+            let bob_to_charlie = txlib.createUTXO(UTXO[0].slot, 1000, bob, charlie);
             txs = [bob_to_charlie.leaf];
             let tree2 = await txlib.submitTransactions(authority, plasma, txs);
 
@@ -240,7 +240,7 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
             let sig = alice_to_bob.sig;
             let exiting_tx_proof = tree1.createMerkleProof(slot);
 
-            let prev_tx = txlib.createUTXO(slot, 0, UTXO[0].block, alice, alice).tx;
+            let prev_tx = txlib.createUTXO(slot, 0, alice, alice).tx;
             let exiting_tx = alice_to_bob.tx;
             await plasma.startExit(
                      slot,

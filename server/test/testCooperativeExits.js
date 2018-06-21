@@ -63,7 +63,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
             // directly after being minted in the plasma chain
             let prevBlock = 0;
 
-            let ret = txlib.createUTXO(UTXO.slot, prevBlock, UTXO.block, alice, alice);
+            let ret = txlib.createUTXO(UTXO.slot, prevBlock, alice, alice);
             let utxo = ret.tx;
             let sig = ret.sig;
 
@@ -97,7 +97,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
             let UTXO = {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()};
             let prevBlock = UTXO.block;
             // Create a UTXO to Bob from Alice and sign it. Refer to Alice's deposit transaction at block 3
-            let alice_to_bob = txlib.createUTXO(UTXO.slot, prevBlock, 1000, alice, bob);
+            let alice_to_bob = txlib.createUTXO(UTXO.slot, prevBlock, alice, bob);
             let txs = [alice_to_bob.leaf]
             // Authority submits a block to plasma with that transaction included
             let tree_bob = await txlib.submitTransactions(authority, plasma, txs);
@@ -106,7 +106,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
             let sig = alice_to_bob.sig;
             let exiting_tx_proof = tree_bob.createMerkleProof(UTXO.slot)
 
-            let prev_tx = txlib.createUTXO(UTXO.slot, 0, 3, alice, alice).tx; // deposit to alice
+            let prev_tx = txlib.createUTXO(UTXO.slot, 0, alice, alice).tx; // deposit to alice
             let exiting_tx = alice_to_bob.tx;
 
             plasma.startExit(
@@ -146,16 +146,21 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
 
         it("After 2 Plasma-Chain transfers", async function() {
             let UTXO = {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()};
-            let alice_to_bob = txlib.createUTXO(UTXO.slot, 3, 1000, alice, bob);
+            let alice_to_bob = txlib.createUTXO(UTXO.slot, 3, alice, bob);
             let txs = [alice_to_bob.leaf];
             let tree_bob = await txlib.submitTransactions(authority, plasma, txs);
 
+            await plasma.submitBlock('0x0', {from: authority});
+
             // Tx to Charlie from Bob referencing Bob's UTXO at block 1000
             let prevBlock = 1000;
-            let bob_to_charlie = txlib.createUTXO(UTXO.slot, prevBlock, 2000, bob, charlie);
+            let bob_to_charlie = txlib.createUTXO(UTXO.slot, prevBlock, bob, charlie);
             txs = [bob_to_charlie.leaf];
+
+
             let tree_charlie = await txlib.submitTransactions(authority, plasma, txs);
-            let exitBlock = 2000;
+
+            let exitBlock = 3000;
 
             // Concatenate the 2 signatures
             let sig = bob_to_charlie.sig
@@ -216,7 +221,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
             let txs = [];
             let tx;
             UTXO.forEach(function(aUTXO) {
-                tx = txlib.createUTXO(aUTXO.slot, UTXO.block, 1000, alice, bob);
+                tx = txlib.createUTXO(aUTXO.slot, UTXO.block, alice, bob);
                 alice_to_bob[aUTXO.slot] = tx;
                 txs.push(tx.leaf);
             });
@@ -234,7 +239,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
                 slot = aUTXO.slot;
                 sig = alice_to_bob[slot].sig;
                 exiting_tx_proof = tree_bob.createMerkleProof(slot);
-                prev_tx = txlib.createUTXO(slot, 0, aUTXO.block, alice, alice).tx;
+                prev_tx = txlib.createUTXO(slot, 0, alice, alice).tx;
                 exiting_tx = alice_to_bob[slot].tx;
 
                 plasma.startExit(
@@ -290,7 +295,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
             let txs = [];
             let tx;
             UTXO.forEach(function(aUTXO) {
-                tx = txlib.createUTXO(aUTXO.slot, aUTXO.block, 1000, alice, bob);
+                tx = txlib.createUTXO(aUTXO.slot, aUTXO.block, alice, bob);
                 alice_to_bob[aUTXO.slot] = tx;
                 txs.push(tx.leaf);
             });
@@ -299,7 +304,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
             let tree_bob = await txlib.submitTransactions(authority, plasma, txs);
 
             // Bob has ownership of the 2 coin's and now he gives 1 to Charlie
-            let bob_to_charlie = txlib.createUTXO(UTXO[0].slot, UTXO[0].block, 2000, bob, charlie);
+            let bob_to_charlie = txlib.createUTXO(UTXO[0].slot, UTXO[0].block, bob, charlie);
             txs = [ bob_to_charlie.leaf ];
             let tree_charlie = await txlib.submitTransactions(authority, plasma, txs);
 
@@ -307,7 +312,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
             let slot = UTXO[1].slot; // the first UTXO in the list is UTXO 1.
             let sig = alice_to_bob[slot].sig
             let exiting_tx_proof = tree_bob.createMerkleProof(slot)
-            let prev_tx = txlib.createUTXO(slot, 0, UTXO[1].block, alice, alice).tx;
+            let prev_tx = txlib.createUTXO(slot, 0, alice, alice).tx;
             let exiting_tx = alice_to_bob[slot].tx;
 
             plasma.startExit(
@@ -368,7 +373,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
             let txs = [];
             let tx;
             UTXO.forEach(function(aUTXO) {
-                tx = txlib.createUTXO(aUTXO.slot, aUTXO.block, 1000, alice, bob);
+                tx = txlib.createUTXO(aUTXO.slot, aUTXO.block, alice, bob);
                 alice_to_bob[aUTXO.slot] = tx;
                 txs.push(tx.leaf);
             });
@@ -379,7 +384,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
             let bob_to_charlie = {};
             txs = [];
             UTXO.forEach(function(aUTXO) {
-                tx = txlib.createUTXO(aUTXO.slot, 1000, 2000, bob, charlie);
+                tx = txlib.createUTXO(aUTXO.slot, 1000, bob, charlie);
                 bob_to_charlie[aUTXO.slot] = tx;
                 txs.push(tx.leaf);
             });
@@ -432,15 +437,15 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
             let UTXO = [{'slot': events[1]['args'].slot, 'block': events[1]['args'].blockNumber.toNumber()},
                         {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()}];
             let txs = [];
-            let alice_to_bob = txlib.createUTXO(UTXO[0].slot, UTXO[0].block, 1000, alice, bob);
-            let alice_to_charlie = txlib.createUTXO(UTXO[1].slot, UTXO[1].block, 1000, alice, charlie);
+            let alice_to_bob = txlib.createUTXO(UTXO[0].slot, UTXO[0].block, alice, bob);
+            let alice_to_charlie = txlib.createUTXO(UTXO[1].slot, UTXO[1].block, alice, charlie);
             txs = [alice_to_bob.leaf, alice_to_charlie.leaf]; // push leaf
             let tree = await txlib.submitTransactions(authority, plasma, txs);
 
             let slot = UTXO[0].slot;
             let sig = alice_to_bob.sig;
             let exiting_tx_proof = tree.createMerkleProof(slot);
-            let prev_tx = txlib.createUTXO(slot, 0, UTXO[0].block, alice, alice).tx;
+            let prev_tx = txlib.createUTXO(slot, 0, alice, alice).tx;
             let exiting_tx = alice_to_bob.tx;
 
             plasma.startExit(
@@ -456,7 +461,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
             slot = UTXO[1].slot;
             sig = alice_to_charlie.sig;
             exiting_tx_proof = tree.createMerkleProof(slot);
-            prev_tx = txlib.createUTXO(slot, 0, UTXO[1].block, alice, alice).tx;
+            prev_tx = txlib.createUTXO(slot, 0, alice, alice).tx;
             exiting_tx = alice_to_charlie.tx;
 
             plasma.startExit(
@@ -497,14 +502,14 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
             let UTXO = [{'slot': events[1]['args'].slot, 'block': events[1]['args'].blockNumber.toNumber()},
                         {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()}];
             let txs = [];
-            let alice_to_bob = txlib.createUTXO(UTXO[0].slot, UTXO[0].block, 1000, alice, bob);
-            let alice_to_charlie = txlib.createUTXO(UTXO[1].slot, UTXO[1].block, 1000, alice, charlie);
+            let alice_to_bob = txlib.createUTXO(UTXO[0].slot, UTXO[0].block, alice, bob);
+            let alice_to_charlie = txlib.createUTXO(UTXO[1].slot, UTXO[1].block, alice, charlie);
             txs = [alice_to_bob.leaf, alice_to_charlie.leaf]; // push leaf
             let tree1 = await txlib.submitTransactions(authority, plasma, txs);
 
             // Bob and Charlie own a coin each.
 
-            let bob_to_charlie = txlib.createUTXO(UTXO[0].slot, 1000, 2000, bob, charlie);
+            let bob_to_charlie = txlib.createUTXO(UTXO[0].slot, 1000, bob, charlie);
             txs = [bob_to_charlie.leaf]
             let tree2 = await txlib.submitTransactions(authority, plasma, txs);
 
@@ -512,7 +517,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
             let slot = UTXO[1].slot;
             let sig = alice_to_charlie.sig;
             let exiting_tx_proof = tree1.createMerkleProof(slot);
-            let prev_tx = txlib.createUTXO(slot, 0, UTXO[1].block, alice, alice).tx;
+            let prev_tx = txlib.createUTXO(slot, 0, alice, alice).tx;
             let exiting_tx = alice_to_charlie.tx;
 
             plasma.startExit(
