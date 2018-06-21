@@ -9,7 +9,7 @@ module.exports = class SparseMerkleTree {
         // Leaves must be a dictionary with key as the leaf's slot and value the leaf's hash
         this.leaves = leaves;
 
-        if (leaves) {
+        if (leaves && Object.keys(leaves).length !== 0) {
             this.tree = this.createTree(this.leaves, this.depth, this.defaultNodes);
             this.root = this.tree[this.depth-1]['0'] || this.tree[this.depth-1]['1'];
         } else {
