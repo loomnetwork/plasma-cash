@@ -32,30 +32,25 @@ module.exports = class SparseMerkleTree {
         let treeLevel = orderedLeaves;
 
         let nextLevel = {};
-        let prevIndex;
         let halfIndex;
         let value;
 
         for (let level = 0; level < depth - 1; level++) {
             nextLevel = {};
-            prevIndex = -1;
-            for (let index in treeLevel) {
+            Object.keys(treeLevel).sort().forEach(index => {
                 halfIndex = web3.toBigNumber(index).dividedToIntegerBy(2).toString();
                 value = treeLevel[index];
                 if (web3.toBigNumber(index).mod(2).isZero()) {
+                    let coIndex = web3.toBigNumber(index).add(1).toString();
                     nextLevel[halfIndex] =
-                        utils.soliditySha3(value, defaultNodes[level]);
+                        utils.soliditySha3(value, treeLevel[coIndex] || defaultNodes[level]);
                 } else {
-                    if (web3.toBigNumber(index).eq(web3.toBigNumber(prevIndex).add(1))) {
+                    if (treeLevel[web3.toBigNumber(index).sub(1).toString()] === undefined) {
                           nextLevel[halfIndex] =
-                          utils.soliditySha3(treeLevel[prevIndex.toString()], value);
-                    } else {
-                        nextLevel[halfIndex] =
-                          utils.soliditySha3(defaultNodes[level], value);
+                            utils.soliditySha3(defaultNodes[level], value);
                     }
                 }
-                prevIndex = index;
-            }
+            })
             treeLevel = nextLevel;
             tree.push(treeLevel);
         }
