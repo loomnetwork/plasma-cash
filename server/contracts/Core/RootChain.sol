@@ -157,7 +157,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
         coin.depositBlock = currentBlock;
         coin.owner = from;
         coin.state = State.DEPOSITED;
-        uint64 slot = numCoins * 10; // uint64(bytes8(keccak256(abi.encodePacked(numCoins, address(erc721), msg.sender)));
+        uint64 slot = numCoins * 2 + 1; // uint64(bytes8(keccak256(abi.encodePacked(numCoins, address(erc721), msg.sender)));
         coins[slot] = coin;
 
         childChain[currentBlock] = childBlock({
