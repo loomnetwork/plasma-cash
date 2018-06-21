@@ -308,10 +308,6 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
         cleanupExit(slot)
     {
         checkDirectSpend(slot, challengingTransaction, signature);
-
-        // Must challenge with a later transaction
-        // require(challengingBlockNumber > coins[slot].exit.exitBlock);
-
         checkTxIncluded(challengingTransaction, challengingBlockNumber, proof);
         // Apply penalties and delete the exit
         slashBond(coins[slot].exit.owner, msg.sender);
