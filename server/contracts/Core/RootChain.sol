@@ -302,18 +302,24 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
         coins[slot].state = State.DEPOSITED;
     }
 
-    function challengeAfter(uint64 slot, uint256 challengingBlockNumber, bytes challengingTransaction, bytes proof)
+    function challengeAfter(uint64 slot, uint256 challengingBlockNumber, bytes challengingTransaction, bytes proof, bytes signature)
         external
         isState(slot, State.EXITING)
         cleanupExit(slot)
     {
-        // Must challenge with a later transaction
-        require(challengingBlockNumber > coins[slot].exit.exitBlock);
+        checkDirectSpend(slot, challengingTransaction, signature);
         checkTxIncluded(challengingTransaction, challengingBlockNumber, proof);
         // Apply penalties and delete the exit
         slashBond(coins[slot].exit.owner, msg.sender);
         // Reset coin state
         coins[slot].state = State.DEPOSITED;
+    }
+
+    function checkDirectSpend(uint64 slot, bytes txBytes, bytes signature) private view {
+        Transaction.TX memory txData = txBytes.getTx();
+        bytes32 txHash = keccak256(txBytes);
+        require(txHash.ecverify(signature, coins[slot].exit.owner), "Invalid sig");
+        require(txData.prevBlock == coins[slot].exit.exitBlock, "Not a direct spend");
     }
 
     /******************** BOND RELATED ********************/
@@ -477,7 +483,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
         return (e.owner, e.prevBlock, e.exitBlock, coins[slot].state);
     }
 
-    function getBlockRoot(uint256 blockNumber) returns (bytes32 root) {
+    function getBlockRoot(uint256 blockNumber) public view returns (bytes32 root) {
         root = childChain[blockNumber].root;
     }
 }
