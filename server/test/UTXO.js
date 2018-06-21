@@ -40,10 +40,10 @@ function createUTXO(slot, block, incBlock, from, to) {
     let sig = signHash(from, txHash);
 
     let leaf = {};
-    leaf.slot = slot
+    leaf.slot = web3.toBigNumber(slot).toString();
     leaf.hash = txHash;
 
-    return {'tx' : data, 'sig' : sig, 'leaf' : leaf};
+    return {'tx': data, 'sig': sig, 'leaf': leaf};
 };
 
 async function submitTransactions(from, plasma, txs) {
@@ -57,7 +57,6 @@ async function submitTransactions(from, plasma, txs) {
     } else {
         tree = new SparseMerkleTree(64);
     }
-
     await plasma.submitBlock(tree.root, {'from': from});
     return tree;
 }

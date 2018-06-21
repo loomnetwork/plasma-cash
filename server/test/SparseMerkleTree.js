@@ -6,7 +6,8 @@ module.exports = class SparseMerkleTree {
         this.depth = depth;
         // Initialize defaults
         this.defaultNodes = this.setdefaultNodes(depth);
-        this.leaves = leaves; // Leaves must be a dictionary with key as the leaf's slot and value the leaf's hash
+        // Leaves must be a dictionary with key as the leaf's slot and value the leaf's hash
+        this.leaves = leaves;
 
         if (leaves) {
             this.tree = this.createTree(this.leaves, this.depth, this.defaultNodes)
@@ -37,9 +38,9 @@ module.exports = class SparseMerkleTree {
             nextLevel = {};
             prevIndex = -1;
             for (var index in treeLevel) {
-                var value = treeLevel[parseInt(index)];
-                if (parseInt(index) % 2 === 0) {
-                    nextLevel[ Math.floor(parseInt(index)/2) ] =
+                var value = treeLevel[index];
+                if (web3.toBigNumber(index).mod(2).isZero()) {
+                    nextLevel[Math.floor(parseInt(index)/2)] =
                         utils.soliditySha3(value, defaultNodes[level]);
                 } else {
                     if (parseInt(index) === prevIndex + 1) {
