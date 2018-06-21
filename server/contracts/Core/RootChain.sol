@@ -302,18 +302,28 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
         coins[slot].state = State.DEPOSITED;
     }
 
-    function challengeAfter(uint64 slot, uint256 challengingBlockNumber, bytes challengingTransaction, bytes proof)
+    function challengeAfter(uint64 slot, uint256 challengingBlockNumber, bytes challengingTransaction, bytes proof, bytes signature)
         external
         isState(slot, State.EXITING)
         cleanupExit(slot)
     {
+        checkDirectSpend(slot, challengingTransaction, signature);
+
         // Must challenge with a later transaction
-        require(challengingBlockNumber > coins[slot].exit.exitBlock);
+        // require(challengingBlockNumber > coins[slot].exit.exitBlock);
+
         checkTxIncluded(challengingTransaction, challengingBlockNumber, proof);
         // Apply penalties and delete the exit
         slashBond(coins[slot].exit.owner, msg.sender);
         // Reset coin state
         coins[slot].state = State.DEPOSITED;
+    }
+
+    function checkDirectSpend(uint64 slot, bytes txBytes, bytes signature) {
+        Transaction.TX memory txData = txBytes.getTx();
+        bytes32 txHash = keccak256(txBytes);
+        require(txHash.ecverify(signature, coins[slot].exit.owner), "Invalid sig");
+        require(txData.prevBlock == coins[slot].exit.exitBlock, "Not a direct spend");
     }
 
     /******************** BOND RELATED ********************/

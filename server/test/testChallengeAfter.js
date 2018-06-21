@@ -65,12 +65,14 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
 
             // Challenge the `Exit Spent Coin`
             let challengeTx = charlie_to_dylan.tx;
+            let sig = charlie_to_dylan.sig;
             let proof = tree_dylan.createMerkleProof(UTXO.slot);
             await plasma.challengeAfter(
                 UTXO.slot,
                 block_number,
                 challengeTx,
                 proof,
+                sig,
                 {'from': challenger}
             );
             t0 = (await web3.eth.getBlock('latest')).timestamp;
@@ -85,7 +87,7 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
             let prev_tx_proof = tree_charlie.createMerkleProof(UTXO.slot)
             let prev_tx = bob_to_charlie.tx;
             let exiting_tx = charlie_to_dylan.tx;
-            let sig = charlie_to_dylan.sig;
+            sig = charlie_to_dylan.sig;
 
             plasma.startExit(
                     UTXO.slot,
@@ -208,9 +210,10 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
             );
 
             let challengeTx = alice_to_bob.tx;
+            sig = alice_to_bob.sig;
             let proof = tree.createMerkleProof(slot);
             await plasma.challengeAfter(
-                slot, 1000, challengeTx, proof,
+                slot, 1000, challengeTx, proof, sig,
                 {'from': challenger}
             );
             t0 = (await web3.eth.getBlock('latest')).timestamp;
@@ -252,9 +255,10 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
             );
 
             let challengeTx = bob_to_charlie.tx;
+            sig = bob_to_charlie.sig;
             let proof = tree2.createMerkleProof(slot);
             await plasma.challengeAfter(
-                slot, 2000, challengeTx, proof,
+                slot, 2000, challengeTx, proof, sig,
                 {'from': challenger}
             );
 
