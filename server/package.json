@@ -11,7 +11,7 @@
     "babel-preset-es2015": "^6.24.1",
     "babel-preset-stage-2": "^6.24.1",
     "eth-gas-reporter": "^0.1.7",
-    "ganache-cli": "^6.1.0",
+    "ganache-cli": "^6.1.2",
     "openzeppelin-solidity": "1.10.0",
     "rlp": "^2.0.0",
     "solium": "^1.1.7",

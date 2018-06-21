@@ -17,6 +17,7 @@ type RootChainService struct {
 	plasmaContract *ethcontract.RootChain
 	callerKey      *ecdsa.PrivateKey
 	callerAddr     common.Address
+	transactOpts   *bind.TransactOpts
 }
 
 func (d *RootChainService) PlasmaCoin(slot uint64) (*PlasmaCoin, error) {
@@ -36,8 +37,7 @@ func (d *RootChainService) PlasmaCoin(slot uint64) (*PlasmaCoin, error) {
 }
 
 func (d *RootChainService) Withdraw(slot uint64) error {
-	auth := bind.NewKeyedTransactor(d.callerKey)
-	_, err := d.plasmaContract.Withdraw(auth, slot)
+	_, err := d.plasmaContract.Withdraw(d.transactOpts, slot)
 	return err
 }
 
@@ -71,7 +71,6 @@ func (d *RootChainService) ChallengeAfter(slot uint64, challengingBlockNumber in
 func (d *RootChainService) StartExit(
 	slot uint64, prevTx Tx, exitingTx Tx, prevTxInclusion Proof, exitingTxInclusion Proof,
 	sigs []byte, prevTxIncBlock int64, exitingTxIncBlock int64) ([]byte, error) {
-	auth := bind.NewKeyedTransactor(d.callerKey)
 	prevTxBytes, err := prevTx.RlpEncode()
 	if err != nil {
 		return nil, err
@@ -81,16 +80,14 @@ func (d *RootChainService) StartExit(
 		return nil, err
 	}
 	_, err = d.plasmaContract.StartExit(
-		auth, slot,
+		d.transactOpts, slot,
 		prevTxBytes, exitingTxBytes, prevTxInclusion.Bytes(), exitingTxInclusion.Bytes(),
 		sigs, big.NewInt(prevTxIncBlock), big.NewInt(exitingTxIncBlock))
 	return []byte{}, err
 }
 
 func (d *RootChainService) FinalizeExits() error {
-	auth := bind.NewKeyedTransactor(d.callerKey)
-
-	_, err := d.plasmaContract.FinalizeExits(auth)
+	_, err := d.plasmaContract.FinalizeExits(d.transactOpts)
 	return err
 }
 
@@ -110,10 +107,21 @@ func InitClients(connStr string) {
 }
 
 func NewRootChainService(callerName string, callerKey *ecdsa.PrivateKey, boundContract *ethcontract.RootChain) *RootChainService {
+	auth := bind.NewKeyedTransactor(callerKey)
+	// If gas price isn't set explicitely then go-ethereum will attempt to query the suggested gas
+	// price, unfortunatley ganache-cli v6.1.2 seems to encode the gas price in a format go-ethereum
+	// can't decode correctly, so this error is returned whenver you attempt to call a contract:
+	// failed to suggest gas price: json: cannot unmarshal hex number with leading zero digits into Go value of type *hexutil.Big
+	//
+	// Earlier versions of ganache-cli don't seem to exhibit this issue, but they're broken in other
+	// ways (logs aren't hex-encoded correctly).
+	auth.GasPrice = big.NewInt(20000)
+	auth.GasLimit = uint64(3141592)
 	return &RootChainService{
 		Name:           callerName,
 		callerKey:      callerKey,
 		callerAddr:     crypto.PubkeyToAddress(callerKey.PublicKey),
 		plasmaContract: boundContract,
+		transactOpts:   auth,
 	}
 }

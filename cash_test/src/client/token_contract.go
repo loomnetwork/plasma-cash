@@ -19,27 +19,16 @@ type TContract struct {
 	tokenContract *ethcontract.Cards
 	callerKey     *ecdsa.PrivateKey
 	callerAddr    common.Address
+	transactOpts  *bind.TransactOpts
 }
 
 func (d *TContract) Deposit(tokenID int64) error {
-	auth := bind.NewKeyedTransactor(d.callerKey)
-	auth.GasPrice = big.NewInt(20000)
-	auth.GasLimit = uint64(3141592)
-	_, err := d.tokenContract.DepositToPlasma(auth, big.NewInt(int64(tokenID)))
+	_, err := d.tokenContract.DepositToPlasma(d.transactOpts, big.NewInt(int64(tokenID)))
 	return err
 }
 
 func (d *TContract) Register() error {
-	auth := bind.NewKeyedTransactor(d.callerKey)
-	// If gas price isn't set explicitely the gas price oracle will be used, ganache-cli v6.1.2
-	// seems to encode the gas price in a format go-ethereum can't decode correctly, and you get
-	// this error:
-	// failed to suggest gas price: json: cannot unmarshal hex number with leading zero digits into Go value of type *hexutil.Big
-	//
-	// Earlier versions of ganache-cli don't seem to exhibit this issue, but they're broken in other
-	// ways.
-	auth.GasPrice = big.NewInt(20000)
-	_, err := d.tokenContract.Register(auth)
+	_, err := d.tokenContract.Register(d.transactOpts)
 	return err
 }
 
@@ -68,10 +57,21 @@ func InitTokenClient(connStr string) {
 }
 
 func NewTokenContract(callerName string, callerKey *ecdsa.PrivateKey, boundContract *ethcontract.Cards) TokenContract {
+	auth := bind.NewKeyedTransactor(callerKey)
+	// If gas price isn't set explicitely then go-ethereum will attempt to query the suggested gas
+	// price, unfortunatley ganache-cli v6.1.2 seems to encode the gas price in a format go-ethereum
+	// can't decode correctly, so this error is returned whenver you attempt to call a contract:
+	// failed to suggest gas price: json: cannot unmarshal hex number with leading zero digits into Go value of type *hexutil.Big
+	//
+	// Earlier versions of ganache-cli don't seem to exhibit this issue, but they're broken in other
+	// ways (logs aren't hex-encoded correctly).
+	auth.GasPrice = big.NewInt(20000)
+	auth.GasLimit = uint64(3141592)
 	return &TContract{
 		Name:          callerName,
 		tokenContract: boundContract,
 		callerKey:     callerKey,
 		callerAddr:    crypto.PubkeyToAddress(callerKey.PublicKey),
+		transactOpts:  auth,
 	}
 }
