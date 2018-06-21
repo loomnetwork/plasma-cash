@@ -319,7 +319,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
         coins[slot].state = State.DEPOSITED;
     }
 
-    function checkDirectSpend(uint64 slot, bytes txBytes, bytes signature) {
+    function checkDirectSpend(uint64 slot, bytes txBytes, bytes signature) private view {
         Transaction.TX memory txData = txBytes.getTx();
         bytes32 txHash = keccak256(txBytes);
         require(txHash.ecverify(signature, coins[slot].exit.owner), "Invalid sig");
@@ -487,7 +487,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
         return (e.owner, e.prevBlock, e.exitBlock, coins[slot].state);
     }
 
-    function getBlockRoot(uint256 blockNumber) returns (bytes32 root) {
+    function getBlockRoot(uint256 blockNumber) public view returns (bytes32 root) {
         root = childChain[blockNumber].root;
     }
 }
