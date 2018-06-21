@@ -2,10 +2,13 @@ CURRENT_DIRECTORY = $(shell pwd)
 
 
 
-.PHONY: all clean test lint deps proto
+.PHONY: all clean test lint deps cli oracle
 
 cli:
-	go build -o plasmascash_tester src/cmd/main.go
+	go build -o plasmascash_tester src/cmd/demo/main.go
+
+oracle:
+	go build -o plasma_orc src/cmd/oracle/main.go
 
 test: 
 	go test ./...

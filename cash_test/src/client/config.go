@@ -34,6 +34,14 @@ func GetTestAccountHexKey(name string) string {
 	return cfg.GetString(name)
 }
 
+func GetContractHexAddress(name string) string {
+	cfg, err := parseConfig()
+	if err != nil {
+		log.Fatalf("failed to load config file: %v", err)
+	}
+	return cfg.GetString(name)
+}
+
 func GetTokenContract(name string) TokenContract {
 	cfg, err := parseConfig()
 	if err != nil {
