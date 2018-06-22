@@ -135,7 +135,8 @@ gas_costs['withdraw'] = withdraw_gas / (
 
 print('Benchmarking done :)')
 print(
-    'Mean gas cost for {} transfers: (Deposit + Start Exit + Finalize Exit + Withdraw) = {}'.format(
+    'Mean gas cost for {} transfers: (Deposit + \
+Start Exit + Finalize Exit + Withdraw) = {}'.format(
         block_iterations, sum(gas_costs.values())
     )
 )
@@ -149,7 +150,8 @@ tx_hash, gas_transfer = authority.token_contract.transfer(
 
 
 print(
-    'Expected Gas cost for {} on-chain transfers (safeTransferFrom) = {}'.format(
+    'Expected Gas cost for {} on-chain transfers \
+(safeTransferFrom) = {}'.format(
         block_iterations, block_iterations * gas_transfer
     )
 )
