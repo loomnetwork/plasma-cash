@@ -2,8 +2,14 @@
 
 set -exo pipefail
 
-cd plasma_cash
+# make test
 
+cd ../server
+npm install
+npm run lint
+npm run test
+
+cd ../plasma_cash
 
 #virtualenv --python=python3.5 .
 #source bin/activate
@@ -15,13 +21,6 @@ pyenv global general
 
 pip install -r requirements.txt
 make lint
-# make test
-
-cd ../server
-npm install
-npm run lint
-npm run test
-
 
 cd ../
 bash integration_test.sh
