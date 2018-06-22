@@ -8,7 +8,7 @@ authority = Client(
 w3 = authority.root_chain.w3  # get w3 instance
 
 child_block_interval = 1000
-block_iterations = 3
+block_iterations = 2
 coins_per_register = 5
 num_deposited_coins = 2
 coin_indices = range(0, num_deposited_coins)
@@ -38,13 +38,14 @@ for index in players_indices:
     print("Player {} deposited coins: {}".format(index, deposits[index]))
 
 
+print("STEP 3")
 # Step 3: Each player gives their deposited coins to the next player
 # 1000 players * 2 coins = 2k Plasma transactions per round
 # This loops `block_iterations` times.
 for iteration in range(block_iterations):
     for index in players_indices:
+        neighbor_index = (index + 1) % number_of_players
         deposit_index = (index - iteration) % number_of_players
-        neighbor_index = (index + 1 + iteration) % number_of_players
         prev_block = (
             deposits[index][coin_index]["blockNumber"]
             if iteration == 0
@@ -64,6 +65,7 @@ for iteration in range(block_iterations):
             )
     authority.submit_block()
 
+print("STEP 4")
 # Step 4: All players initiate an exit for the coins they own.
 # Since each player gave their coin to their neighbour, player `i`
 # now owns the coins that player `(i-block_iterations) % num_players`
