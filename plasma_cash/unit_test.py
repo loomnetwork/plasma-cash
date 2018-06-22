@@ -13,7 +13,11 @@ dummy_val_2 = keccak(3)
 class TestSparseMerkleTree(object):
     def test_size_limits(self):
         with pytest.raises(SparseMerkleTree.TreeSizeExceededException):
-            SparseMerkleTree(depth=1, leaves={0: empty_val, 1: empty_val})
+            SparseMerkleTree(depth=0, leaves={0: '0', 1: '1'})
+        with pytest.raises(SparseMerkleTree.TreeSizeExceededException):
+            SparseMerkleTree(
+                depth=1, leaves={0: empty_val, 1: empty_val, 2: empty_val}
+            )
 
     def test_empty_SMT(self):
         emptyTree = SparseMerkleTree(64, {})
@@ -21,36 +25,32 @@ class TestSparseMerkleTree(object):
 
     def test_all_leaves_with_val(self):
         leaves = {0: dummy_val, 1: dummy_val, 2: dummy_val, 3: dummy_val}
-        tree = SparseMerkleTree(depth=3, leaves=leaves)
+        tree = SparseMerkleTree(depth=2, leaves=leaves)
         mid_level_val = keccak(dummy_val * 2)
         assert tree.root == keccak(mid_level_val + mid_level_val)
 
     def test_empty_leaves(self):
-        tree = SparseMerkleTree(depth=3)
+        tree = SparseMerkleTree(depth=2)
         mid_level_val = keccak(default_hash * 2)
         assert tree.root == keccak(mid_level_val * 2)
 
     def test_empty_left_leave(self):
         leaves = {1: dummy_val, 2: dummy_val, 3: dummy_val}
-        tree = SparseMerkleTree(depth=3, leaves=leaves)
+        tree = SparseMerkleTree(depth=2, leaves=leaves)
         mid_left_val = keccak(default_hash + dummy_val)
         mid_right_val = keccak(dummy_val * 2)
         assert tree.root == keccak(mid_left_val + mid_right_val)
 
     def test_empty_right_leave(self):
         leaves = {0: dummy_val, 2: dummy_val, 3: dummy_val}
-        tree = SparseMerkleTree(depth=3, leaves=leaves)
+        tree = SparseMerkleTree(depth=2, leaves=leaves)
         mid_left_val = keccak(dummy_val + default_hash)
         mid_right_val = keccak(dummy_val * 2)
         assert tree.root == keccak(mid_left_val + mid_right_val)
 
-    def test_exceed_tree_size(self):
-        with pytest.raises(SparseMerkleTree.TreeSizeExceededException):
-            SparseMerkleTree(depth=1, leaves={0: '0', 1: '1'})
-
     def test_create_merkle_proof(self):
         leaves = {0: dummy_val, 2: dummy_val, 3: dummy_val_2}
-        tree = SparseMerkleTree(depth=3, leaves=leaves)
+        tree = SparseMerkleTree(depth=2, leaves=leaves)
         mid_left_val = keccak(dummy_val + default_hash)
         mid_right_val = keccak(dummy_val + dummy_val_2)
         assert (

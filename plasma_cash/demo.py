@@ -53,12 +53,11 @@ assert len(registered_deposits) == 3, "Alice has incorrect number of deposits"
 # Alice to Bob, and Alice to Charlie. We care about the Alice to Bob
 # transaction
 alice_to_bob = alice.send_transaction(
-    deposit3_utxo, deposit3_block_number, 1, bob.token_contract.account.address
+    deposit3_utxo, deposit3_block_number, bob.token_contract.account.address
 )
 random_tx = alice.send_transaction(
     deposit2_utxo,
     deposit2_block_number,
-    1,
     charlie.token_contract.account.address,
 )
 plasma_block1 = authority.submit_block()
@@ -68,7 +67,7 @@ authority.submit_block()
 
 # Bob to Charlie
 bob_to_charlie = bob.send_transaction(
-    deposit3_utxo, plasma_block1, 1, charlie.token_contract.account.address
+    deposit3_utxo, plasma_block1, charlie.token_contract.account.address
 )
 
 # This is the info that bob is required to send to charlie. This happens on

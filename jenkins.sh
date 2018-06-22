@@ -21,6 +21,7 @@ pyenv global general
 
 pip install -r requirements.txt
 make lint
+make test
 
 cd ../
 bash integration_test.sh

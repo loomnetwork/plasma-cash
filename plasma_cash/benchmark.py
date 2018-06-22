@@ -48,7 +48,6 @@ for i in range(block_iterations):
             players[index].send_transaction(
                 deposits[index][coin_index]["slot"],
                 deposits[index][coin_index]["blockNumber"],
-                1,  # todo remove?
                 players[neighbor_index].token_contract.account.address,
             )
             print(

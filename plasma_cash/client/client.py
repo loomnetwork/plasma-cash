@@ -300,9 +300,9 @@ class Client(object):
     def submit_block(self):
         return self.child_chain.submit_block()
 
-    def send_transaction(self, slot, prev_block, denomination, new_owner):
+    def send_transaction(self, slot, prev_block, new_owner):
         new_owner = utils.normalize_address(new_owner)
-        tx = Transaction(slot, prev_block, denomination, new_owner)
+        tx = Transaction(slot, prev_block, 1, new_owner)
         tx.make_mutable()
         tx.sign(self.key)
         tx.make_immutable()
