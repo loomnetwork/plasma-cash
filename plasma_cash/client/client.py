@@ -1,9 +1,12 @@
+import json
+
 import rlp
 from ethereum import utils
+
 from child_chain.block import Block
 from child_chain.transaction import Transaction, UnsignedTransaction
+
 from .child_chain_service import ChildChainService
-import json
 
 
 class Client(object):

@@ -1,13 +1,11 @@
 import rlp
-from web3.auto import w3
 from ethereum import utils
+from web3.auto import w3
+
 from .block import Block
-from .exceptions import (
-    InvalidTxSignatureException,
-    CoinAlreadyIncludedException,
-    PreviousTxNotFoundException,
-    TxAlreadySpentException,
-)
+from .exceptions import (CoinAlreadyIncludedException,
+                         InvalidTxSignatureException,
+                         PreviousTxNotFoundException, TxAlreadySpentException)
 from .transaction import Transaction
 
 

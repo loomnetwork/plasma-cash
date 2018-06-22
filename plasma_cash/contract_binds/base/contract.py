@@ -1,8 +1,10 @@
-from ..utils.getWeb3 import getWeb3
-from threading import Thread
-import time
 import json
+import time
+from threading import Thread
+
 from web3.utils.events import get_event_data
+
+from ..utils.getWeb3 import getWeb3
 
 
 class Contract(object):

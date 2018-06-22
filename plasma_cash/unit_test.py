@@ -1,6 +1,7 @@
 import pytest
-from hexbytes import HexBytes
 from eth_utils.crypto import keccak
+from hexbytes import HexBytes
+
 from utils.merkle.sparse_merkle_tree import SparseMerkleTree
 
 empty_val = b'\x00' * 32

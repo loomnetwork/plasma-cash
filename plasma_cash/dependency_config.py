@@ -1,7 +1,7 @@
 from child_chain.child_chain import ChildChain
 from config import plasma_config
-from contract_binds.plasma_cash import PlasmaCash
 from contract_binds.erc721 import ERC721
+from contract_binds.plasma_cash import PlasmaCash
 
 
 class DependencyContainer(object):
