@@ -37,11 +37,11 @@ type OracleConfig struct {
 }
 
 type Oracle struct {
-	cfg        OracleConfig
-	solPlasma  *ethcontract.RootChain
-	goPlasma   *client.Contract
-	startBlock uint64
-	ethClient  *ethclient.Client
+	cfg           OracleConfig
+	solPlasma     *ethcontract.RootChain
+	goPlasma      *client.Contract
+	startEthBlock uint64 // Eth block from which the oracle should start looking for deposits
+	ethClient     *ethclient.Client
 }
 
 func NewOracle(cfg OracleConfig) *Oracle {
@@ -98,22 +98,44 @@ func (orc *Oracle) Run() {
 			skipSleep = false
 		}
 
+		// DAppChain -> Plasma Blocks -> Ethereum
+
+		if orc.cfg.EthPrivateKey != nil {
+			if err := orc.syncPlasmaBlocksWithEthereum(); err != nil {
+				continue
+			}
+
+			breq := &pctypes.SubmitBlockToMainnetRequest{}
+			bresp := &pctypes.SubmitBlockToMainnetResponse{}
+			if _, err := orc.goPlasma.Call("SubmitBlockToMainnet", breq, orc.cfg.Signer, bresp); err != nil {
+				log.Printf("failed to commit SubmitBlockToMainnet tx: %v", err)
+				continue
+			}
+
+			if err := orc.submitPlasmaBlockToEthereum(bresp.MerkleHash); err != nil {
+				log.Printf("failed to submit plasma block to mainnet: %v", err)
+				continue
+			}
+		}
+
+		// Ethereum -> Plasma Deposits -> DAppChain
+
 		// TODO: get start block from Plasma Go contract, like the Transfer Gateway Oracle
-		startBlock := orc.startBlock
+		startEthBlock := orc.startEthBlock
 
 		// TODO: limit max block range per batch
-		latestBlock, err := orc.getLatestEthBlockNumber()
+		latestEthBlock, err := orc.getLatestEthBlockNumber()
 		if err != nil {
 			log.Printf("failed to obtain latest Ethereum block number: %v", err)
 			continue
 		}
 
-		if latestBlock < startBlock {
+		if latestEthBlock < startEthBlock {
 			// Wait for Ethereum to produce a new block...
 			continue
 		}
 
-		deposits, err := orc.fetchDeposits(startBlock, latestBlock)
+		deposits, err := orc.fetchDeposits(startEthBlock, latestEthBlock)
 		if err != nil {
 			log.Printf("failed to fetch events from Ethereum: %v", err)
 			continue
@@ -126,20 +148,30 @@ func (orc *Oracle) Run() {
 			}
 		}
 
-		orc.startBlock = latestBlock + 1
+		orc.startEthBlock = latestEthBlock + 1
+	}
+}
 
-		if orc.cfg.EthPrivateKey != nil {
-			hashes, err := orc.fetchPlasmaBlocks()
-			if err != nil {
-				log.Printf("failed to fetch Plasma blocks: %v", err)
-				continue
-			}
-			// TODO: figure out how to prevent multiple oracles from submitting the same block
-			for _, hash := range hashes {
-				orc.submitPlasmaBlock(hash)
-			}
+// Catch up on any plasma blocks that haven't been submitted to Ethereum yet.
+func (orc *Oracle) syncPlasmaBlocksWithEthereum() error {
+	// Normally there shouldn't be any of these blocks around because the oracle will
+	// attempt to submit the block as soon as it gets it from the DAppChain. However if
+	// an error occurs while the oracle is attempting to send the block to mainnet
+	// (connection drops out, tx runs out of gas, oracle crashes, etc.) it will need to
+	// be resent before any new plasma blocks are obtained from the DAppChain.
+	hashes, err := orc.fetchPlasmaBlocks()
+	if err != nil {
+		log.Printf("failed to fetch Plasma blocks: %v", err)
+		return err
+	}
+
+	for _, hash := range hashes {
+		if err := orc.submitPlasmaBlockToEthereum(hash); err != nil {
+			return err
 		}
 	}
+
+	return nil
 }
 
 func (orc *Oracle) getLatestEthBlockNumber() (uint64, error) {
@@ -191,14 +223,22 @@ func (orc *Oracle) fetchDeposits(startBlock, endBlock uint64) ([]*pctypes.Deposi
 	return deposits, nil
 }
 
-// Fetches all submit-block events from a Loom DAppChain node
+// Fetches any as yet unsubmitted plasma blocks from the DAppChain
 func (orc *Oracle) fetchPlasmaBlocks() ([][]byte, error) {
-	// TODO: pull submit-block event data from the dappchain
+	// TODO: find the DAppChain block (X) that corresponds to the last plasma block merkle root that was
+	//       successfully submitted to Ethereum
+	// TODO: trawl the through the DAppChain starting at block X using Tendermint RPC endpoint
+	//       https://tendermint.github.io/slate/?shell#blockchaininfo to find
+	//       SubmitBlockToMainnet txs, then extract the merkle root returned from SubmitBlockToMainnet
+	//       by https://tendermint.github.io/slate/?shell#tx decoding the tx result data
 	return nil, nil
 }
 
 // Submits a Plasma block (or rather its merkle root) to the Plasma Solidity contract on Ethereum
-func (orc *Oracle) submitPlasmaBlock(merkleRoot []byte) error {
+func (orc *Oracle) submitPlasmaBlockToEthereum(merkleRoot []byte) error {
+	// TODO: query the Plasma contract on mainnet for the last plasma block and bail out if we're
+	//       trying to submit the same block again
+
 	if len(merkleRoot) != 32 {
 		return errors.New("invalid merkle root size")
 	}
