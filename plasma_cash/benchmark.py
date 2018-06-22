@@ -1,7 +1,8 @@
+import collections
+
 from client.client import Client
 from dependency_config import container
 from utils.utils import increaseTime
-import collections
 
 authority = Client(
     container.get_root("authority"), container.get_token("authority")
@@ -125,16 +126,30 @@ for index in players_indices:
         withdraw_gas += gas_used
         print("Player {} withdrew coin: {}".format(index, slot))
 
-gas_costs['finalize_exit'] = finalize_exit_gas / (number_of_players * num_deposited_coins)
-gas_costs['withdraw'] = withdraw_gas / (number_of_players * num_deposited_coins)
+gas_costs['finalize_exit'] = finalize_exit_gas / (
+    number_of_players * num_deposited_coins
+)
+gas_costs['withdraw'] = withdraw_gas / (
+    number_of_players * num_deposited_coins
+)
 
 print('Benchmarking done :)')
-print('Mean gas cost for {} transfers: (Deposit + Start Exit + Finalize Exit + Withdraw) = {}'.format(block_iterations, sum(gas_costs.values())))
+print(
+    'Mean gas cost for {} transfers: (Deposit + Start Exit + Finalize Exit + Withdraw) = {}'.format(
+        block_iterations, sum(gas_costs.values())
+    )
+)
 
 # Authority registers and transacts on-chain, index = 1000
 authority.register()
 coin = number_of_players * coins_per_register + 2
-tx_hash, gas_transfer = authority.token_contract.transfer(players[0].token_contract.account.address, coin) 
+tx_hash, gas_transfer = authority.token_contract.transfer(
+    players[0].token_contract.account.address, coin
+)
 
 
-print('Expected Gas cost for {} on-chain transfers (safeTransferFrom) = {}'.format(block_iterations, block_iterations * gas_transfer))
+print(
+    'Expected Gas cost for {} on-chain transfers (safeTransferFrom) = {}'.format(
+        block_iterations, block_iterations * gas_transfer
+    )
+)
