@@ -31,7 +31,10 @@ deposits = {}
 for index in players_indices:
     players[index].register()
     for coin_index in coin_indices:
-        players[index].deposit(index * coins_per_register + coin_index + 1)
+        tx_hash, gas_used = players[index].deposit(
+            index * coins_per_register + coin_index + 1
+        )
+        print(gas_used)
     deposits[index] = list(
         map(lambda event: event["args"], players[index].get_all_deposits())
     )
@@ -54,15 +57,17 @@ for iteration in range(block_iterations):
             )
             print(
                 '{}: PLAYER {} to {} : Coin {} from block {}'.format(
-                    iteration, index, neighbor_index,
+                    iteration,
+                    index,
+                    neighbor_index,
                     deposits[deposit_index][coin_index]['slot'],
-                    prev_block
+                    prev_block,
                 )
             )
             players[index].send_transaction(
                 deposits[deposit_index][coin_index]["slot"],
                 prev_block,
-                players[neighbor_index].token_contract.account.address
+                players[neighbor_index].token_contract.account.address,
             )
     authority.submit_block()
 
@@ -84,7 +89,7 @@ for index in players_indices:
             if block_iterations == 1
             else (block_iterations - 1) * child_block_interval
         )
-        players[index].start_exit(
+        tx_hash, gas_used = players[index].start_exit(
             slot, prev_block, block_iterations * child_block_interval
         )
 
@@ -99,8 +104,8 @@ for index in players_indices:
     received = (index - block_iterations) % number_of_players
     for coin_index in coin_indices:
         slot = deposits[received][coin_index]["slot"]
-        players[index].finalize_exit(slot)
-        players[index].withdraw(slot)
+        tx_hash, gas_used = players[index].finalize_exit(slot)
+        tx_hash, gas_used = players[index].withdraw(slot)
         print("Player {} withdrew coin: {}".format(index, slot))
 
 print('Benchmarking done :)')

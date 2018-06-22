@@ -23,7 +23,7 @@ current_block = authority.get_block_number()
 print('current block: {}'.format(current_block))
 
 # Mallory deposits one of her coins to the plasma contract
-tx_hash = mallory.deposit(6)
+tx_hash, gas_used = mallory.deposit(6)
 event_data = mallory.root_chain.get_event_data('Deposit', tx_hash)
 deposit1_utxo = event_data[0]['args']['slot']
 mallory.deposit(7)

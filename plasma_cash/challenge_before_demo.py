@@ -15,7 +15,7 @@ authority = Client(
 dan.register()
 
 # Dan deposits a coin
-tx_hash = dan.deposit(16)
+tx_hash, gas_used = dan.deposit(16)
 event_data = dan.root_chain.get_event_data('Deposit', tx_hash)
 deposit1_utxo = event_data[0]['args']['slot']
 

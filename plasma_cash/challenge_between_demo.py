@@ -17,7 +17,7 @@ bobTokensStart = bob.token_contract.balance_of()
 eve.register()
 
 # Eve deposits a coin
-tx_hash = eve.deposit(11)
+tx_hash, gas_used = eve.deposit(11)
 event_data = eve.root_chain.get_event_data('Deposit', tx_hash)
 deposit1_utxo = event_data[0]['args']['slot']
 
