@@ -11,6 +11,15 @@ class ERC721(Contract):
         args = []
         return self.sign_and_send(self.contract.functions.register, args)
 
+    def transfer(self, to, tokenId, data=None):
+        if data is None:
+            args = [self.account.address, to, tokenId]
+        else:
+            args = [self.account.address, to, tokenId, data]
+        return self.sign_and_send(
+            self.contract.functions.safeTransferFrom, args
+        )
+
     def deposit(self, tokenId):
         '''
         Slot is providable by the user however there is a validity check

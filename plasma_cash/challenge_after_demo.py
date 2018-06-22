@@ -23,7 +23,7 @@ current_block = authority.get_block_number()
 print('current block: {}'.format(current_block))
 
 # Mallory deposits one of her coins to the plasma contract
-tx_hash = mallory.deposit(6)
+tx_hash, gas_used = mallory.deposit(6)
 event_data = mallory.root_chain.get_event_data('Deposit', tx_hash)
 deposit1_utxo = event_data[0]['args']['slot']
 mallory.deposit(7)
@@ -47,7 +47,7 @@ plasma_block2 = authority.submit_block()
 # Coin 6 was the first deposit of
 coin = mallory.get_plasma_coin(deposit1_utxo)
 mallory_to_dan = mallory.send_transaction(
-    deposit1_utxo, coin['deposit_block'], 1, dan.token_contract.account.address
+    deposit1_utxo, coin['deposit_block'], dan.token_contract.account.address
 )
 plasma_block3 = authority.submit_block()
 

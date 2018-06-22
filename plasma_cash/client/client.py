@@ -31,13 +31,13 @@ class Client(object):
 
     def register(self):
         ''' Register a new player and grant 5 cards, for demo purposes'''
-        tx_hash = self.token_contract.register()
-        return tx_hash
+        tx_hash, gas_used = self.token_contract.register()
+        return tx_hash, gas_used
 
     def deposit(self, tokenId):
         ''' Deposit happens by a use calling the erc721 token contract '''
-        tx_hash = self.token_contract.deposit(tokenId)
-        return tx_hash
+        tx_hash, gas_used = self.token_contract.deposit(tokenId)
+        return tx_hash, gas_used
 
     # Plasma Functions
 
@@ -64,7 +64,7 @@ class Client(object):
             exiting_tx.make_mutable()
             exiting_tx.sign(self.key)
             exiting_tx.make_immutable()
-            tx_hash = self.root_chain.start_exit(
+            tx_hash, gas_used = self.root_chain.start_exit(
                 slot,
                 b'0x0',
                 rlp.encode(exiting_tx, UnsignedTransaction),
@@ -84,7 +84,7 @@ class Client(object):
                 prev_tx_blk_num, slot
             )
 
-            tx_hash = self.root_chain.start_exit(
+            tx_hash, gas_used = self.root_chain.start_exit(
                 slot,
                 rlp.encode(prev_tx, UnsignedTransaction),
                 rlp.encode(exiting_tx, UnsignedTransaction),
@@ -94,7 +94,7 @@ class Client(object):
                 prev_tx_blk_num,
                 tx_blk_num,
             )
-        return tx_hash
+        return tx_hash, gas_used
 
     def challenge_before(self, slot, prev_tx_blk_num, tx_blk_num):
         if tx_blk_num % self.child_block_interval != 0:
@@ -109,7 +109,7 @@ class Client(object):
             exiting_tx.make_mutable()
             exiting_tx.sign(self.key)
             exiting_tx.make_immutable()
-            tx_hash = self.root_chain.challenge_before(
+            tx_hash, gas_used = self.root_chain.challenge_before(
                 slot,
                 b'0x0',
                 rlp.encode(exiting_tx, UnsignedTransaction),
@@ -129,7 +129,7 @@ class Client(object):
                 prev_tx_blk_num, slot
             )
 
-            tx_hash = self.root_chain.challenge_before(
+            tx_hash, gas_used = self.root_chain.challenge_before(
                 slot,
                 rlp.encode(prev_tx, UnsignedTransaction),
                 rlp.encode(exiting_tx, UnsignedTransaction),
@@ -139,7 +139,7 @@ class Client(object):
                 prev_tx_blk_num,
                 tx_blk_num,
             )
-        return tx_hash
+        return tx_hash, gas_used
 
     def respond_challenge_before(self, slot, challenging_block_number):
         '''
@@ -150,13 +150,13 @@ class Client(object):
             challenging_block_number, slot
         )
 
-        tx_hash = self.root_chain.respond_challenge_before(
+        tx_hash, gas_used = self.root_chain.respond_challenge_before(
             slot,
             challenging_block_number,
             rlp.encode(challenging_tx, UnsignedTransaction),
             proof,
         )
-        return tx_hash
+        return tx_hash, gas_used
 
     def challenge_between(self, slot, challenging_block_number):
         '''
@@ -167,13 +167,13 @@ class Client(object):
             challenging_block_number, slot
         )
 
-        tx_hash = self.root_chain.challenge_between(
+        tx_hash, gas_used = self.root_chain.challenge_between(
             slot,
             challenging_block_number,
             rlp.encode(challenging_tx, UnsignedTransaction),
             proof,
         )
-        return tx_hash
+        return tx_hash, gas_used
 
     def challenge_after(self, slot, challenging_block_number):
         '''
@@ -183,30 +183,30 @@ class Client(object):
         challenging_tx, proof = self.get_tx_and_proof(
             challenging_block_number, slot
         )
-        tx_hash = self.root_chain.challenge_after(
+        tx_hash, gas_used = self.root_chain.challenge_after(
             slot,
             challenging_block_number,
             rlp.encode(challenging_tx, UnsignedTransaction),
             proof,
             challenging_tx.sig,
         )
-        return tx_hash
+        return tx_hash, gas_used
 
     def finalize_exit(self, slot):
-        tx_hash = self.root_chain.finalize_exit(slot)
-        return tx_hash
+        tx_hash, gas_used = self.root_chain.finalize_exit(slot)
+        return tx_hash, gas_used
 
     def finalize_exits(self):
-        tx_hash = self.root_chain.finalize_exits()
-        return tx_hash
+        tx_hash, gas_used = self.root_chain.finalize_exits()
+        return tx_hash, gas_used
 
     def withdraw(self, slot):
-        tx_hash = self.root_chain.withdraw(slot)
-        return tx_hash
+        tx_hash, gas_used = self.root_chain.withdraw(slot)
+        return tx_hash, gas_used
 
     def withdraw_bonds(self):
-        tx_hash = self.root_chain.withdraw_bonds()
-        return tx_hash
+        tx_hash, gas_used = self.root_chain.withdraw_bonds()
+        return tx_hash, gas_used
 
     def get_plasma_coin(self, slot):
         return self.root_chain.get_plasma_coin(slot)
@@ -300,9 +300,9 @@ class Client(object):
     def submit_block(self):
         return self.child_chain.submit_block()
 
-    def send_transaction(self, slot, prev_block, denomination, new_owner):
+    def send_transaction(self, slot, prev_block, new_owner):
         new_owner = utils.normalize_address(new_owner)
-        tx = Transaction(slot, prev_block, denomination, new_owner)
+        tx = Transaction(slot, prev_block, 1, new_owner)
         tx.make_mutable()
         tx.sign(self.key)
         tx.make_immutable()

@@ -28,17 +28,17 @@ assert charlieTokensStart == 0, "START: Charlie has incorrect number of tokens"
 # Alice deposits 3 of her coins to the plasma contract and gets 3 plasma nft
 # utxos in return
 tokenId = 1
-tx_hash = alice.deposit(tokenId)
+tx_hash, gas_used = alice.deposit(tokenId)
 event_data = alice.root_chain.get_event_data('Deposit', tx_hash)
 print('ALICE EVENT DATA1', event_data[0]['args'])
 
-tx_hash = alice.deposit(tokenId + 1)
+tx_hash, gas_used = alice.deposit(tokenId + 1)
 event_data = alice.root_chain.get_event_data('Deposit', tx_hash)
 deposit2_utxo = event_data[0]['args']['slot']
 deposit2_block_number = event_data[0]['args']['slot']
 print('ALICE EVENT DATA2', event_data[0]['args'])
 
-tx_hash = alice.deposit(tokenId + 2)
+tx_hash, gas_used = alice.deposit(tokenId + 2)
 event_data = alice.root_chain.get_event_data('Deposit', tx_hash)
 deposit3_utxo = event_data[0]['args']['slot']
 deposit3_block_number = event_data[0]['args']['slot']
@@ -53,12 +53,11 @@ assert len(registered_deposits) == 3, "Alice has incorrect number of deposits"
 # Alice to Bob, and Alice to Charlie. We care about the Alice to Bob
 # transaction
 alice_to_bob = alice.send_transaction(
-    deposit3_utxo, deposit3_block_number, 1, bob.token_contract.account.address
+    deposit3_utxo, deposit3_block_number, bob.token_contract.account.address
 )
 random_tx = alice.send_transaction(
     deposit2_utxo,
     deposit2_block_number,
-    1,
     charlie.token_contract.account.address,
 )
 plasma_block1 = authority.submit_block()
@@ -68,7 +67,7 @@ authority.submit_block()
 
 # Bob to Charlie
 bob_to_charlie = bob.send_transaction(
-    deposit3_utxo, plasma_block1, 1, charlie.token_contract.account.address
+    deposit3_utxo, plasma_block1, charlie.token_contract.account.address
 )
 
 # This is the info that bob is required to send to charlie. This happens on

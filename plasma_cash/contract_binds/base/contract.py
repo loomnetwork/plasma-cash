@@ -37,12 +37,12 @@ class Contract(object):
         )
 
         try:
-            tx_hash = self._send_raw_tx(signed_tx)
+            tx_hash, gas_used = self._send_raw_tx(signed_tx)
         except Exception as e:
             print('FAILURE: ', e)
             info = 'Failed: {}, Args: {}'.format(func.__name__, args)
             print(info)
-        return tx_hash
+        return tx_hash, gas_used
 
     def send_transaction(self, to, value):
         signed_tx = self._sign_transaction(to, value)
@@ -90,12 +90,13 @@ class Contract(object):
 
     def _send_raw_tx(self, signed_tx):
         tx_hash = self.w3.eth.sendRawTransaction(signed_tx.rawTransaction)
-        return tx_hash
+        gas_used = self.waitForTxReceipt(tx_hash)['gasUsed']
+        return tx_hash, gas_used
 
     def waitForTxReceipt(self, tx):
         receipt = self.w3.eth.getTransactionReceipt(tx)
         while receipt is None:
-            time.sleep(12)  # Block time avg
+            time.sleep(1)  # Block time avg
             receipt = self.w3.eth.getTransactionReceipt(tx)
         return receipt
 

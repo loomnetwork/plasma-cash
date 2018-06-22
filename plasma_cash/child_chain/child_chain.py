@@ -78,7 +78,7 @@ class ChildChain(object):
             # deposit tx if prev_block is 0
             if (
                 prev_tx.prev_block % self.child_block_interval == 0
-                and tx.sender != prev_tx.new_owner
+                and utils.normalize_address(tx.sender) != prev_tx.new_owner
             ):
                 raise InvalidTxSignatureException('failed to send transaction')
             prev_tx.spent = True  # Mark the previous tx as spent

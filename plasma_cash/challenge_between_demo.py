@@ -17,7 +17,7 @@ bobTokensStart = bob.token_contract.balance_of()
 eve.register()
 
 # Eve deposits a coin
-tx_hash = eve.deposit(11)
+tx_hash, gas_used = eve.deposit(11)
 event_data = eve.root_chain.get_event_data('Deposit', tx_hash)
 deposit1_utxo = event_data[0]['args']['slot']
 
@@ -28,17 +28,14 @@ time.sleep(2)
 # TODO stop manually setting these UTXOs
 coin = eve.get_plasma_coin(deposit1_utxo)
 eve_to_bob = eve.send_transaction(
-    deposit1_utxo, coin['deposit_block'], 1, bob.token_contract.account.address
+    deposit1_utxo, coin['deposit_block'], bob.token_contract.account.address
 )
 authority.submit_block()
 eve_to_bob_block = authority.get_block_number()
 
 # Eve sends this same plasma coin to Alice
 eve_to_alice = eve.send_transaction(
-    deposit1_utxo,
-    coin['deposit_block'],
-    1,
-    alice.token_contract.account.address,
+    deposit1_utxo, coin['deposit_block'], alice.token_contract.account.address
 )
 authority.submit_block()
 

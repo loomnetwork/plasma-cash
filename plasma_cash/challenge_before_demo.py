@@ -15,7 +15,7 @@ authority = Client(
 dan.register()
 
 # Dan deposits a coin
-tx_hash = dan.deposit(16)
+tx_hash, gas_used = dan.deposit(16)
 event_data = dan.root_chain.get_event_data('Deposit', tx_hash)
 deposit1_utxo = event_data[0]['args']['slot']
 
@@ -32,7 +32,6 @@ authority.submit_block()
 trudy_to_mallory = trudy.send_transaction(
     deposit1_utxo,
     coin['deposit_block'],
-    1,
     mallory.token_contract.account.address,
 )
 authority.submit_block()
@@ -40,10 +39,7 @@ trudy_to_mallory_block = authority.get_block_number()
 
 # Mallory sends her invalid coin to Trudy
 mallory_to_trudy = mallory.send_transaction(
-    deposit1_utxo,
-    trudy_to_mallory_block,
-    1,
-    trudy.token_contract.account.address,
+    deposit1_utxo, trudy_to_mallory_block, trudy.token_contract.account.address
 )
 authority.submit_block()
 mallory_to_trudy_block = authority.get_block_number()
