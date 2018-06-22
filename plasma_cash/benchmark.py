@@ -7,7 +7,7 @@ authority = Client(container.get_root('authority'),
 w3 = authority.root_chain.w3  # get w3 instance
 
 coins_per_register = 5
-number_of_extras = 13
+number_of_extras = 8
 extras_indices = range(0, number_of_extras)
 
 extras = list(map(lambda index: Client(container.get_root('extras', index),
@@ -25,8 +25,8 @@ for index in extras_indices:
 
 for index in extras_indices:
     print(deposits[index])
-#   extras[index].send_transaction(
-#       deposits[index]['utxo'], deposits[index]['block_number'], 1,
-#       extras[(index + 1) % number_of_extras].token_contract.account.address)
+    extras[index].send_transaction(
+        deposits[index][0]['slot'], deposits[index][0]['blockNumber'], 1,
+        extras[(index + 1) % number_of_extras].token_contract.account.address)
 
 authority.submit_block()
