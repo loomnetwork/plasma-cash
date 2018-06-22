@@ -41,18 +41,25 @@ for index in players_indices:
 # Step 3: Each player gives their deposited coins to the next player
 # 1000 players * 2 coins = 2k Plasma transactions per round
 # This loops `block_iterations` times.
-for i in range(block_iterations):
+for iteration in range(block_iterations):
     for index in players_indices:
+        deposit_index = (index - iteration) % number_of_players
+        neighbor_index = (index + 1 + iteration) % number_of_players
+        prev_block = (
+            deposits[index][coin_index]["blockNumber"]
+            if iteration == 0
+            else iteration * child_block_interval
+        )
         for coin_index in coin_indices:
-            neighbor_index = (index + 1) % number_of_players
             players[index].send_transaction(
-                deposits[index][coin_index]["slot"],
-                deposits[index][coin_index]["blockNumber"],
-                players[neighbor_index].token_contract.account.address,
+                deposits[deposit_index][coin_index]["slot"],
+                prev_block,
+                players[neighbor_index].token_contract.account.address
             )
             print(
-                'PLAYER {} to {} : Coin {}'.format(
-                    index, neighbor_index, deposits[index][coin_index]['slot']
+                '{}: PLAYER {} to {} : Coin {}'.format(
+                    iteration, index, neighbor_index,
+                    deposits[deposit_index][coin_index]['slot']
                 )
             )
     authority.submit_block()
@@ -74,7 +81,6 @@ for index in players_indices:
             if block_iterations == 1
             else (block_iterations - 1) * child_block_interval
         )
-
         players[index].start_exit(
             slot, prev_block, block_iterations * child_block_interval
         )
