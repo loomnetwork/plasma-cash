@@ -1,7 +1,6 @@
 from client.client import Client
 from dependency_config import container
 from utils.utils import increaseTime
-from time import sleep
 
 authority = Client(
     container.get_root("authority"), container.get_token("authority")
@@ -58,7 +57,8 @@ for i in range(block_iterations):
 # Step 4: All players initiate an exit for the coins they own.
 # Since each player gave their coin to their neighbour, player `i`
 # now owns the coins that player `(i-block_iterations) % num_players`
-# initially had. Everyone initializes their exits by referencing the last 2 blocks
+# initially had. Everyone initializes their exits 
+# by referencing the last 2 blocks
 for index in players_indices:
     received = (index - block_iterations) % number_of_players
     for coin_index in coin_indices:
