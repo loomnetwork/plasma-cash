@@ -8,7 +8,7 @@ authority = Client(
 w3 = authority.root_chain.w3  # get w3 instance
 
 child_block_interval = 1000
-block_iterations = 2
+block_iterations = 3
 coins_per_register = 5
 num_deposited_coins = 2
 coin_indices = range(0, num_deposited_coins)
@@ -46,22 +46,23 @@ for iteration in range(block_iterations):
     for index in players_indices:
         neighbor_index = (index + 1) % number_of_players
         deposit_index = (index - iteration) % number_of_players
-        prev_block = (
-            deposits[index][coin_index]["blockNumber"]
-            if iteration == 0
-            else iteration * child_block_interval
-        )
         for coin_index in coin_indices:
+            prev_block = (
+                deposits[index][coin_index]["blockNumber"]
+                if iteration == 0
+                else iteration * child_block_interval
+            )
+            print(
+                '{}: PLAYER {} to {} : Coin {} from block {}'.format(
+                    iteration, index, neighbor_index,
+                    deposits[deposit_index][coin_index]['slot'],
+                    prev_block
+                )
+            )
             players[index].send_transaction(
                 deposits[deposit_index][coin_index]["slot"],
                 prev_block,
                 players[neighbor_index].token_contract.account.address
-            )
-            print(
-                '{}: PLAYER {} to {} : Coin {}'.format(
-                    iteration, index, neighbor_index,
-                    deposits[deposit_index][coin_index]['slot']
-                )
             )
     authority.submit_block()
 
