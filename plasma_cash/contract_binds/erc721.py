@@ -19,8 +19,7 @@ class ERC721(Contract):
         args = [tokenId]
         return self.sign_and_send(
                 self.contract.functions.depositToPlasma,
-                args
-        )
+                args)
 
     def balance_of(self):
         return self.contract.functions.balanceOf(

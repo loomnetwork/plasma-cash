@@ -1,5 +1,4 @@
 from ..utils.getWeb3 import getWeb3
-from ..utils.colors import green, red, yellow
 from threading import Thread
 import time
 import json
@@ -10,7 +9,6 @@ class Contract(object):
     '''Base class for interfacing with a contract'''
     def __init__(self, keystore, address, abi_file, endpoint):
         w3 = getWeb3(endpoint)
-        # address = w3.toChecksumAddress(address) # need to comment out because of ganache bug
         with open(abi_file) as f:
             abi = json.load(f)['abi']
         contract = w3.eth.contract(abi=abi, address=address)
@@ -27,12 +25,11 @@ class Contract(object):
 
     def sign_and_send(self, func, args, value=0, gas=1000000):
         ''' Expecting all arguments in 1 array '''
-        signed_tx = self._sign_function_call(
-                func,
-                args,
-                value,
-                gas  # may need to change gas
-                )
+        signed_tx = self._sign_function_call(func,
+                                             args,
+                                             value,
+                                             # may need to change gas
+                                             gas)
 
         try:
             tx_hash = self._send_raw_tx(signed_tx)
@@ -102,22 +99,22 @@ class Contract(object):
         for log in tx_logs:
             try:
                 d = get_event_data(event_abi, log)
-            except:
+            except Exception as e:
                 continue
             matched.append(d)
         return matched
 
     def watch_event(self, event_name, callback, interval, fromBlock=0,
-                toBlock='latest', filters=None):
+                    toBlock='latest', filters=None):
         event_filter = self.install_filter(
                 event_name,
                 fromBlock,
                 toBlock,
                 filters
             )
-        worker = Thread(target=self.watcher,
-                        args=(event_filter, callback, interval),
-                        daemon=True).start()
+        Thread(target=self.watcher,
+               args=(event_filter, callback, interval),
+               daemon=True).start()
 
     def watcher(self, event_filter, callback, interval):
         while True:
