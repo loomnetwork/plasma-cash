@@ -44,28 +44,52 @@ func (d *RootChainService) Withdraw(slot uint64) error {
 func (d *RootChainService) ChallengeBefore(slot uint64, prevTx Tx, exitingTx Tx,
 	prevTxInclusionProof Proof, exitingTxInclusionProof Proof,
 	sig []byte, prevTxBlockNum int64, exitingTxBlockNum int64) ([]byte, error) {
-
-	//return self.sign_and_send(self.contract.functions.challengeBefore, args,	  value=self.BOND)
-	return []byte{}, nil
+	prevTxBytes, err := prevTx.RlpEncode()
+	if err != nil {
+		return nil, err
+	}
+	exitingTxBytes, err := exitingTx.RlpEncode()
+	if err != nil {
+		return nil, err
+	}
+	tx, err := d.plasmaContract.ChallengeBefore(
+		d.transactOpts, slot, prevTxBytes, exitingTxBytes,
+		prevTxInclusionProof.Bytes(), exitingTxInclusionProof.Bytes(), sig,
+		big.NewInt(prevTxBlockNum), big.NewInt(exitingTxBlockNum))
+	return tx.Hash().Bytes(), err
 }
 
 func (d *RootChainService) RespondChallengeBefore(slot uint64, challengingBlockNumber int64,
-	challenging_transaction Tx, proof Proof) ([]byte, error) {
-
-	//return self.sign_and_send(self.contract.functions.respond_challenge_before,					args)
-	return []byte{}, nil
+	challengingTx Tx, proof Proof) ([]byte, error) {
+	challengingTxBytes, err := challengingTx.RlpEncode()
+	if err != nil {
+		return nil, err
+	}
+	tx, err := d.plasmaContract.RespondChallengeBefore(
+		d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof.Bytes())
+	return tx.Hash().Bytes(), err
 }
 
 func (d *RootChainService) ChallengeBetween(slot uint64, challengingBlockNumber int64,
-	challengingTransaction Tx, proof Proof) ([]byte, error) {
-	//return self.sign_and_send(self.contract.functions.challengeBetween, args)
-	return []byte{}, nil
+	challengingTx Tx, proof Proof) ([]byte, error) {
+	challengingTxBytes, err := challengingTx.RlpEncode()
+	if err != nil {
+		return nil, err
+	}
+	tx, err := d.plasmaContract.ChallengeBetween(
+		d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof.Bytes())
+	return tx.Hash().Bytes(), err
 }
 
 func (d *RootChainService) ChallengeAfter(slot uint64, challengingBlockNumber int64,
-	challengingTransaction Tx, proof Proof) ([]byte, error) {
-	//return self.sign_and_send(self.contract.functions.challengeAfter, args)
-	return []byte{}, nil
+	challengingTx Tx, proof Proof) ([]byte, error) {
+	challengingTxBytes, err := challengingTx.RlpEncode()
+	if err != nil {
+		return nil, err
+	}
+	tx, err := d.plasmaContract.ChallengeAfter(
+		d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof.Bytes())
+	return tx.Hash().Bytes(), err
 }
 
 func (d *RootChainService) StartExit(
@@ -79,11 +103,11 @@ func (d *RootChainService) StartExit(
 	if err != nil {
 		return nil, err
 	}
-	_, err = d.plasmaContract.StartExit(
+	tx, err := d.plasmaContract.StartExit(
 		d.transactOpts, slot,
 		prevTxBytes, exitingTxBytes, prevTxInclusion.Bytes(), exitingTxInclusion.Bytes(),
 		sigs, big.NewInt(prevTxIncBlock), big.NewInt(exitingTxIncBlock))
-	return []byte{}, err
+	return tx.Hash().Bytes(), err
 }
 
 func (d *RootChainService) FinalizeExits() error {
@@ -91,9 +115,9 @@ func (d *RootChainService) FinalizeExits() error {
 	return err
 }
 
-// TODO: implement for challenge_after_demo
 func (d *RootChainService) WithdrawBonds() error {
-	return nil
+	_, err := d.plasmaContract.WithdrawBonds(d.transactOpts)
+	return err
 }
 
 var conn *ethclient.Client
