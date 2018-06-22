@@ -2,7 +2,7 @@
 
 set -exo pipefail
 
-cd ../plasma_cash
+cd plasma_cash
 
 
 #virtualenv --python=python3.5 .
@@ -16,7 +16,7 @@ pip install -r requirements.txt
 make lint
 # make test
 
-cd server
+cd ../server
 npm install
 npm run lint
 npm run test
