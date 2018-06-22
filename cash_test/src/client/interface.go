@@ -6,6 +6,7 @@ type Tx interface {
 }
 
 type Block interface {
+	MerkleHash() []byte
 }
 
 type Proof interface {

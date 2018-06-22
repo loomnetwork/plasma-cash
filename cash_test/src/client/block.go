@@ -12,3 +12,7 @@ type PbBlock struct {
 func NewClientBlock(pb *pctypes.PlasmaBlock) Block {
 	return &PbBlock{pb}
 }
+
+func (p *PbBlock) MerkleHash() []byte {
+	return p.block.MerkleHash
+}
