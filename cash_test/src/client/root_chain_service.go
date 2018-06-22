@@ -56,7 +56,10 @@ func (d *RootChainService) ChallengeBefore(slot uint64, prevTx Tx, exitingTx Tx,
 		d.transactOpts, slot, prevTxBytes, exitingTxBytes,
 		prevTxInclusionProof.Bytes(), exitingTxInclusionProof.Bytes(), sig,
 		big.NewInt(prevTxBlockNum), big.NewInt(exitingTxBlockNum))
-	return tx.Hash().Bytes(), err
+	if err != nil {
+		return nil, err
+	}
+	return tx.Hash().Bytes(), nil
 }
 
 func (d *RootChainService) RespondChallengeBefore(slot uint64, challengingBlockNumber int64,
@@ -67,7 +70,10 @@ func (d *RootChainService) RespondChallengeBefore(slot uint64, challengingBlockN
 	}
 	tx, err := d.plasmaContract.RespondChallengeBefore(
 		d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof.Bytes())
-	return tx.Hash().Bytes(), err
+	if err != nil {
+		return nil, err
+	}
+	return tx.Hash().Bytes(), nil
 }
 
 func (d *RootChainService) ChallengeBetween(slot uint64, challengingBlockNumber int64,
@@ -78,7 +84,10 @@ func (d *RootChainService) ChallengeBetween(slot uint64, challengingBlockNumber 
 	}
 	tx, err := d.plasmaContract.ChallengeBetween(
 		d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof.Bytes())
-	return tx.Hash().Bytes(), err
+	if err != nil {
+		return nil, err
+	}
+	return tx.Hash().Bytes(), nil
 }
 
 func (d *RootChainService) ChallengeAfter(slot uint64, challengingBlockNumber int64,
@@ -89,7 +98,10 @@ func (d *RootChainService) ChallengeAfter(slot uint64, challengingBlockNumber in
 	}
 	tx, err := d.plasmaContract.ChallengeAfter(
 		d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof.Bytes())
-	return tx.Hash().Bytes(), err
+	if err != nil {
+		return nil, err
+	}
+	return tx.Hash().Bytes(), nil
 }
 
 func (d *RootChainService) StartExit(
@@ -107,7 +119,10 @@ func (d *RootChainService) StartExit(
 		d.transactOpts, slot,
 		prevTxBytes, exitingTxBytes, prevTxInclusion.Bytes(), exitingTxInclusion.Bytes(),
 		sigs, big.NewInt(prevTxIncBlock), big.NewInt(exitingTxIncBlock))
-	return tx.Hash().Bytes(), err
+	if err != nil {
+		return nil, err
+	}
+	return tx.Hash().Bytes(), nil
 }
 
 func (d *RootChainService) FinalizeExits() error {
