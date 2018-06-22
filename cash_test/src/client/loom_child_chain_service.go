@@ -22,11 +22,17 @@ type LoomChildChainService struct {
 	loomcontract *LoomContract
 }
 
+func logdebug(data string) {
+	fmt.Printf(data + "\n")
+}
+
 func (c *LoomChildChainService) CurrentBlock() (Block, error) {
+	logdebug("CurrentBlock()")
 	return c.Block(0) //asking for block zero gives latest
 }
 
 func (c *LoomChildChainService) BlockNumber() (int64, error) {
+	logdebug("BlockNumber()")
 	request := &pctypes.GetCurrentBlockRequest{}
 	result := &pctypes.GetCurrentBlockResponse{}
 
@@ -41,7 +47,7 @@ func (c *LoomChildChainService) BlockNumber() (int64, error) {
 }
 
 func (c *LoomChildChainService) Block(blknum int64) (Block, error) {
-	fmt.Printf("trying to get Block data\n")
+	logdebug(fmt.Sprintf("Block(%d)", blknum))
 	blk := &types.BigUInt{*loom.NewBigUIntFromInt(blknum)}
 
 	var result pctypes.GetBlockResponse
@@ -58,9 +64,9 @@ func (c *LoomChildChainService) Block(blknum int64) (Block, error) {
 	log.Printf("get block value %v '\n", result)
 
 	//TODO detect empty blocks correctly
-//	if result.Block0.GetProof() == nil {
-//		return nil, fmt.Errorf("empty block from the server")
-//	}
+	//	if result.Block0.GetProof() == nil {
+	//		return nil, fmt.Errorf("empty block from the server")
+	//	}
 	return NewClientBlock(result.Block), nil
 }
 
@@ -72,6 +78,8 @@ func (c *LoomChildChainService) Proof(blknum int64, uid uint64) (Proof, error) {
 */
 
 func (c *LoomChildChainService) SubmitBlock() error {
+	logdebug("SubmitBlock()")
+
 	request := &pctypes.SubmitBlockToMainnetRequest{}
 	//	params := &pctypes.GetBlockRequest{}
 
@@ -98,6 +106,8 @@ func (l *LoomTx) Sig() []byte {
 }
 
 func (l *LoomTx) RlpEncode() ([]byte, error) {
+	logdebug("RlpEncode()")
+
 	return rlp.EncodeToBytes([]interface{}{
 		l.Slot,
 		l.PrevBlock,
@@ -107,6 +117,8 @@ func (l *LoomTx) RlpEncode() ([]byte, error) {
 }
 
 func (c *LoomChildChainService) SendTransaction(slot uint64, prevBlock int64, denomination int64, newOwner string) (Tx, error) {
+	logdebug("SendTransaction()")
+
 	loomAddress := fmt.Sprintf("chain:%s", newOwner)
 
 	address := loom.MustParseAddress(loomAddress)
