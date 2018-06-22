@@ -15,7 +15,7 @@ contract CryptoCards is ERC721Token("CryptoCards", "CCC") {
 
     function register() external {
         // require(!registered[msg.sender]);
-        for (int j = 0; j<5 ; j++) {
+        for (int j = 0; j < 5; j++) {
             create(); // Give each new player 5 cards
         }
         // registered[msg.sender] = true;

@@ -3,6 +3,7 @@ from .base.contract import Contract
 
 class ERC721(Contract):
     '''ERC721 bindings for python '''
+
     def __init__(self, private_key, abi_file, address, endpoint):
         super().__init__(private_key, address, abi_file, endpoint)
 
@@ -18,11 +19,8 @@ class ERC721(Contract):
         '''
         args = [tokenId]
         return self.sign_and_send(
-                self.contract.functions.depositToPlasma,
-                args
+            self.contract.functions.depositToPlasma, args
         )
 
     def balance_of(self):
-        return self.contract.functions.balanceOf(
-                self.account.address
-        ).call()
+        return self.contract.functions.balanceOf(self.account.address).call()

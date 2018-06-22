@@ -10,10 +10,7 @@ from utils.merkle.sparse_merkle_tree import SparseMerkleTree
 
 class Block(rlp.Serializable):
 
-    fields = [
-        ('transaction_set', CountableList(Transaction)),
-        ('sig', binary)
-    ]
+    fields = [('transaction_set', CountableList(Transaction)), ('sig', binary)]
 
     def __init__(self, transaction_set=None, sig=b'\x00' * 65):
         if transaction_set is None:
@@ -37,8 +34,9 @@ class Block(rlp.Serializable):
         return get_sender(self.hash, self.sig)
 
     def merklize_transaction_set(self):
-        hashed_transaction_dict = {tx.uid: tx.hash
-                                   for tx in self.transaction_set}
+        hashed_transaction_dict = {
+            tx.uid: tx.hash for tx in self.transaction_set
+        }
         self.merkle = SparseMerkleTree(64, hashed_transaction_dict)
         return self.merkle.root
 

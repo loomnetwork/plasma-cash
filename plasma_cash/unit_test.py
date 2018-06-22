@@ -8,8 +8,8 @@ default_hash = keccak(empty_val)
 dummy_val = keccak(2)
 dummy_val_2 = keccak(3)
 
-class TestSparseMerkleTree(object):
 
+class TestSparseMerkleTree(object):
     def test_size_limits(self):
         with pytest.raises(SparseMerkleTree.TreeSizeExceededException):
             SparseMerkleTree(depth=1, leaves={0: empty_val, 1: empty_val})
@@ -52,18 +52,36 @@ class TestSparseMerkleTree(object):
         tree = SparseMerkleTree(depth=3, leaves=leaves)
         mid_left_val = keccak(dummy_val + default_hash)
         mid_right_val = keccak(dummy_val + dummy_val_2)
-        assert tree.create_merkle_proof(0) == (2).to_bytes(8, byteorder='big') + mid_right_val
-        assert tree.create_merkle_proof(1) == (3).to_bytes(8, byteorder='big') + dummy_val + mid_right_val
-        assert tree.create_merkle_proof(2) == (3).to_bytes(8, byteorder='big') + dummy_val_2 + mid_left_val
-        assert tree.create_merkle_proof(3) == (3).to_bytes(8, byteorder='big') + dummy_val + mid_left_val
+        assert (
+            tree.create_merkle_proof(0)
+            == (2).to_bytes(8, byteorder='big') + mid_right_val
+        )
+        assert (
+            tree.create_merkle_proof(1)
+            == (3).to_bytes(8, byteorder='big') + dummy_val + mid_right_val
+        )
+        assert (
+            tree.create_merkle_proof(2)
+            == (3).to_bytes(8, byteorder='big') + dummy_val_2 + mid_left_val
+        )
+        assert (
+            tree.create_merkle_proof(3)
+            == (3).to_bytes(8, byteorder='big') + dummy_val + mid_left_val
+        )
 
     def test_old(self):
         slot = 2
-        txHash = HexBytes('0xcf04ea8bb4ff94066eb84dd932f9e66d1c9f40d84d5491f5a7735200de010d84')
+        txHash = HexBytes(
+            '0xcf04ea8bb4ff94066eb84dd932f9e66d1c9f40d84d5491f5a7735200de010d84'
+        )
         slot2 = 600
-        txHash2 = HexBytes('0xabcabcabacbc94566eb84dd932f9e66d1c9f40d84d5491f5a7735200de010d84')
+        txHash2 = HexBytes(
+            '0xabcabcabacbc94566eb84dd932f9e66d1c9f40d84d5491f5a7735200de010d84'
+        )
         slot3 = 30000
-        txHash3 = HexBytes('0xabcaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1c9f40d84d5491f5a7735200de010d84')
+        txHash3 = HexBytes(
+            '0xabcaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1c9f40d84d5491f5a7735200de010d84'
+        )
         tx = {slot: txHash, slot2: txHash2, slot3: txHash3}
         tree = SparseMerkleTree(64, tx)
         for s in tx.keys():

@@ -3,20 +3,22 @@ from eth_utils.crypto import keccak
 
 
 class SparseMerkleTree(object):
-
     def __init__(self, depth=64, leaves={}):
         self.depth = depth
-        if len(leaves) > 2**depth:
+        if len(leaves) > 2 ** depth:
             raise self.TreeSizeExceededException(
-                'tree with depth {} cannot have {} leaves'.format(depth,
-                                                                  len(leaves)))
+                'tree with depth {} cannot have {} leaves'.format(
+                    depth, len(leaves)
+                )
+            )
 
         # Sort the transaction dict by index.
         self.leaves = OrderedDict(sorted(leaves.items(), key=lambda t: t[0]))
         self.default_nodes = self.create_default_nodes(self.depth)
         if leaves:
-            self.tree = self.create_tree(self.leaves, self.depth,
-                                         self.default_nodes)
+            self.tree = self.create_tree(
+                self.leaves, self.depth, self.default_nodes
+            )
             self.root = self.tree[-1][0]
         else:
             self.tree = []
@@ -41,18 +43,21 @@ class SparseMerkleTree(object):
                 if index % 2 == 0:
                     co_index = index + 1
                     if co_index in tree_level:
-                        next_level[index // 2] = keccak(value +
-                                                        tree_level[co_index])
+                        next_level[index // 2] = keccak(
+                            value + tree_level[co_index]
+                        )
                     else:
-                        next_level[index // 2] = keccak(value +
-                                                        default_nodes[level])
+                        next_level[index // 2] = keccak(
+                            value + default_nodes[level]
+                        )
                 else:
                     # If the node is a right node, check if its left sibling is
                     # a default node.
                     co_index = index - 1
                     if co_index not in tree_level:
-                        next_level[index // 2] = keccak(default_nodes[level] +
-                                                        value)
+                        next_level[index // 2] = keccak(
+                            default_nodes[level] + value
+                        )
             tree_level = next_level
             tree.append(tree_level)
         return tree
@@ -94,12 +99,12 @@ class SparseMerkleTree(object):
             computed_hash = self.default_nodes[-1]
 
         for d in range(self.depth):
-            if (proofbits % 2 == 0):
+            if proofbits % 2 == 0:
                 proof_element = self.default_nodes[d]
             else:
-                proof_element = proof[p:p+32]
+                proof_element = proof[p:p + 32]
                 p += 32
-            if (index % 2 == 0):
+            if index % 2 == 0:
                 computed_hash = keccak(computed_hash + proof_element)
             else:
                 computed_hash = keccak(proof_element + computed_hash)

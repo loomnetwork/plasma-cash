@@ -6,8 +6,9 @@ from utils.utils import increaseTime
 dan = Client(container.get_root('dan'), container.get_token('dan'))
 trudy = Client(container.get_root('trudy'), container.get_token('trudy'))
 mallory = Client(container.get_root('mallory'), container.get_token('mallory'))
-authority = Client(container.get_root('authority'),
-                   container.get_token('authority'))
+authority = Client(
+    container.get_root('authority'), container.get_token('authority')
+)
 
 # Give Dan 5 tokens
 dan.register()
@@ -28,15 +29,21 @@ authority.submit_block()
 
 # Trudy sends her invalid coin to Mallory
 trudy_to_mallory = trudy.send_transaction(
-     deposit1_utxo, coin['deposit_block'], 1,
-     mallory.token_contract.account.address)
+    deposit1_utxo,
+    coin['deposit_block'],
+    1,
+    mallory.token_contract.account.address,
+)
 authority.submit_block()
 trudy_to_mallory_block = authority.get_block_number()
 
 # Mallory sends her invalid coin to Trudy
 mallory_to_trudy = mallory.send_transaction(
-     deposit1_utxo, trudy_to_mallory_block,
-     1, trudy.token_contract.account.address)
+    deposit1_utxo,
+    trudy_to_mallory_block,
+    1,
+    trudy.token_contract.account.address,
+)
 authority.submit_block()
 mallory_to_trudy_block = authority.get_block_number()
 
@@ -59,13 +66,15 @@ dan.withdraw(deposit1_utxo)
 dan_balance_before = w3.eth.getBalance(dan.token_contract.account.address)
 dan.withdraw_bonds()
 dan_balance_after = w3.eth.getBalance(dan.token_contract.account.address)
-assert (dan_balance_before < dan_balance_after), \
-        "END: Dan did not withdraw his bonds"
+assert (
+    dan_balance_before < dan_balance_after
+), "END: Dan did not withdraw his bonds"
 
 danTokensEnd = dan.token_contract.balance_of()
 
 print('dan has {} tokens'.format(danTokensEnd))
-assert (danTokensEnd == danTokensStart + 1), \
-        "END: dan has incorrect number of tokens"
+assert (
+    danTokensEnd == danTokensStart + 1
+), "END: dan has incorrect number of tokens"
 
 print('Plasma Cash `challengeBefore` success :)')

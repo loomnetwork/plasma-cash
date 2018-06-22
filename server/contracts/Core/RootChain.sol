@@ -413,9 +413,9 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
 
         if (checkSender)
             require(exitingTxData.owner == msg.sender, "Invalid sender");
+        require(keccak256(exitingTxBytes).ecverify(sig, prevTxData.owner), "Invalid sig");
         require(exitingTxData.slot == prevTxData.slot);
         require(prevTxIncBlock < exitingTxIncBlock);
-        require(keccak256(exitingTxBytes).ecverify(sig, prevTxData.owner), "Invalid sig");
 
         checkTxIncluded(prevTxBytes, prevTxIncBlock, prevTxInclusionProof);
         checkTxIncluded(exitingTxBytes, exitingTxIncBlock, exitingTxInclusionProof);

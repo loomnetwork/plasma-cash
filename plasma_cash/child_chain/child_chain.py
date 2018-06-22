@@ -2,9 +2,12 @@ import rlp
 from web3.auto import w3
 from ethereum import utils
 from .block import Block
-from .exceptions import (InvalidTxSignatureException,
-                         CoinAlreadyIncludedException,
-                         PreviousTxNotFoundException, TxAlreadySpentException)
+from .exceptions import (
+    InvalidTxSignatureException,
+    CoinAlreadyIncludedException,
+    PreviousTxNotFoundException,
+    TxAlreadySpentException,
+)
 from .transaction import Transaction
 
 
@@ -75,8 +78,10 @@ class ChildChain(object):
             if prev_tx.spent:
                 raise TxAlreadySpentException('failed to send transaction')
             # deposit tx if prev_block is 0
-            if (prev_tx.prev_block % self.child_block_interval == 0
-                    and tx.sender != prev_tx.new_owner):
+            if (
+                prev_tx.prev_block % self.child_block_interval == 0
+                and tx.sender != prev_tx.new_owner
+            ):
                 raise InvalidTxSignatureException('failed to send transaction')
             prev_tx.spent = True  # Mark the previous tx as spent
         self.current_block.add_tx(tx)
@@ -103,5 +108,8 @@ class ChildChain(object):
 
     def get_tx_and_proof(self, blknum, slot):
         tx = self.get_tx(blknum, slot)
-        proof = self.get_proof(blknum, slot)
+        if blknum % self.child_block_interval != 0:
+            proof = '00' * 8
+        else:
+            proof = self.get_proof(blknum, slot)
         return tx, proof

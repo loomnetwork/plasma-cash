@@ -10,6 +10,7 @@ def create_app():
     container.get_child_chain()
 
     from . import server
+
     app.register_blueprint(server.bp)
 
     return app
