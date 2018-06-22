@@ -47,6 +47,10 @@ class PlasmaCash(Contract):
         args = []
         return self.sign_and_send(self.contract.functions.finalizeExits, args)
 
+    def finalize_exit(self, slot):
+        args = [slot]
+        return self.sign_and_send(self.contract.functions.finalizeExit, args)
+
     def withdraw(self, uid):
         args = [uid]
         return self.sign_and_send(self.contract.functions.withdraw, args)

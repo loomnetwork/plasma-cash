@@ -71,7 +71,7 @@ class Client(object):
             exiting_tx, exiting_tx_proof = self.get_tx_and_proof(tx_blk_num,
                                                                  slot)
             prev_tx, prev_tx_proof = self.get_tx_and_proof(prev_tx_blk_num,
-                                                           slot)
+                                                                 slot)
 
             tx_hash = self.root_chain.start_exit(
                     slot,
@@ -156,6 +156,10 @@ class Client(object):
             slot, challenging_block_number,
             rlp.encode(challenging_tx, UnsignedTransaction), proof,
             challenging_tx.sig)
+        return tx_hash
+
+    def finalize_exit(self, slot):
+        tx_hash = self.root_chain.finalize_exit(slot)
         return tx_hash
 
     def finalize_exits(self):
