@@ -2,8 +2,10 @@ package oracle
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"ethcontract"
 	"log"
+	"math/big"
 	"runtime"
 	"time"
 
@@ -26,7 +28,12 @@ type OracleConfig struct {
 	ChainID          string
 	WriteURI         string
 	ReadURI          string
-	Signer           auth.Signer
+	// Used to sign txs sent to Loom DAppChain
+	Signer auth.Signer
+	// Private key that should be used to sign txs sent to Ethereum
+	EthPrivateKey *ecdsa.PrivateKey
+	// Override default gas computation when sending txs to Ethereum
+	OverrideGas bool
 }
 
 type Oracle struct {
@@ -120,6 +127,18 @@ func (orc *Oracle) Run() {
 		}
 
 		orc.startBlock = latestBlock + 1
+
+		if orc.cfg.EthPrivateKey != nil {
+			hashes, err := orc.fetchPlasmaBlocks()
+			if err != nil {
+				log.Printf("failed to fetch Plasma blocks: %v", err)
+				continue
+			}
+			// TODO: figure out how to prevent multiple oracles from submitting the same block
+			for _, hash := range hashes {
+				orc.submitPlasmaBlock(hash)
+			}
+		}
 	}
 }
 
@@ -157,12 +176,12 @@ func (orc *Oracle) fetchDeposits(startBlock, endBlock uint64) ([]*pctypes.Deposi
 				DepositBlock: &ltypes.BigUInt{Value: *loom.NewBigUInt(ev.BlockNumber)},
 				Denomination: &ltypes.BigUInt{Value: *loom.NewBigUIntFromInt(1)}, // TODO: ev.Denomination
 				From:         loom.Address{ChainID: "eth", Local: fromAddr}.MarshalPB(),
-				// TODO: store ev.Hash ... should it's always a hash of ev.Slot, so a bit redundant
+				// TODO: store ev.Hash... it's always a hash of ev.Slot, so a bit redundant
 			})
 		} else {
 			err := it.Error()
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to get event data for ETHReceived")
+				return nil, errors.Wrap(err, "failed to get event data for Plasma deposit")
 			}
 			it.Close()
 			break
@@ -170,4 +189,27 @@ func (orc *Oracle) fetchDeposits(startBlock, endBlock uint64) ([]*pctypes.Deposi
 	}
 
 	return deposits, nil
+}
+
+// Fetches all submit-block events from a Loom DAppChain node
+func (orc *Oracle) fetchPlasmaBlocks() ([][]byte, error) {
+	// TODO: pull submit-block event data from the dappchain
+	return nil, nil
+}
+
+// Submits a Plasma block (or rather its merkle root) to the Plasma Solidity contract on Ethereum
+func (orc *Oracle) submitPlasmaBlock(merkleRoot []byte) error {
+	if len(merkleRoot) != 32 {
+		return errors.New("invalid merkle root size")
+	}
+	auth := bind.NewKeyedTransactor(orc.cfg.EthPrivateKey)
+	if orc.cfg.OverrideGas {
+		auth.GasPrice = big.NewInt(20000)
+		auth.GasLimit = uint64(3141592)
+	}
+
+	var root [32]byte
+	copy(root[:], merkleRoot)
+	_, err := orc.solPlasma.SubmitBlock(auth, root)
+	return err
 }
