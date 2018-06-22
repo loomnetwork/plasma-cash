@@ -103,5 +103,8 @@ class ChildChain(object):
 
     def get_tx_and_proof(self, blknum, slot):
         tx = self.get_tx(blknum, slot)
-        proof = self.get_proof(blknum, slot)
+        if blknum % self.child_block_interval != 0:
+            proof = '00' * 8
+        else:
+            proof = self.get_proof(blknum, slot)
         return tx, proof
