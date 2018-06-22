@@ -1,7 +1,8 @@
+from time import sleep
+
 from client.client import Client
 from dependency_config import container
 from utils.utils import increaseTime
-from time import sleep
 
 alice = Client(container.get_root('alice'), container.get_token('alice'))
 bob = Client(container.get_root('bob'), container.get_token('bob'))

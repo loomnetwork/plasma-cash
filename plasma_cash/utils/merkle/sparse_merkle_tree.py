@@ -1,4 +1,5 @@
 from collections import OrderedDict
+
 from eth_utils.crypto import keccak
 
 
@@ -102,7 +103,7 @@ class SparseMerkleTree(object):
             if proofbits % 2 == 0:
                 proof_element = self.default_nodes[d]
             else:
-                proof_element = proof[p:p + 32]
+                proof_element = proof[p : p + 32]
                 p += 32
             if index % 2 == 0:
                 computed_hash = keccak(computed_hash + proof_element)

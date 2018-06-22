@@ -1,9 +1,10 @@
-import rlp
 import ethereum.utils
-from web3.auto import w3
+import rlp
 from rlp.sedes import big_endian_int, binary
+from web3.auto import w3
 
 from utils.utils import get_sender, sign
+
 from .exceptions import InvalidTxSignatureException
 
 

@@ -3,9 +3,10 @@ from rlp.sedes import CountableList, binary
 from web3.auto import w3
 
 from child_chain.exceptions import InvalidBlockSignatureException
-from .transaction import Transaction
-from utils.utils import get_sender, sign
 from utils.merkle.sparse_merkle_tree import SparseMerkleTree
+from utils.utils import get_sender, sign
+
+from .transaction import Transaction
 
 
 class Block(rlp.Serializable):

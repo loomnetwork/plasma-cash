@@ -1,5 +1,6 @@
-from web3.auto import w3
 from hexbytes import HexBytes
+from web3.auto import w3
+
 from child_chain.exceptions import InvalidTxSignatureException
 
 
