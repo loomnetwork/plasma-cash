@@ -4,7 +4,7 @@ set -exo pipefail
 
 # make test
 
-cd ../server
+cd server
 npm install
 npm run lint
 npm run test
