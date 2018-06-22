@@ -13,7 +13,7 @@ virtualenv --python=python3.5 .
 source bin/activate
 pip install -r requirements.txt
 make lint
-make test
+# make test
 
 cd ../
 bash integration_test.sh
