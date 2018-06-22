@@ -61,8 +61,7 @@ for iteration in range(block_iterations):
             )
             players[index].send_transaction(
                 deposits[deposit_index][coin_index]["slot"],
-                # prev_block
-                deposits[deposit_index][coin_index]["blockNumber"],
+                prev_block,
                 players[neighbor_index].token_contract.account.address
             )
     authority.submit_block()
