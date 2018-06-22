@@ -8,8 +8,9 @@ ethereum==2.3.1
 
 # linting
 flake8==3.5.0
-# black==18.6b4
+black==18.6b4
 isort==4.3.4
 
 # testing
 pytest==3.6.0
+eth-tester==0.1.0b27
