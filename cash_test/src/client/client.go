@@ -1,5 +1,9 @@
 package client
 
+import (
+	"fmt"
+)
+
 type Client struct {
 	childChain         ChainServiceClient
 	RootChain          RootChainClient
@@ -211,8 +215,9 @@ func (c *Client) getTxAndProof(blkHeight int64, slot uint64) (Tx, Proof, error) 
 		return nil, nil, err
 	}
 
+	fmt.Printf("block-%v\n", block) //placeholder
 	//	tx = rlp.decode(utils.decode_hex(data['tx']), Transaction)
-	return &LoomTx{}, &SimpleProof{block.Proof()}, nil
+	return &LoomTx{}, &SimpleProof{}, nil //block.Proof()???
 }
 
 func (c *Client) GetBlockNumber() (int64, error) {

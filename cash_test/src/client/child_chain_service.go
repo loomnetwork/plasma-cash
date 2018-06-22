@@ -18,10 +18,6 @@ type DummyBlock struct {
 	blockId string
 }
 
-func (d *DummyBlock) Proof() []byte {
-	return []byte{}
-}
-
 func (c *ChildChainService) CurrentBlock() (Block, error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/block", c.url), nil)
 	if err != nil {

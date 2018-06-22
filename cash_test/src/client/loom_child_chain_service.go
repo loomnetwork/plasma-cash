@@ -57,10 +57,10 @@ func (c *LoomChildChainService) Block(blknum int64) (Block, error) {
 
 	log.Printf("get block value %v '\n", result)
 
-	//detect empty blocks correctly
-	if result.Block.GetProof() == nil {
-		return nil, fmt.Errorf("empty block from the server")
-	}
+	//TODO detect empty blocks correctly
+//	if result.Block0.GetProof() == nil {
+//		return nil, fmt.Errorf("empty block from the server")
+//	}
 	return NewClientBlock(result.Block), nil
 }
 
