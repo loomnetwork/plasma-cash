@@ -23,8 +23,9 @@ def get_block_number():
 def get_tx_and_proof():
     blknum = int(request.args.get('blknum'))
     slot = int(request.args.get('slot'))
-    tx, proof = container.get_child_chain().get_tx_and_proof(int(blknum),
-                                                             int(slot))
+    tx, proof = container.get_child_chain().get_tx_and_proof(
+        int(blknum), int(slot)
+    )
     return jsonify({'tx': tx, 'proof': proof})
 
 

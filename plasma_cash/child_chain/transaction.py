@@ -14,11 +14,12 @@ class Transaction(rlp.Serializable):
         ('prev_block', big_endian_int),
         ('denomination', big_endian_int),
         ('new_owner', ethereum.utils.address),
-        ('sig', binary)
+        ('sig', binary),
     ]
 
-    def __init__(self, uid, prev_block, denomination, new_owner,
-                 sig=b'\x00' * 65):
+    def __init__(
+        self, uid, prev_block, denomination, new_owner, sig=b'\x00' * 65
+    ):
         self.uid = uid
         self.prev_block = prev_block
         self.denomination = denomination

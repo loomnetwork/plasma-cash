@@ -6,8 +6,9 @@ from utils.utils import increaseTime
 alice = Client(container.get_root('alice'), container.get_token('alice'))
 bob = Client(container.get_root('bob'), container.get_token('bob'))
 eve = Client(container.get_root('eve'), container.get_token('eve'))
-authority = Client(container.get_root('authority'),
-                   container.get_token('authority'))
+authority = Client(
+    container.get_root('authority'), container.get_token('authority')
+)
 
 bobTokensStart = bob.token_contract.balance_of()
 
@@ -26,15 +27,18 @@ time.sleep(2)
 # TODO stop manually setting these UTXOs
 coin = eve.get_plasma_coin(deposit1_utxo)
 eve_to_bob = eve.send_transaction(
-         deposit1_utxo, coin['deposit_block'],
-         1, bob.token_contract.account.address)
+    deposit1_utxo, coin['deposit_block'], 1, bob.token_contract.account.address
+)
 authority.submit_block()
 eve_to_bob_block = authority.get_block_number()
 
 # Eve sends this same plasma coin to Alice
 eve_to_alice = eve.send_transaction(
-      deposit1_utxo, coin['deposit_block'],
-      1, alice.token_contract.account.address)
+    deposit1_utxo,
+    coin['deposit_block'],
+    1,
+    alice.token_contract.account.address,
+)
 authority.submit_block()
 
 eve_to_alice_block = authority.get_block_number()
@@ -55,13 +59,15 @@ bob.withdraw(deposit1_utxo)
 bob_balance_before = w3.eth.getBalance(bob.token_contract.account.address)
 bob.withdraw_bonds()
 bob_balance_after = w3.eth.getBalance(bob.token_contract.account.address)
-assert (bob_balance_before < bob_balance_after), \
-        "END: Bob did not withdraw his bonds"
+assert (
+    bob_balance_before < bob_balance_after
+), "END: Bob did not withdraw his bonds"
 
 bobTokensEnd = bob.token_contract.balance_of()
 
 print('Bob has {} tokens'.format(bobTokensEnd))
-assert (bobTokensEnd == bobTokensStart + 1), \
-        "END: Bob has incorrect number of tokens"
+assert (
+    bobTokensEnd == bobTokensStart + 1
+), "END: Bob has incorrect number of tokens"
 
 print('Plasma Cash `challengeBetween` success :)')

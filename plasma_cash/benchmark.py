@@ -51,46 +51,48 @@ for i in range(block_iterations):
                 1,  # todo remove?
                 players[neighbor_index].token_contract.account.address,
             )
-            print('PLAYER {} to {} : Coin {}'.format(index, neighbor_index, deposits[index][coin_index]['slot']))
+            print(
+                'PLAYER {} to {} : Coin {}'.format(
+                    index, neighbor_index, deposits[index][coin_index]['slot']
+                )
+            )
     authority.submit_block()
 
 # Step 4: All players initiate an exit for the coins they own.
 # Since each player gave their coin to their neighbour, player `i`
 # now owns the coins that player `(i-block_iterations) % num_players`
-# initially had. Everyone initializes their exits 
+# initially had. Everyone initializes their exits
 # by referencing the last 2 blocks
 for index in players_indices:
     received = (index - block_iterations) % number_of_players
     for coin_index in coin_indices:
-        print('PLAYER {} exiting {} from {}'.format(index, coin_index, received))
+        print(
+            'PLAYER {} exiting {} from {}'.format(index, coin_index, received)
+        )
         slot = deposits[received][coin_index]["slot"]
-        prev_block = \
-            deposits[received][coin_index]["blockNumber"] \
-            if block_iterations == 1 else \
-            (block_iterations - 1) * child_block_interval
+        prev_block = (
+            deposits[received][coin_index]["blockNumber"]
+            if block_iterations == 1
+            else (block_iterations - 1) * child_block_interval
+        )
+
         players[index].start_exit(
-             slot,
-             prev_block,
-             block_iterations * child_block_interval
+            slot, prev_block, block_iterations * child_block_interval
         )
 
 
 increaseTime(w3, 8 * 24 * 3600)
 # Somebody can finalize all exits, or each user can finalize their own
-# authority.finalize_exits() 
+# authority.finalize_exits()
 
-# Final step: Each user finalizes their exit after challenge period 
-# has passed and then withdraws their coins. 
+# Final step: Each user finalizes their exit after challenge period
+# has passed and then withdraws their coins.
 for index in players_indices:
     received = (index - block_iterations) % number_of_players
     for coin_index in coin_indices:
         slot = deposits[received][coin_index]["slot"]
-        players[index].finalize_exit(
-             slot
-        )
-        players[index].withdraw(
-             slot,
-        )
+        players[index].finalize_exit(slot)
+        players[index].withdraw(slot)
         print("Player {} withdrew coin: {}".format(index, slot))
 
 print('Benchmarking done :)')

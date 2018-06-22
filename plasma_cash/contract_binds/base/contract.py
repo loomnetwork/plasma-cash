@@ -7,6 +7,7 @@ from web3.utils.events import get_event_data
 
 class Contract(object):
     '''Base class for interfacing with a contract'''
+
     def __init__(self, keystore, address, abi_file, endpoint):
         w3 = getWeb3(endpoint)
         with open(abi_file) as f:
@@ -25,11 +26,13 @@ class Contract(object):
 
     def sign_and_send(self, func, args, value=0, gas=1000000):
         ''' Expecting all arguments in 1 array '''
-        signed_tx = self._sign_function_call(func,
-                                             args,
-                                             value,
-                                             # may need to change gas
-                                             gas)
+        signed_tx = self._sign_function_call(
+            func,
+            args,
+            value,
+            # may need to change gas
+            gas,
+        )
 
         try:
             tx_hash = self._send_raw_tx(signed_tx)
@@ -48,13 +51,13 @@ class Contract(object):
         gasPrice = self.w3.toWei('10', 'gwei')
 
         raw_tx = {
-                'chainId': int(self.w3.version.network),
-                'to': self.w3.toChecksumAddress(to),
-                'value': value,
-                'gas': gas,
-                'gasPrice': gasPrice,
-                'nonce': self.w3.eth.getTransactionCount(self.account.address)
-                }
+            'chainId': int(self.w3.version.network),
+            'to': self.w3.toChecksumAddress(to),
+            'value': value,
+            'gas': gas,
+            'gasPrice': gasPrice,
+            'nonce': self.w3.eth.getTransactionCount(self.account.address),
+        }
 
         # print(raw_tx)
 
@@ -69,11 +72,13 @@ class Contract(object):
             TODO: Add option to modify gas
         """
         # Build the raw transaction
-        raw_tx = func(*args).buildTransaction({
-            'gas': gas,
-            'value': value,
-            'nonce': self.w3.eth.getTransactionCount(self.account.address)
-            })
+        raw_tx = func(*args).buildTransaction(
+            {
+                'gas': gas,
+                'value': value,
+                'nonce': self.w3.eth.getTransactionCount(self.account.address),
+            }
+        )
         raw_tx['to'] = self.w3.toChecksumAddress(raw_tx['to'])
 
         # Sign the transaction with the meter's private key
@@ -104,17 +109,23 @@ class Contract(object):
             matched.append(d)
         return matched
 
-    def watch_event(self, event_name, callback, interval, fromBlock=0,
-                    toBlock='latest', filters=None):
+    def watch_event(
+        self,
+        event_name,
+        callback,
+        interval,
+        fromBlock=0,
+        toBlock='latest',
+        filters=None,
+    ):
         event_filter = self.install_filter(
-                event_name,
-                fromBlock,
-                toBlock,
-                filters
-            )
-        Thread(target=self.watcher,
-               args=(event_filter, callback, interval),
-               daemon=True).start()
+            event_name, fromBlock, toBlock, filters
+        )
+        Thread(
+            target=self.watcher,
+            args=(event_filter, callback, interval),
+            daemon=True,
+        ).start()
 
     def watcher(self, event_filter, callback, interval):
         while True:
@@ -122,10 +133,11 @@ class Contract(object):
                 callback(event)
                 time.sleep(interval)
 
-    def install_filter(self, event_name, fromBlock=0, toBlock='latest',
-                       filters=None):
+    def install_filter(
+        self, event_name, fromBlock=0, toBlock='latest', filters=None
+    ):
         event = getattr(self.contract.events, event_name)
-        eventFilter = event.createFilter(fromBlock=fromBlock,
-                                         toBlock=toBlock,
-                                         argument_filters=filters)
+        eventFilter = event.createFilter(
+            fromBlock=fromBlock, toBlock=toBlock, argument_filters=filters
+        )
         return eventFilter
