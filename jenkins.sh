@@ -11,6 +11,7 @@ export PATH="/var/lib/jenkins/.pyenv/bin:$PATH"
 eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 #pyenv virtualenv 3.6.0 general
+pyenv global general
 
 pip install -r requirements.txt
 make lint
