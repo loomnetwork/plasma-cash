@@ -98,58 +98,66 @@ func (orc *Oracle) Run() {
 			skipSleep = false
 		}
 
-		// DAppChain -> Plasma Blocks -> Ethereum
-
 		if orc.cfg.EthPrivateKey != nil {
-			if err := orc.syncPlasmaBlocksWithEthereum(); err != nil {
-				continue
-			}
-
-			breq := &pctypes.SubmitBlockToMainnetRequest{}
-			bresp := &pctypes.SubmitBlockToMainnetResponse{}
-			if _, err := orc.goPlasma.Call("SubmitBlockToMainnet", breq, orc.cfg.Signer, bresp); err != nil {
-				log.Printf("failed to commit SubmitBlockToMainnet tx: %v", err)
-				continue
-			}
-
-			if err := orc.submitPlasmaBlockToEthereum(bresp.MerkleHash); err != nil {
-				log.Printf("failed to submit plasma block to mainnet: %v", err)
-				continue
+			if err := orc.sendPlasmaBlocksToEthereum(); err != nil {
+				log.Println(err.Error())
 			}
 		}
 
-		// Ethereum -> Plasma Deposits -> DAppChain
-
-		// TODO: get start block from Plasma Go contract, like the Transfer Gateway Oracle
-		startEthBlock := orc.startEthBlock
-
-		// TODO: limit max block range per batch
-		latestEthBlock, err := orc.getLatestEthBlockNumber()
-		if err != nil {
-			log.Printf("failed to obtain latest Ethereum block number: %v", err)
-			continue
+		if err := orc.sendPlasmaDepositsToDAppChain(); err != nil {
+			log.Println(err.Error())
 		}
-
-		if latestEthBlock < startEthBlock {
-			// Wait for Ethereum to produce a new block...
-			continue
-		}
-
-		deposits, err := orc.fetchDeposits(startEthBlock, latestEthBlock)
-		if err != nil {
-			log.Printf("failed to fetch events from Ethereum: %v", err)
-			continue
-		}
-
-		for _, deposit := range deposits {
-			if _, err := orc.goPlasma.Call("DepositRequest", deposit, orc.cfg.Signer, nil); err != nil {
-				log.Printf("failed to commit DepositRequest tx: %v", err)
-				continue
-			}
-		}
-
-		orc.startEthBlock = latestEthBlock + 1
 	}
+}
+
+// DAppChain -> Plasma Blocks -> Ethereum
+func (orc *Oracle) sendPlasmaBlocksToEthereum() error {
+	if err := orc.syncPlasmaBlocksWithEthereum(); err != nil {
+		return errors.Wrap(err, "failed to sync plasma blocks with mainnet")
+	}
+
+	breq := &pctypes.SubmitBlockToMainnetRequest{}
+	bresp := &pctypes.SubmitBlockToMainnetResponse{}
+	if _, err := orc.goPlasma.Call("SubmitBlockToMainnet", breq, orc.cfg.Signer, bresp); err != nil {
+		return errors.Wrap(err, "failed to commit SubmitBlockToMainnet tx")
+	}
+
+	if err := orc.submitPlasmaBlockToEthereum(bresp.MerkleHash); err != nil {
+		return errors.Wrap(err, "failed to submit plasma block to mainnet")
+	}
+
+	return nil
+}
+
+// Ethereum -> Plasma Deposits -> DAppChain
+func (orc *Oracle) sendPlasmaDepositsToDAppChain() error {
+	// TODO: get start block from Plasma Go contract, like the Transfer Gateway Oracle
+	startEthBlock := orc.startEthBlock
+
+	// TODO: limit max block range per batch
+	latestEthBlock, err := orc.getLatestEthBlockNumber()
+	if err != nil {
+		return errors.Wrap(err, "failed to obtain latest Ethereum block number")
+	}
+
+	if latestEthBlock < startEthBlock {
+		// Wait for Ethereum to produce a new block...
+		return nil
+	}
+
+	deposits, err := orc.fetchDeposits(startEthBlock, latestEthBlock)
+	if err != nil {
+		return errors.Wrap(err, "failed to fetch Plasma deposits from Ethereum")
+	}
+
+	for _, deposit := range deposits {
+		if _, err := orc.goPlasma.Call("DepositRequest", deposit, orc.cfg.Signer, nil); err != nil {
+			return errors.Wrap(err, "failed to commit DepositRequest tx")
+		}
+	}
+
+	orc.startEthBlock = latestEthBlock + 1
+	return nil
 }
 
 // Catch up on any plasma blocks that haven't been submitted to Ethereum yet.
