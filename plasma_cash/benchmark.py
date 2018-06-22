@@ -8,7 +8,7 @@ authority = Client(
 w3 = authority.root_chain.w3  # get w3 instance
 
 child_block_interval = 1000
-block_iterations = 3
+block_iterations = 4
 coins_per_register = 5
 num_deposited_coins = 2
 coin_indices = range(0, num_deposited_coins)
@@ -61,7 +61,8 @@ for iteration in range(block_iterations):
             )
             players[index].send_transaction(
                 deposits[deposit_index][coin_index]["slot"],
-                prev_block,
+                # prev_block
+                deposits[deposit_index][coin_index]["blockNumber"],
                 players[neighbor_index].token_contract.account.address
             )
     authority.submit_block()
