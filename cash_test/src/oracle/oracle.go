@@ -21,6 +21,8 @@ import (
 )
 
 type OracleConfig struct {
+	// Each Plasma block number must be a multiple of this value
+	PlasmaBlockInterval uint32
 	// URI of an Ethereum node
 	EthereumURI string
 	// Plasma contract address on Ethereum
@@ -117,13 +119,8 @@ func (orc *Oracle) sendPlasmaBlocksToEthereum() error {
 	}
 
 	breq := &pctypes.SubmitBlockToMainnetRequest{}
-	bresp := &pctypes.SubmitBlockToMainnetResponse{}
-	if _, err := orc.goPlasma.Call("SubmitBlockToMainnet", breq, orc.cfg.Signer, bresp); err != nil {
+	if _, err := orc.goPlasma.Call("SubmitBlockToMainnet", breq, orc.cfg.Signer, nil); err != nil {
 		return errors.Wrap(err, "failed to commit SubmitBlockToMainnet tx")
-	}
-
-	if err := orc.submitPlasmaBlockToEthereum(bresp.MerkleHash); err != nil {
-		return errors.Wrap(err, "failed to submit plasma block to mainnet")
 	}
 
 	return nil
@@ -160,23 +157,58 @@ func (orc *Oracle) sendPlasmaDepositsToDAppChain() error {
 	return nil
 }
 
-// Catch up on any plasma blocks that haven't been submitted to Ethereum yet.
+// Send any finalized but unsubmitted plasma blocks from the DAppChain to Ethereum.
 func (orc *Oracle) syncPlasmaBlocksWithEthereum() error {
-	// Normally there shouldn't be any of these blocks around because the oracle will
-	// attempt to submit the block as soon as it gets it from the DAppChain. However if
-	// an error occurs while the oracle is attempting to send the block to mainnet
-	// (connection drops out, tx runs out of gas, oracle crashes, etc.) it will need to
-	// be resent before any new plasma blocks are obtained from the DAppChain.
-	hashes, err := orc.fetchPlasmaBlocks()
+	curEthPlasmaBlockNum, err := orc.solPlasma.CurrentBlock(nil)
 	if err != nil {
-		log.Printf("failed to fetch Plasma blocks: %v", err)
-		return err
+		return errors.Wrap(err, "failed to obtain current plasma block from Ethereum")
+	}
+	log.Printf("solPlasma.CurrentBlock: %s", curEthPlasmaBlockNum.String())
+
+	req := &pctypes.GetCurrentBlockRequest{}
+	resp := &pctypes.GetCurrentBlockResponse{}
+	caller := loom.Address{
+		ChainID: orc.cfg.ChainID,
+		Local:   loom.LocalAddressFromPublicKey(orc.cfg.Signer.PublicKey()),
+	}
+	if _, err := orc.goPlasma.StaticCall("GetCurrentBlockRequest", req, caller, resp); err != nil {
+		return errors.Wrap(err, "failed to call GetCurrentBlockRequest")
+	}
+	curLoomPlasmaBlockNum := resp.BlockHeight.Value.Int
+
+	if curLoomPlasmaBlockNum.Cmp(curEthPlasmaBlockNum) == 0 {
+		// DAppChain and Ethereum both have all the finalized Plasma blocks
+		return nil
 	}
 
-	for _, hash := range hashes {
-		if err := orc.submitPlasmaBlockToEthereum(hash); err != nil {
-			return err
+	plasmaBlockInterval := big.NewInt(int64(orc.cfg.PlasmaBlockInterval))
+	unsubmittedPlasmaBlockNum := nextPlasmaBlockNum(curEthPlasmaBlockNum, plasmaBlockInterval)
+
+	for {
+		log.Printf("unsubmittedPlasmaBlockNum: %s", unsubmittedPlasmaBlockNum.String())
+		if unsubmittedPlasmaBlockNum.Cmp(curLoomPlasmaBlockNum) > 0 {
+			// All the finalized plasma blocks in the DAppChain have been submitted to Ethereum
+			break
 		}
+
+		req := &pctypes.GetBlockRequest{
+			BlockHeight: &ltypes.BigUInt{Value: *loom.NewBigUInt(unsubmittedPlasmaBlockNum)},
+		}
+		resp := &pctypes.GetBlockResponse{}
+		if _, err := orc.goPlasma.StaticCall("GetBlockRequest", req, caller, resp); err != nil {
+			return errors.Wrap(err, "failed to obtain plasma block from DAppChain")
+		}
+		if resp.Block == nil {
+			return errors.New("DAppChain returned empty plasma block")
+		}
+
+		// TODO: Will this block until the tx is confirmed? If not then should wait until it is
+		//       confirmed before submitting another block.
+		if err := orc.submitPlasmaBlockToEthereum(unsubmittedPlasmaBlockNum, resp.Block.MerkleHash); err != nil {
+			return errors.Wrap(err, "failed to submit plasma block to Ethereum")
+		}
+
+		unsubmittedPlasmaBlockNum = nextPlasmaBlockNum(unsubmittedPlasmaBlockNum, plasmaBlockInterval)
 	}
 
 	return nil
@@ -231,21 +263,17 @@ func (orc *Oracle) fetchDeposits(startBlock, endBlock uint64) ([]*pctypes.Deposi
 	return deposits, nil
 }
 
-// Fetches any as yet unsubmitted plasma blocks from the DAppChain
-func (orc *Oracle) fetchPlasmaBlocks() ([][]byte, error) {
-	// TODO: find the DAppChain block (X) that corresponds to the last plasma block merkle root that was
-	//       successfully submitted to Ethereum
-	// TODO: trawl the through the DAppChain starting at block X using Tendermint RPC endpoint
-	//       https://tendermint.github.io/slate/?shell#blockchaininfo to find
-	//       SubmitBlockToMainnet txs, then extract the merkle root returned from SubmitBlockToMainnet
-	//       by https://tendermint.github.io/slate/?shell#tx decoding the tx result data
-	return nil, nil
-}
-
 // Submits a Plasma block (or rather its merkle root) to the Plasma Solidity contract on Ethereum
-func (orc *Oracle) submitPlasmaBlockToEthereum(merkleRoot []byte) error {
-	// TODO: query the Plasma contract on mainnet for the last plasma block and bail out if we're
-	//       trying to submit the same block again
+func (orc *Oracle) submitPlasmaBlockToEthereum(plasmaBlockNum *big.Int, merkleRoot []byte) error {
+	curEthPlasmaBlockNum, err := orc.solPlasma.CurrentBlock(nil)
+	if err != nil {
+		return errors.Wrap(err, "failed to obtain current plasma block from Ethereum")
+	}
+
+	// Try to avoid submitting the same plasma blocks multiple times
+	if plasmaBlockNum.Cmp(curEthPlasmaBlockNum) <= 0 {
+		return nil
+	}
 
 	if len(merkleRoot) != 32 {
 		return errors.New("invalid merkle root size")
@@ -258,6 +286,20 @@ func (orc *Oracle) submitPlasmaBlockToEthereum(merkleRoot []byte) error {
 
 	var root [32]byte
 	copy(root[:], merkleRoot)
-	_, err := orc.solPlasma.SubmitBlock(auth, root)
+	_, err = orc.solPlasma.SubmitBlock(auth, root)
 	return err
+}
+
+// Computes the block number of the next non-deposit Plasma block.
+// Plasma block numbers of non-deposit blocks are expected to be multiples of the specified interval.
+func nextPlasmaBlockNum(current *big.Int, interval *big.Int) *big.Int {
+	if current.Cmp(new(big.Int)) == 0 {
+		return new(big.Int).Set(interval)
+	}
+	if current.Cmp(interval) == 0 {
+		return new(big.Int).Add(current, interval)
+	}
+	r := new(big.Int).Add(current, new(big.Int).Sub(interval, big.NewInt(1)))
+	r.Div(r, interval)        // (current + (interval - 1)) / interval
+	return r.Mul(r, interval) // ((current + (interval - 1)) / interval) * interval
 }

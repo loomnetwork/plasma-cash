@@ -22,14 +22,15 @@ func main() {
 		log.Fatalf("failed to load private key: %v", err)
 	}
 	plasmaOrc := oracle.NewOracle(oracle.OracleConfig{
-		EthereumURI:      "http://localhost:8545",
-		PlasmaHexAddress: client.GetContractHexAddress("root_chain"),
-		ChainID:          "default",
-		WriteURI:         "http://localhost:46658/rpc",
-		ReadURI:          "http://localhost:46658/query",
-		Signer:           auth.NewEd25519Signer(loomPrivKey),
-		EthPrivateKey:    ethPrivKey,
-		OverrideGas:      true,
+		PlasmaBlockInterval: 1000,
+		EthereumURI:         "http://localhost:8545",
+		PlasmaHexAddress:    client.GetContractHexAddress("root_chain"),
+		ChainID:             "default",
+		WriteURI:            "http://localhost:46658/rpc",
+		ReadURI:             "http://localhost:46658/query",
+		Signer:              auth.NewEd25519Signer(loomPrivKey),
+		EthPrivateKey:       ethPrivKey,
+		OverrideGas:         true,
 	})
 	if err := plasmaOrc.Init(); err != nil {
 		log.Fatal(err)
