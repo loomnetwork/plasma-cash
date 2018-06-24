@@ -34,7 +34,8 @@ deps:
 		github.com/ethereum/go-ethereum \
 		github.com/gorilla/mux \
 		github.com/inconshreveable/mousetrap \
-		gopkg.in/check.v1
+		gopkg.in/check.v1 \
+		github.com/stretchr/testify
 
 clean:
 	go clean

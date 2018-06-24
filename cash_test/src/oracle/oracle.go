@@ -290,7 +290,10 @@ func (orc *Oracle) submitPlasmaBlockToEthereum(plasmaBlockNum *big.Int, merkleRo
 	return err
 }
 
+// TODO: This function should be moved to loomchain/builtin/plasma_cash when the Oracle is
+//       integrated into loomchain.
 // Computes the block number of the next non-deposit Plasma block.
+// The current Plasma block number can be for a deposit or non-deposit Plasma block.
 // Plasma block numbers of non-deposit blocks are expected to be multiples of the specified interval.
 func nextPlasmaBlockNum(current *big.Int, interval *big.Int) *big.Int {
 	if current.Cmp(new(big.Int)) == 0 {
