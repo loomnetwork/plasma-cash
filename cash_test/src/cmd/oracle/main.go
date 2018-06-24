@@ -23,14 +23,18 @@ func main() {
 	}
 	plasmaOrc := oracle.NewOracle(oracle.OracleConfig{
 		PlasmaBlockInterval: 1000,
-		EthereumURI:         "http://localhost:8545",
-		PlasmaHexAddress:    client.GetContractHexAddress("root_chain"),
-		ChainID:             "default",
-		WriteURI:            "http://localhost:46658/rpc",
-		ReadURI:             "http://localhost:46658/query",
-		Signer:              auth.NewEd25519Signer(loomPrivKey),
-		EthPrivateKey:       ethPrivKey,
-		OverrideGas:         true,
+		DAppChainClientCfg: oracle.DAppChainPlasmaClientConfig{
+			ChainID:  "default",
+			WriteURI: "http://localhost:46658/rpc",
+			ReadURI:  "http://localhost:46658/query",
+			Signer:   auth.NewEd25519Signer(loomPrivKey),
+		},
+		EthClientCfg: oracle.EthPlasmaClientConfig{
+			EthereumURI:      "http://localhost:8545",
+			PlasmaHexAddress: client.GetContractHexAddress("root_chain"),
+			PrivateKey:       ethPrivKey,
+			OverrideGas:      true,
+		},
 	})
 	if err := plasmaOrc.Init(); err != nil {
 		log.Fatal(err)
