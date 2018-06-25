@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto/sha3"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/loomnetwork/go-loom/common/evmcompat"
 )
@@ -34,6 +35,7 @@ func (l *LoomTx) RlpEncode() ([]byte, error) {
 }
 
 func (l *LoomTx) Hash() []byte {
+	//TODO is Previous block included block?
 	//    if l.IncludeBlock.Mod(1000) == 0 {
 	//            ret = w3.sha3(rlp.encode(self, UnsignedTransaction))
 	//   }
@@ -41,14 +43,19 @@ func (l *LoomTx) Hash() []byte {
 	//      else
 	data, err := soliditySha3(l.Slot)
 	if err != nil {
-		panic(err)
+		panic(err) //TODO
 	}
 	return data
 }
 
 func (l *LoomTx) MerkleHash() []byte {
-	//        return w3.sha3(rlp.encode(self))
+	data, err := l.rlpEncodeWithSha3()
+	if err != nil {
+		panic(err) //TODO
+	}
 	panic("TODO")
+
+	return data
 }
 
 func soliditySha3(data uint64) ([]byte, error) {
@@ -58,4 +65,14 @@ func soliditySha3(data uint64) ([]byte, error) {
 		return []byte{}, err
 	}
 	return hash, err
+}
+
+func (l *LoomTx) rlpEncodeWithSha3() ([]byte, error) {
+	hash, err := l.RlpEncode()
+	if err != nil {
+		return []byte{}, err
+	}
+	d := sha3.NewKeccak256()
+	d.Write(hash)
+	return d.Sum(nil), nil
 }
