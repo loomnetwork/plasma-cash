@@ -7,11 +7,11 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 // Lib deps
 import "../Libraries/Transaction/Transaction.sol";
-import "../Libraries/ByteUtils.sol";
 import "../Libraries/ECVerify.sol";
 
 import "./SparseMerkleTree.sol";
 import "./ValidatorManagerContract.sol";
+
 
 contract RootChain is ERC721Receiver {
     event Deposit(uint64 indexed slot, uint256 blockNumber, uint64 denomination, address indexed from);
@@ -47,7 +47,6 @@ contract RootChain is ERC721Receiver {
         _;
     }
 
-
     modifier isBonded() {
         require(msg.value == BOND_AMOUNT);
 
@@ -61,7 +60,6 @@ contract RootChain is ERC721Receiver {
         _;
     }
 
-
     modifier cleanupExit(uint64 slot) {
         _;
         delete coins[slot].exit;
@@ -72,11 +70,11 @@ contract RootChain is ERC721Receiver {
         uint256 bonded;
         uint256 withdrawable;
     }
-    mapping (address => Balance ) public balances;
+    mapping (address => Balance) public balances;
 
     // exits
     uint64[] public exitSlots;
-    // Each exit can be challenged once ? Need to confirm if needed for more.
+    // Each exit can only be challenged by a single challenger at a time
     mapping (uint64 => address) challengers;
     struct Exit {
         address prevOwner; // previous owner of coin
@@ -98,7 +96,8 @@ contract RootChain is ERC721Receiver {
     uint64 public numCoins = 0;
     mapping (uint64 => Coin) public coins;
     struct Coin {
-        uint64 uid; // there are up to 2^64 cards, can probably make it less
+        uint64 uid; // there are up to 2^64 cards, one for every leaf of
+                    // a depth 64 Sparse Merkle Tree
         uint32 denomination; // Currently set to 1 always, subject to change once the token changes
         uint256 depositBlock;
         address owner; // who owns that nft
@@ -131,8 +130,8 @@ contract RootChain is ERC721Receiver {
     {
         // rounding to next whole `childBlockInterval`
         currentBlock = currentBlock.add(childBlockInterval)
-                                   .div(childBlockInterval)
-                                   .mul(childBlockInterval);
+            .div(childBlockInterval)
+            .mul(childBlockInterval);
 
         childChain[currentBlock] = ChildBlock({
             root: root,
@@ -141,7 +140,6 @@ contract RootChain is ERC721Receiver {
 
         emit SubmittedBlock(currentBlock, root, block.timestamp);
     }
-
 
     /// @dev Allows anyone to deposit funds into the Plasma chain, called when contract receives ERC721
     function deposit(address from, uint64 uid, uint32 denomination)
@@ -168,7 +166,11 @@ contract RootChain is ERC721Receiver {
         });
 
         // create a utxo at `slot`
-        emit Deposit(slot, currentBlock, denomination, from);
+        emit Deposit(
+            slot,
+            currentBlock,
+            denomination,
+            from);
 
         numCoins += 1;
     }
@@ -265,7 +267,11 @@ contract RootChain is ERC721Receiver {
         require(prevTxIncBlock < exitingTxIncBlock);
         // If we're exiting a deposit UTXO directly, we do a different inclusion check
         if (exitingTxIncBlock % childBlockInterval != 0) {
-            checkDepositBlockInclusion(exitingTxBytes, sig, exitingTxIncBlock, false);
+            checkDepositBlockInclusion(
+                exitingTxBytes,
+                sig,
+                exitingTxIncBlock,
+                false);
         } else {
             checkBlockInclusion(
                 prevTxBytes, exitingTxBytes, prevTxInclusionProof,
@@ -275,8 +281,14 @@ contract RootChain is ERC721Receiver {
         setChallenged(slot);
     }
 
-    // If `challengeBefore` was successfully challenged, then set state to RESPONDED and allow the coin to be exited. No need to actually attach a bond when responding to a challenge
-    function respondChallengeBefore(uint64 slot, uint256 challengingBlockNumber, bytes challengingTransaction, bytes proof)
+    // If `challengeBefore` was successfully challenged, then set state to
+    // RESPONDED and allow the coin to be exited. No need to actually attach
+    // a bond when responding to a challenge
+    function respondChallengeBefore(
+        uint64 slot,
+        uint256 challengingBlockNumber,
+        bytes challengingTransaction,
+        bytes proof)
         external
         isState(slot, State.CHALLENGED)
     {
@@ -287,8 +299,12 @@ contract RootChain is ERC721Receiver {
         emit RespondedExitChallenge(slot);
     }
 
-
-    function challengeBetween(uint64 slot, uint256 challengingBlockNumber, bytes challengingTransaction, bytes proof, bytes signature)
+    function challengeBetween(
+        uint64 slot,
+        uint256 challengingBlockNumber,
+        bytes challengingTransaction,
+        bytes proof,
+        bytes signature)
         external isState(slot, State.EXITING) cleanupExit(slot)
     {
         // Must challenge with a tx in between
@@ -307,7 +323,12 @@ contract RootChain is ERC721Receiver {
         coins[slot].state = State.DEPOSITED;
     }
 
-    function challengeAfter(uint64 slot, uint256 challengingBlockNumber, bytes challengingTransaction, bytes proof, bytes signature)
+    function challengeAfter(
+        uint64 slot,
+        uint256 challengingBlockNumber,
+        bytes challengingTransaction,
+        bytes proof,
+        bytes signature)
         external
         isState(slot, State.EXITING)
         cleanupExit(slot)
@@ -343,7 +364,12 @@ contract RootChain is ERC721Receiver {
         emit SlashedBond(from, to, BOND_AMOUNT);
     }
 
-    function pushExit(uint64 slot, bytes txBytes, uint256 prevBlock, uint256 exitingBlock) private {
+    function pushExit(
+        uint64 slot,
+        bytes txBytes,
+        uint256 prevBlock,
+        uint256 exitingBlock) private
+    {
         Transaction.TX memory txData = txBytes.getTx();
 
         // Push exit to list
@@ -366,13 +392,14 @@ contract RootChain is ERC721Receiver {
     }
 
     function setChallenged(uint64 slot) private {
-        // Do not delete exit yet. Set its state as challenged and wait for the exitor's response
+        // When an exit is challenged, its state is set to challenged and the
+        // contract waits for the exitor's response. The exit is not
+        // immediately deleted.
         coins[slot].state = State.CHALLENGED;
         // Save the challenger's address, for applying penalties
         challengers[slot] = msg.sender;
         emit ChallengedExit(slot);
     }
-
 
     /******************** PROOF CHECKING ********************/
 
@@ -436,7 +463,9 @@ contract RootChain is ERC721Receiver {
         bytes32 txHash;
         bytes32 root = childChain[blockNumber].root;
 
-        // If deposit block, just check the matching hash to the block's root. Simpler verification due to deposit mechanism
+        // If deposit block, just verify that the tx hash equals the block
+        // root.  This simpler verification due to deposit block's root being
+        // set equal to the hash of the signle transaction it contains.
         if (blockNumber % childBlockInterval != 0) {
             txHash = keccak256(abi.encodePacked(txData.slot));
             require(txHash == root);
@@ -453,7 +482,6 @@ contract RootChain is ERC721Receiver {
             );
         }
     }
-
 
     /******************** ERC721 ********************/
 
@@ -477,10 +505,18 @@ contract RootChain is ERC721Receiver {
         return 0;
     }
 
-    function checkMembership(bytes32 txHash, bytes32 root, uint64 slot, bytes proof) public returns (bool) {
-        return smt.checkMembership(txHash, root, slot, proof);
+    function checkMembership(
+        bytes32 txHash,
+        bytes32 root,
+        uint64 slot,
+        bytes proof) public returns (bool)
+    {
+        return smt.checkMembership(
+            txHash,
+            root,
+            slot,
+            proof);
     }
-
 
     function getPlasmaCoin(uint64 slot) external view returns(uint64, uint256, uint32, address, State) {
         Coin memory c = coins[slot];
