@@ -135,6 +135,11 @@ func (d *RootChainService) WithdrawBonds() error {
 	return err
 }
 
+func (d *RootChainService) SubmitBlock(blockNum *big.Int, merkleRoot [32]byte) error {
+	_, err := d.plasmaContract.SubmitBlock(d.transactOpts, merkleRoot)
+	return err
+}
+
 var conn *ethclient.Client
 
 func InitClients(connStr string) {

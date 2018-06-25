@@ -1,5 +1,9 @@
 package client
 
+import (
+	"math/big"
+)
+
 type Client struct {
 	childChain         ChainServiceClient
 	RootChain          RootChainClient
@@ -198,7 +202,23 @@ func (c *Client) PlasmaCoin(slot uint64) (*PlasmaCoin, error) {
 // Child Chain Functions
 
 func (c *Client) SubmitBlock() error {
-	return c.childChain.SubmitBlock()
+	if err := c.childChain.SubmitBlock(); err != nil {
+		return err
+	}
+
+	blockNum, err := c.childChain.BlockNumber()
+	if err != nil {
+		return err
+	}
+
+	block, err := c.childChain.Block(blockNum)
+	if err != nil {
+		return err
+	}
+
+	var root [32]byte
+	copy(root[:], block.MerkleHash())
+	return c.RootChain.SubmitBlock(big.NewInt(blockNum), root)
 }
 
 func (c *Client) SendTransaction(slot uint64, prevBlock int64, denomination int64, newOwner string) (Tx, error) {

@@ -1,5 +1,7 @@
 package client
 
+import "math/big"
+
 type Tx interface {
 	Sig() []byte
 	RlpEncode() ([]byte, error)
@@ -72,6 +74,8 @@ type RootChainClient interface {
 
 	ChallengeAfter(slot uint64, challengingBlockNumber int64,
 		challengingTransaction Tx, proof Proof) ([]byte, error)
+
+	SubmitBlock(blockNum *big.Int, merkleRoot [32]byte) error
 }
 
 type ChainServiceClient interface {
