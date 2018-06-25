@@ -5,9 +5,11 @@ import (
 	"crypto/ecdsa"
 	"ethcontract"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	etypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	loom "github.com/loomnetwork/go-loom"
 	pctypes "github.com/loomnetwork/go-loom/builtin/types/plasma_cash"
@@ -24,12 +26,18 @@ type EthPlasmaClientConfig struct {
 	PrivateKey *ecdsa.PrivateKey
 	// Override default gas computation when sending txs to Ethereum
 	OverrideGas bool
+	// How often Ethereum should be polled for mined txs (defaults to 10 secs).
+	TxPollInterval time.Duration
+	// Maximum amount of time to way for a tx to be mined by Ethereum (defaults to 5 mins).
+	TxTimeout time.Duration
 }
 
 type EthPlasmaClient interface {
 	Init() error
 	CurrentPlasmaBlockNum() (*big.Int, error)
 	LatestEthBlockNum() (uint64, error)
+	// SubmitPlasmaBlock will submit a Plasma block to Ethereum and wait until the tx is confirmed.
+	// The maximum wait time can be specified via the TxTimeout option in the client config.
 	SubmitPlasmaBlock(merkleRoot [32]byte) error
 	FetchDeposits(startBlock, endBlock uint64) ([]*pctypes.DepositRequest, error)
 }
@@ -70,14 +78,26 @@ func (c *EthPlasmaClientImpl) LatestEthBlockNum() (uint64, error) {
 	return blockHeader.Number.Uint64(), nil
 }
 
+// SubmitPlasmaBlock will submit a Plasma block to Ethereum and wait until the tx is confirmed.
 func (c *EthPlasmaClientImpl) SubmitPlasmaBlock(merkleRoot [32]byte) error {
+	failMsg := "failed to submit plasma block to Ethereum"
 	auth := bind.NewKeyedTransactor(c.PrivateKey)
 	if c.OverrideGas {
 		auth.GasPrice = big.NewInt(20000)
 		auth.GasLimit = uint64(3141592)
 	}
-	_, err := c.plasmaContract.SubmitBlock(auth, merkleRoot)
-	return err
+	tx, err := c.plasmaContract.SubmitBlock(auth, merkleRoot)
+	if err != nil {
+		return errors.Wrap(err, failMsg)
+	}
+	receipt, err := c.waitForTxReceipt(context.TODO(), tx)
+	if err != nil {
+		return err
+	}
+	if receipt.Status == 0 {
+		return errors.New(failMsg)
+	}
+	return nil
 }
 
 // FetchDeposits fetches all deposit events from an Ethereum node from startBlock to endBlock (inclusive).
@@ -119,4 +139,43 @@ func (c *EthPlasmaClientImpl) FetchDeposits(startBlock, endBlock uint64) ([]*pct
 	}
 
 	return deposits, nil
+}
+
+// waitForTxReceipt waits for a tx to be confirmed.
+// It stops waiting if the context is canceled, or the tx hasn't been confirmed after TxTimeout.
+func (c *EthPlasmaClientImpl) waitForTxReceipt(ctx context.Context, tx *etypes.Transaction) (*etypes.Receipt, error) {
+	timeout := c.TxTimeout
+	if timeout == 0 {
+		timeout = 5 * time.Minute
+	}
+
+	interval := c.TxPollInterval
+	if interval == 0 {
+		interval = 10 * time.Second
+	}
+
+	timer := time.NewTimer(timeout)
+	ticker := time.NewTicker(interval)
+
+	defer timer.Stop()
+	defer ticker.Stop()
+
+	txHash := tx.Hash()
+	for {
+		receipt, err := c.ethClient.TransactionReceipt(ctx, txHash)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to retrieve tx receipt")
+		}
+		if receipt != nil {
+			return receipt, nil
+		}
+		// Wait for the next round.
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-timer.C:
+			return nil, errors.New("timed out waiting for tx receipt")
+		case <-ticker.C:
+		}
+	}
 }

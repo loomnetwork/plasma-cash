@@ -151,10 +151,8 @@ func (orc *Oracle) syncPlasmaBlocksWithEthereum() error {
 			return err
 		}
 
-		// TODO: Will this block until the tx is confirmed? If not then should wait until it is
-		//       confirmed before submitting another block.
 		if err := orc.submitPlasmaBlockToEthereum(unsubmittedPlasmaBlockNum, block.MerkleHash); err != nil {
-			return errors.Wrap(err, "failed to submit plasma block to Ethereum")
+			return err
 		}
 
 		unsubmittedPlasmaBlockNum = nextPlasmaBlockNum(unsubmittedPlasmaBlockNum, plasmaBlockInterval)
@@ -163,7 +161,8 @@ func (orc *Oracle) syncPlasmaBlocksWithEthereum() error {
 	return nil
 }
 
-// Submits a Plasma block (or rather its merkle root) to the Plasma Solidity contract on Ethereum
+// Submits a Plasma block (or rather its merkle root) to the Plasma Solidity contract on Ethereum.
+// This function will block until the tx is confirmed, or times out.
 func (orc *Oracle) submitPlasmaBlockToEthereum(plasmaBlockNum *big.Int, merkleRoot []byte) error {
 	curEthPlasmaBlockNum, err := orc.ethPlasmaClient.CurrentPlasmaBlockNum()
 	if err != nil {
