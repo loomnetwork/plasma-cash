@@ -9,7 +9,8 @@ contract ValidatorManagerContract is Ownable {
     
     function checkValidator(address _address) public view returns (bool) {
         // owner is a permanent validator
-        if (_address == owner) return true; 
+        if (_address == owner)
+            return true;
         return validators[_address];
     }
 

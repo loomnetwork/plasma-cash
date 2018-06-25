@@ -98,7 +98,7 @@ contract RootChain is ERC721Receiver {
     mapping (uint64 => Coin) public coins;
     struct Coin {
         uint64 uid; // there are up to 2^64 cards, can probably make it less
-        uint32 denomination; // an owner cannot own more than 256 of a card. Currently set to 1 always, subject to change once the token changes
+        uint32 denomination; // Currently set to 1 always, subject to change once the token changes
         uint256 depositBlock;
         address owner; // who owns that nft
         address contractAddress; // which contract does the coin belong to
@@ -109,13 +109,13 @@ contract RootChain is ERC721Receiver {
     // child chain
     uint256 public childBlockInterval = 1000;
     uint256 public currentBlock = 0;
-    struct childBlock {
+    struct ChildBlock {
         bytes32 root;
         uint256 createdAt;
     }
 
     uint256 public depositCount;
-    mapping(uint256 => childBlock) public childChain;
+    mapping(uint256 => ChildBlock) public childChain;
     ValidatorManagerContract vmc;
     SparseMerkleTree smt;
 
@@ -124,8 +124,6 @@ contract RootChain is ERC721Receiver {
         smt = new SparseMerkleTree();
     }
 
-    /// @param root 32 byte merkleRoot of ChildChain block
-    /// @notice childChain blocks can only be submitted at most every 6 root chain blocks
     function submitBlock(bytes32 root)
         public
         isValidator
@@ -135,7 +133,7 @@ contract RootChain is ERC721Receiver {
                                    .div(childBlockInterval)
                                    .mul(childBlockInterval);
 
-        childChain[currentBlock] = childBlock({
+        childChain[currentBlock] = ChildBlock({
             root: root,
             createdAt: block.timestamp
         });
@@ -161,7 +159,7 @@ contract RootChain is ERC721Receiver {
         uint64 slot = uint64(bytes8(keccak256(abi.encodePacked(numCoins, msg.sender, from))));
         coins[slot] = coin;
 
-        childChain[currentBlock] = childBlock({
+        childChain[currentBlock] = ChildBlock({
             // save signed transaction hash as root
             // hash for deposit transactions is the hash of its slot
             root: keccak256(abi.encodePacked(slot)),
@@ -316,13 +314,6 @@ contract RootChain is ERC721Receiver {
         coins[slot].state = State.DEPOSITED;
     }
 
-    function checkDirectSpend(uint64 slot, bytes txBytes, bytes signature) private view {
-        Transaction.TX memory txData = txBytes.getTx();
-        bytes32 txHash = keccak256(txBytes);
-        require(txHash.ecverify(signature, coins[slot].exit.owner), "Invalid sig");
-        require(txData.prevBlock == coins[slot].exit.exitBlock, "Not a direct spend");
-    }
-
     /******************** BOND RELATED ********************/
 
     function freeBond(address from) private {
@@ -375,6 +366,13 @@ contract RootChain is ERC721Receiver {
 
 
     /******************** PROOF CHECKING ********************/
+
+    function checkDirectSpend(uint64 slot, bytes txBytes, bytes signature) private view {
+        Transaction.TX memory txData = txBytes.getTx();
+        bytes32 txHash = keccak256(txBytes);
+        require(txHash.ecverify(signature, coins[slot].exit.owner), "Invalid sig");
+        require(txData.prevBlock == coins[slot].exit.exitBlock, "Not a direct spend");
+    }
 
     function checkDepositBlockInclusion(
         bytes txBytes,
@@ -455,8 +453,8 @@ contract RootChain is ERC721Receiver {
         isTokenApproved(msg.sender)
         returns(bytes4)
     {
-        deposit(_from, uint64(_uid), uint32(1));
-        return ERC721_RECEIVED;
+    deposit(_from, uint64(_uid), uint32(1));
+    return ERC721_RECEIVED;
     }
 
     /******************** HELPERS ********************/
