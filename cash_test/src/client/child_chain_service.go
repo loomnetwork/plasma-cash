@@ -18,6 +18,9 @@ type DummyBlock struct {
 	blockId string
 }
 
+func (d *DummyBlock)  TxFromSlot(slot uint64) (Tx, error) {
+	return &LoomTx{}, nil
+}
 func (d *DummyBlock) MerkleHash() []byte {
 	return []byte{}
 }

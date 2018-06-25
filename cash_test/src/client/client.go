@@ -1,7 +1,10 @@
 package client
 
 import (
+	"fmt"
 	"math/big"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type Client struct {
@@ -26,8 +29,13 @@ func (c *Client) Deposit(tokenId int64) {
 // Plasma Functions
 
 //Placeholder
-func Transaction(slot uint64, prevTxBlkNum int64, domination int64, address string) Tx {
-	return &LoomTx{}
+func Transaction(slot uint64, prevTxBlkNum int64, domination uint32, address string) Tx {
+	panic(address)
+	return &LoomTx{Slot: slot,
+		PrevBlock:    big.NewInt(prevTxBlkNum),
+		Denomination: domination,
+		Owner:        common.HexToAddress(address),  //TODO: 0x?
+	}
 }
 
 func (c *Client) StartExit(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]byte, error) {
@@ -45,6 +53,7 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]b
 		// In case the sender is exiting a Deposit transaction, they should
 		// just create a signed transaction to themselves. There is no need
 		// for a merkle proof.
+		fmt.Printf("exiting deposit transaction\n")
 
 		account, err := c.TokenContract.Account()
 		if err != nil {
@@ -63,8 +72,8 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]b
 			return nil, err
 		}
 		return txHash, nil
-
 	}
+	fmt.Printf("NOT exiting deposit transaction\n")
 
 	// Otherwise, they should get the raw tx info from the block
 	// And the merkle proof and submit these
@@ -78,15 +87,17 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]b
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("exitingTx-%v exitingTxProof-%v\n", exitingTx, exitingTxProof)
+	fmt.Printf("prevTx-%v prevTxProof-%v\n", prevTx, prevTxProof)
+	fmt.Printf("prevTxBlkNum-%d-txBlkNum-%d\n", prevTxBlkNum, txBlkNum)
+	fmt.Printf("exitingTxIncBlock MOD childBlockInterval %d\n", txBlkNum%1000)
 
-	txHash, err = c.RootChain.StartExit(
+	return c.RootChain.StartExit(
 		slot,
 		prevTx, exitingTx,
 		prevTxProof, exitingTxProof,
 		exitingTx.Sig(),
 		prevTxBlkNum, txBlkNum)
-	return txHash, nil
-
 }
 
 func (c *Client) ChallengeBefore(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]byte, error) {
@@ -199,6 +210,10 @@ func (c *Client) PlasmaCoin(slot uint64) (*PlasmaCoin, error) {
 	return c.RootChain.PlasmaCoin(slot)
 }
 
+func (c *Client) DebugCoinMetaData() {
+	c.RootChain.DebugCoinMetaData()
+}
+
 // Child Chain Functions
 
 func (c *Client) SubmitBlock() error {
@@ -230,9 +245,12 @@ func (c *Client) getTxAndProof(blkHeight int64, slot uint64) (Tx, Proof, error) 
 	if err != nil {
 		return nil, nil, err
 	}
-
-	//	tx = rlp.decode(utils.decode_hex(data['tx']), Transaction)
-	return &LoomTx{}, &SimpleProof{block.MerkleHash()}, nil
+	tx, err := block.TxFromSlot(slot)
+	if err != nil {
+		return nil, nil, err
+	}
+	
+	return tx, &SimpleProof{block.MerkleHash()}, nil
 }
 
 func (c *Client) GetBlockNumber() (int64, error) {

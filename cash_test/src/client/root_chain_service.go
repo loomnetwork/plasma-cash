@@ -3,6 +3,7 @@ package client
 import (
 	"crypto/ecdsa"
 	"ethcontract"
+	"fmt"
 	"log"
 	"math/big"
 
@@ -18,6 +19,7 @@ type RootChainService struct {
 	callerKey      *ecdsa.PrivateKey
 	callerAddr     common.Address
 	transactOpts   *bind.TransactOpts
+	callOpts       *bind.CallOpts
 }
 
 func (d *RootChainService) PlasmaCoin(slot uint64) (*PlasmaCoin, error) {
@@ -140,6 +142,23 @@ func (d *RootChainService) SubmitBlock(blockNum *big.Int, merkleRoot [32]byte) e
 	return err
 }
 
+func (d *RootChainService) DebugCoinMetaData() {
+	coins, err := d.plasmaContract.NumCoins(d.callOpts) //todo make this readonly
+	fmt.Printf("Num coins -%v\n", coins)
+	if err != nil {
+		panic(err)
+	}
+	for x := uint64(0); x < coins; x++ {
+		//uid, c.depositBlock, c.denomination, c.owner, c.state
+		uid, _, _, _, state, err := d.plasmaContract.GetPlasmaCoin(d.callOpts, x)
+		fmt.Printf("Num coins -%d -(uid)-%v -(state)-%v\n", x, uid, state)
+
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
 var conn *ethclient.Client
 
 func InitClients(connStr string) {
@@ -161,11 +180,15 @@ func NewRootChainService(callerName string, callerKey *ecdsa.PrivateKey, boundCo
 	// ways (logs aren't hex-encoded correctly).
 	auth.GasPrice = big.NewInt(20000)
 	auth.GasLimit = uint64(3141592)
+	callerAddr := crypto.PubkeyToAddress(callerKey.PublicKey)
 	return &RootChainService{
 		Name:           callerName,
 		callerKey:      callerKey,
-		callerAddr:     crypto.PubkeyToAddress(callerKey.PublicKey),
+		callerAddr:     callerAddr,
 		plasmaContract: boundContract,
 		transactOpts:   auth,
+		callOpts: &bind.CallOpts{
+			From: callerAddr,
+		},
 	}
 }

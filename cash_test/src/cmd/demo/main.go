@@ -87,9 +87,12 @@ func main() {
 	utxoID = uint64(2)
 	prevTxBlkNum := int64(1000)
 	exitingTxBlkNum := int64(2000)
+	charlie.DebugCoinMetaData()
+	fmt.Printf("Before start exit\n")
 	_, err = charlie.StartExit(utxoID, prevTxBlkNum, exitingTxBlkNum)
 	exitIfError(err)
 	fmt.Printf("After start exit\n")
+	charlie.DebugCoinMetaData()
 
 	// After 8 days pass, charlie's exit should be finalizable
 	//increaseTime(w3, 8*24*3600)
@@ -110,6 +113,7 @@ func main() {
 	// wallet.
 
 	fmt.Printf("withdraw-%d\n", utxoID)
+	charlie.DebugCoinMetaData()
 	err = charlie.Withdraw(utxoID)
 	exitIfError(err)
 

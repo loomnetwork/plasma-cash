@@ -9,6 +9,7 @@ type Tx interface {
 
 type Block interface {
 	MerkleHash() []byte
+	TxFromSlot(slot uint64) (Tx, error)
 }
 
 type Proof interface {
@@ -76,6 +77,8 @@ type RootChainClient interface {
 		challengingTransaction Tx, proof Proof) ([]byte, error)
 
 	SubmitBlock(blockNum *big.Int, merkleRoot [32]byte) error
+
+	DebugCoinMetaData()
 }
 
 type ChainServiceClient interface {
