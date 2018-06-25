@@ -13,7 +13,7 @@ import "../Libraries/ECVerify.sol";
 import "./SparseMerkleTree.sol";
 import "./ValidatorManagerContract.sol";
 
-contract RootChain is ERC721Receiver, SparseMerkleTree {
+contract RootChain is ERC721Receiver {
     event Deposit(uint64 indexed slot, uint256 blockNumber, uint64 denomination, address indexed from);
     event SubmittedBlock(uint256 blockNumber, bytes32 root, uint256 timestamp);
 
@@ -117,9 +117,11 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
     uint256 public depositCount;
     mapping(uint256 => childBlock) public childChain;
     ValidatorManagerContract vmc;
+    SparseMerkleTree smt;
 
     constructor (ValidatorManagerContract _vmc) public {
         vmc = _vmc;
+        smt = new SparseMerkleTree();
     }
 
     /// @param root 32 byte merkleRoot of ChildChain block
@@ -434,7 +436,7 @@ contract RootChain is ERC721Receiver, SparseMerkleTree {
         } else {
             txHash = keccak256(txBytes);
             require(
-                checkMembership(
+                smt.checkMembership(
                     txHash,
                     root,
                     txData.slot,
