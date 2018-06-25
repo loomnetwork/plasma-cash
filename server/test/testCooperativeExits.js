@@ -1,5 +1,5 @@
-const CryptoCards = artifacts.require("CryptoCards");
 const ValidatorManagerContract = artifacts.require("ValidatorManagerContract");
+const CryptoCards = artifacts.require("CryptoCards");
 const RootChain = artifacts.require("RootChain");
 import {increaseTimeTo, duration} from './helpers/increaseTime'
 import assertRevert from './helpers/assertRevert.js';
