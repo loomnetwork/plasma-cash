@@ -74,7 +74,7 @@ contract RootChain is ERC721Receiver {
 
     // exits
     uint64[] public exitSlots;
-    // Each exit can be challenged once ? Need to confirm if needed for more.
+    // Each exit can only be challenged by a single challenger at a time
     mapping (uint64 => address) challengers;
     struct Exit {
         address prevOwner; // previous owner of coin
