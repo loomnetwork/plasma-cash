@@ -88,18 +88,20 @@ func main() {
 	exitingTxBlkNum := int64(2000)
 	_, err = charlie.StartExit(utxoID, prevTxBlkNum, exitingTxBlkNum)
 	exitIfError(err)
-	fmt.Printf("After start exit")
+	fmt.Printf("After start exit\n")
 
 	// After 8 days pass, charlie's exit should be finalizable
 	//	w3 = charlie.RootChain().w3 // get w3 instance
 	//increaseTime(w3, 8*24*3600) //TODO ???
 
 	err = authority.FinalizeExits()
+	fmt.Printf("finalize exits\n")
 	exitIfError(err)
 
 	// Charlie should now be able to withdraw the utxo which included token 2 to his
 	// wallet.
 
+	fmt.Printf("withdraw-%d\n", utxoID)
 	err = charlie.Withdraw(utxoID)
 	exitIfError(err)
 
