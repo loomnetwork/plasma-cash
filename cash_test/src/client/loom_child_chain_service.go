@@ -34,7 +34,7 @@ func (c *LoomChildChainService) CurrentBlock() (Block, error) {
 func (c *LoomChildChainService) BlockNumber() (int64, error) {
 	logdebug("BlockNumber()")
 	request := &pctypes.GetCurrentBlockRequest{}
-	result := &pctypes.GetCurrentBlockResponse{}
+	var result pctypes.GetCurrentBlockResponse
 
 	if err := c.loomcontract.StaticCallContract("GetCurrentBlockRequest", request, &result); err != nil {
 		log.Fatalf("failed getting Block number - %v\n", err)
