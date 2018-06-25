@@ -115,7 +115,7 @@ func (w *PlasmaBlockWorker) submitPlasmaBlockToEthereum(plasmaBlockNum *big.Int,
 
 	var root [32]byte
 	copy(root[:], merkleRoot)
-	return w.ethPlasmaClient.SubmitPlasmaBlock(root)
+	return w.ethPlasmaClient.SubmitPlasmaBlock(plasmaBlockNum, root)
 }
 
 // PlasmaDepositWorker sends Plasma deposits from Ethereum to the DAppChain.

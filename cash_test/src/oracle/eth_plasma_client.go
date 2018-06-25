@@ -38,7 +38,7 @@ type EthPlasmaClient interface {
 	LatestEthBlockNum() (uint64, error)
 	// SubmitPlasmaBlock will submit a Plasma block to Ethereum and wait until the tx is confirmed.
 	// The maximum wait time can be specified via the TxTimeout option in the client config.
-	SubmitPlasmaBlock(merkleRoot [32]byte) error
+	SubmitPlasmaBlock(plasmaBlockNum *big.Int, merkleRoot [32]byte) error
 	FetchDeposits(startBlock, endBlock uint64) ([]*pctypes.DepositRequest, error)
 }
 
@@ -79,7 +79,7 @@ func (c *EthPlasmaClientImpl) LatestEthBlockNum() (uint64, error) {
 }
 
 // SubmitPlasmaBlock will submit a Plasma block to Ethereum and wait until the tx is confirmed.
-func (c *EthPlasmaClientImpl) SubmitPlasmaBlock(merkleRoot [32]byte) error {
+func (c *EthPlasmaClientImpl) SubmitPlasmaBlock(blockNum *big.Int, merkleRoot [32]byte) error {
 	failMsg := "failed to submit plasma block to Ethereum"
 	auth := bind.NewKeyedTransactor(c.PrivateKey)
 	if c.OverrideGas {
