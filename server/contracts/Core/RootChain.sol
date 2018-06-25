@@ -434,7 +434,7 @@ contract RootChain is ERC721Receiver {
         } else {
             txHash = keccak256(txBytes);
             require(
-                smt.checkMembership(
+                checkMembership(
                     txHash,
                     root,
                     txData.slot,
@@ -453,8 +453,8 @@ contract RootChain is ERC721Receiver {
         isTokenApproved(msg.sender)
         returns(bytes4)
     {
-    deposit(_from, uint64(_uid), uint32(1));
-    return ERC721_RECEIVED;
+        deposit(_from, uint64(_uid), uint32(1));
+        return ERC721_RECEIVED;
     }
 
     /******************** HELPERS ********************/
@@ -467,6 +467,11 @@ contract RootChain is ERC721Receiver {
         }
         return 0;
     }
+
+    function checkMembership(bytes32 txHash, bytes32 root, uint64 slot, bytes proof) public returns (bool) {
+        return smt.checkMembership(txHash, root, slot, proof);
+    }
+
 
     function getPlasmaCoin(uint64 slot) external view returns(uint64, uint256, uint32, address, State) {
         Coin memory c = coins[slot];
