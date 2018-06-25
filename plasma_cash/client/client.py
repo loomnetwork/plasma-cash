@@ -172,6 +172,7 @@ class Client(object):
             challenging_block_number,
             rlp.encode(challenging_tx, UnsignedTransaction),
             proof,
+            challenging_tx.sig,
         )
         return tx_hash, gas_used
 
