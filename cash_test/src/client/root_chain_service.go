@@ -117,10 +117,14 @@ func (d *RootChainService) StartExit(
 	if err != nil {
 		return nil, err
 	}
+	d.transactOpts.Value = big.NewInt(100000000000000000) //0.1 eth
+
 	tx, err := d.plasmaContract.StartExit(
 		d.transactOpts, slot,
 		prevTxBytes, exitingTxBytes, prevTxInclusion.Bytes(), exitingTxInclusion.Bytes(),
 		sigs, big.NewInt(prevTxIncBlock), big.NewInt(exitingTxIncBlock))
+
+	d.transactOpts.Value = big.NewInt(0)
 	if err != nil {
 		return nil, err
 	}
