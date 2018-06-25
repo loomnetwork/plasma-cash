@@ -8,18 +8,17 @@ contract SparseMerkleTree {
     bytes32[DEPTH + 1] public defaultHashes;
 
     constructor() public {
-        // keccak256(uint256(0));
+        // defaultHash[0] is being set to keccak256(uint256(0));
         defaultHashes[0] = 0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563;
         setDefaultHashes(1, DEPTH);
     }
 
-    function setDefaultHashes(uint8 startIndex, uint8 endIndex) private {
-        for (uint8 i = startIndex; i <= endIndex; i ++) {
-            defaultHashes[i] = keccak256(abi.encodePacked(defaultHashes[i-1], defaultHashes[i-1]));
-        }
-    }
-
-    function checkMembership(bytes32 leaf, bytes32 root, uint64 tokenID, bytes proof) public view returns (bool) {
+    function checkMembership(
+        bytes32 leaf,
+        bytes32 root,
+        uint64 tokenID,
+        bytes proof) public view returns (bool)
+    {
         bytes32 computedHash = getRoot(leaf, tokenID, proof);
         return (computedHash == root);
     }
@@ -50,5 +49,11 @@ contract SparseMerkleTree {
             index = index / 2;
         }
         return computedHash;
+    }
+
+    function setDefaultHashes(uint8 startIndex, uint8 endIndex) private {
+        for (uint8 i = startIndex; i <= endIndex; i ++) {
+            defaultHashes[i] = keccak256(abi.encodePacked(defaultHashes[i-1], defaultHashes[i-1]));
+        }
     }
 }
