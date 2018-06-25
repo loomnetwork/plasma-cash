@@ -4,7 +4,10 @@ import (
 	"client"
 	"log"
 	"oracle"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/loomnetwork/go-loom/auth"
@@ -21,7 +24,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to load private key: %v", err)
 	}
-	plasmaOrc := oracle.NewOracle(oracle.OracleConfig{
+	plasmaOrc := oracle.NewOracle(&oracle.OracleConfig{
 		PlasmaBlockInterval: 1000,
 		DAppChainClientCfg: oracle.DAppChainPlasmaClientConfig{
 			ChainID:  "default",
@@ -39,5 +42,12 @@ func main() {
 	if err := plasmaOrc.Init(); err != nil {
 		log.Fatal(err)
 	}
+
+	// Trap Interrupts, SIGINTs and SIGTERMs.
+	sigC := make(chan os.Signal, 1)
+	signal.Notify(sigC, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	defer signal.Stop(sigC)
+
 	plasmaOrc.Run()
+	<-sigC
 }
