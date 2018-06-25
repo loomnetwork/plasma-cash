@@ -3,8 +3,7 @@ from ethereum import utils
 from web3.auto import w3
 
 from .block import Block
-from .exceptions import (CoinAlreadyIncludedException,
-                         InvalidTxSignatureException,
+from .exceptions import (InvalidTxSignatureException,
                          PreviousTxNotFoundException, TxAlreadySpentException)
 from .transaction import Transaction
 
@@ -56,11 +55,6 @@ class ChildChain(object):
 
     def send_transaction(self, transaction):
         tx = rlp.decode(utils.decode_hex(transaction), Transaction)
-
-        # a plasma cash block can only have 1 spend of a particular coin
-        tx_included = self.current_block.get_tx_by_uid(tx.uid)
-        if tx_included is not None and tx.uid == tx_included.uid:
-            raise CoinAlreadyIncludedException('double spend rejected')
 
         # If the tx we are spending is not a deposit tx
         if tx.prev_block % self.child_block_interval == 0:
