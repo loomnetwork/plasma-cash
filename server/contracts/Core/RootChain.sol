@@ -79,6 +79,7 @@ contract RootChain is ERC721Receiver {
     // Each exit can be challenged once ? Need to confirm if needed for more.
     mapping (uint64 => address) challengers;
     struct Exit {
+        address prevOwner; // previous owner of coin
         address owner;
         uint256 createdAt;
         uint256 bond;
@@ -195,7 +196,7 @@ contract RootChain is ERC721Receiver {
                 true
             );
         }
-        pushExit(slot, prevTxIncBlock, exitingTxIncBlock);
+        pushExit(slot, prevTxBytes, prevTxIncBlock, exitingTxIncBlock);
     }
 
     function finalizeExit(uint64 slot) public {
@@ -287,13 +288,18 @@ contract RootChain is ERC721Receiver {
     }
 
 
-    function challengeBetween(uint64 slot, uint256 challengingBlockNumber, bytes challengingTransaction, bytes proof)
+    function challengeBetween(uint64 slot, uint256 challengingBlockNumber, bytes challengingTransaction, bytes proof, bytes signature)
         external isState(slot, State.EXITING) cleanupExit(slot)
     {
         // Must challenge with a tx in between
         require(
             coins[slot].exit.exitBlock > challengingBlockNumber && coins[slot].exit.prevBlock < challengingBlockNumber,
             "Challenging transaction must have happened AFTER the attested exit's timestamp");
+
+        // Check that the challenging transaction has been signed
+        // by the attested previous owner of the coin in the exit
+        bytes32 txHash = keccak256(challengingTransaction);
+        require(txHash.ecverify(signature, coins[slot].exit.prevOwner), "Invalid sig");
 
         checkTxIncluded(challengingTransaction, challengingBlockNumber, proof);
         // Apply penalties and change state
@@ -337,13 +343,16 @@ contract RootChain is ERC721Receiver {
         emit SlashedBond(from, to, BOND_AMOUNT);
     }
 
-    function pushExit(uint64 slot, uint256 prevBlock, uint256 exitingBlock) private {
+    function pushExit(uint64 slot, bytes txBytes, uint256 prevBlock, uint256 exitingBlock) private {
+        Transaction.TX memory txData = txBytes.getTx();
+
         // Push exit to list
         exitSlots.push(slot);
 
         // Create exit
         Coin storage c = coins[slot];
         c.exit = Exit({
+            prevOwner: txData.owner,
             owner: msg.sender,
             createdAt: block.timestamp,
             bond: msg.value,
