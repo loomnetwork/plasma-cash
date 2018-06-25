@@ -2,6 +2,7 @@ package main
 
 import (
 	"client"
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -91,8 +92,15 @@ func main() {
 	fmt.Printf("After start exit\n")
 
 	// After 8 days pass, charlie's exit should be finalizable
-	//	w3 = charlie.RootChain().w3 // get w3 instance
-	//increaseTime(w3, 8*24*3600) //TODO ???
+	//increaseTime(w3, 8*24*3600)
+
+	fmt.Printf("increase time\n")
+	ganache, err := client.ConnectToGanache("http://localhost:8545")
+	exitIfError(err)
+	fmt.Printf("increase time2\n")
+	timeAdj, err := ganache.IncreaseTime(context.TODO(), 8*24*3600)
+	fmt.Printf("timeAdj-%v\n", timeAdj)
+	exitIfError(err)
 
 	err = authority.FinalizeExits()
 	fmt.Printf("finalize exits\n")
