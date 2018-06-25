@@ -60,6 +60,7 @@ class SparseMerkleTree(object):
         return tree
 
     def create_merkle_proof(self, uid):
+        print('create_merkle_proof-{}-depth-{}'.format(uid, self.depth))
         # Generate a merkle proof for a leaf with provided index.
         # First `depth/8` bytes of the proof are necessary for checking if
         # we are at a default-node
@@ -74,7 +75,10 @@ class SparseMerkleTree(object):
                 proofbits += 2 ** level
 
         proof_bytes = proofbits.to_bytes(8, byteorder='big')
-        return proof_bytes + proof
+        d = proof_bytes + proof
+        print('proof and bytes =={}'.format(d))
+        print('length of proof and bytes =={}'.format(len(d)))
+        return d
 
     def verify(self, uid, proof):
         ''' Checks if the proof for the leaf at `uid` is valid'''

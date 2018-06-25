@@ -34,7 +34,7 @@ func Transaction(slot uint64, prevTxBlkNum int64, domination uint32, address str
 	return &LoomTx{Slot: slot,
 		PrevBlock:    big.NewInt(prevTxBlkNum),
 		Denomination: domination,
-		Owner:        common.HexToAddress(address),  //TODO: 0x?
+		Owner:        common.HexToAddress(address), //TODO: 0x?
 	}
 }
 
@@ -54,6 +54,7 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]b
 		// just create a signed transaction to themselves. There is no need
 		// for a merkle proof.
 		fmt.Printf("exiting deposit transaction\n")
+		panic("TODO")
 
 		account, err := c.TokenContract.Account()
 		if err != nil {
@@ -92,12 +93,17 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]b
 	fmt.Printf("prevTxBlkNum-%d-txBlkNum-%d\n", prevTxBlkNum, txBlkNum)
 	fmt.Printf("exitingTxIncBlock MOD childBlockInterval %d\n", txBlkNum%1000)
 
+	signedSig := c.sign(exitingTx.Sig())
+
 	return c.RootChain.StartExit(
 		slot,
 		prevTx, exitingTx,
 		prevTxProof, exitingTxProof,
-		exitingTx.Sig(),
+		signedSig,
 		prevTxBlkNum, txBlkNum)
+}
+func (c *Client) sign(data []byte) []byte {
+	panic("get signatures working from rootchain private key")
 }
 
 func (c *Client) ChallengeBefore(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]byte, error) {
@@ -105,6 +111,7 @@ func (c *Client) ChallengeBefore(slot uint64, prevTxBlkNum int64, txBlkNum int64
 		// In case the sender is exiting a Deposit transaction, they should
 		// just create a signed transaction to themselves. There is no need
 		// for a merkle proof.
+		panic("TODO")
 
 		account, err := c.TokenContract.Account()
 		if err != nil {
@@ -136,11 +143,13 @@ func (c *Client) ChallengeBefore(slot uint64, prevTxBlkNum int64, txBlkNum int64
 		return nil, err
 	}
 
+	signedSig := c.sign(exitingTx.Sig())
+
 	txHash, err := c.RootChain.ChallengeBefore(
 		slot,
 		prevTx, exitingTx,
 		prevTxProof, exitingTxProof,
-		exitingTx.Sig(),
+		signedSig,
 		prevTxBlkNum, txBlkNum)
 	return txHash, err
 
@@ -249,7 +258,7 @@ func (c *Client) getTxAndProof(blkHeight int64, slot uint64) (Tx, Proof, error) 
 	if err != nil {
 		return nil, nil, err
 	}
-	
+
 	return tx, &SimpleProof{block.MerkleHash()}, nil
 }
 

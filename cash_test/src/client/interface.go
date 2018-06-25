@@ -3,8 +3,8 @@ package client
 import "math/big"
 
 type Tx interface {
-	Sig() []byte
 	RlpEncode() ([]byte, error)
+	Sig() []byte
 }
 
 type Block interface {

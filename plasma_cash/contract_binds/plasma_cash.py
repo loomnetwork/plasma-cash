@@ -57,6 +57,8 @@ class PlasmaCash(Contract):
         return self
 
     def submit_block(self, root):
+        print('submit_block-root-{}'.format(root))
+        print('submit_block-len(root)-{}'.format(len(root)))
         args = [root]
         self.sign_and_send(self.contract.functions.submitBlock, args)
         return self
