@@ -63,11 +63,12 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
             let tree_charlie = ret.charlie.tree;
 
             let challengeTx = bob_to_charlie.tx;
+            let sig = bob_to_charlie.sig;
             let proof = tree_charlie.createMerkleProof(UTXO.slot);
             let block_number = 2000; // Charlie's transaction which is the valid one was included at block 2000
 
             await plasma.challengeBetween(
-                UTXO.slot, block_number, challengeTx, proof,
+                UTXO.slot, block_number, challengeTx, proof, sig,
                 {'from': challenger}
             );
 
@@ -75,7 +76,7 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
             let exiting_tx = bob_to_charlie.tx;
             let prev_tx_proof = tree_bob.createMerkleProof(UTXO.slot);
             let exiting_tx_proof = tree_charlie.createMerkleProof(UTXO.slot);
-            let sig = bob_to_charlie.sig;
+            sig = bob_to_charlie.sig;
 
             plasma.startExit(
                 UTXO.slot,
