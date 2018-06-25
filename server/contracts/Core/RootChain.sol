@@ -96,7 +96,8 @@ contract RootChain is ERC721Receiver {
     uint64 public numCoins = 0;
     mapping (uint64 => Coin) public coins;
     struct Coin {
-        uint64 uid; // there are up to 2^64 cards, can probably make it less
+        uint64 uid; // there are up to 2^64 cards, one for every leaf of
+                    // a depth 64 Sparse Merkle Tree
         uint32 denomination; // Currently set to 1 always, subject to change once the token changes
         uint256 depositBlock;
         address owner; // who owns that nft
@@ -280,7 +281,9 @@ contract RootChain is ERC721Receiver {
         setChallenged(slot);
     }
 
-    // If `challengeBefore` was successfully challenged, then set state to RESPONDED and allow the coin to be exited. No need to actually attach a bond when responding to a challenge
+    // If `challengeBefore` was successfully challenged, then set state to
+    // RESPONDED and allow the coin to be exited. No need to actually attach
+    // a bond when responding to a challenge
     function respondChallengeBefore(
         uint64 slot,
         uint256 challengingBlockNumber,
@@ -389,7 +392,9 @@ contract RootChain is ERC721Receiver {
     }
 
     function setChallenged(uint64 slot) private {
-        // Do not delete exit yet. Set its state as challenged and wait for the exitor's response
+        // When an exit is challenged, its state is set to challenged and the
+        // contract waits for the exitor's response. The exit is not
+        // immediately deleted.
         coins[slot].state = State.CHALLENGED;
         // Save the challenger's address, for applying penalties
         challengers[slot] = msg.sender;
@@ -458,7 +463,9 @@ contract RootChain is ERC721Receiver {
         bytes32 txHash;
         bytes32 root = childChain[blockNumber].root;
 
-        // If deposit block, just check the matching hash to the block's root. Simpler verification due to deposit mechanism
+        // If deposit block, just verify that the tx hash equals the block
+        // root.  This simpler verification due to deposit block's root being
+        // set equal to the hash of the signle transaction it contains.
         if (blockNumber % childBlockInterval != 0) {
             txHash = keccak256(abi.encodePacked(txData.slot));
             require(txHash == root);
