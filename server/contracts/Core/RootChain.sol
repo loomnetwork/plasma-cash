@@ -47,7 +47,6 @@ contract RootChain is ERC721Receiver {
         _;
     }
 
-
     modifier isBonded() {
         require(msg.value == BOND_AMOUNT);
 
@@ -61,7 +60,6 @@ contract RootChain is ERC721Receiver {
         _;
     }
 
-
     modifier cleanupExit(uint64 slot) {
         _;
         delete coins[slot].exit;
@@ -72,7 +70,7 @@ contract RootChain is ERC721Receiver {
         uint256 bonded;
         uint256 withdrawable;
     }
-    mapping (address => Balance ) public balances;
+    mapping (address => Balance) public balances;
 
     // exits
     uint64[] public exitSlots;
@@ -298,8 +296,12 @@ contract RootChain is ERC721Receiver {
         emit RespondedExitChallenge(slot);
     }
 
-
-    function challengeBetween(uint64 slot, uint256 challengingBlockNumber, bytes challengingTransaction, bytes proof, bytes signature)
+    function challengeBetween(
+        uint64 slot,
+        uint256 challengingBlockNumber,
+        bytes challengingTransaction,
+        bytes proof,
+        bytes signature)
         external isState(slot, State.EXITING) cleanupExit(slot)
     {
         // Must challenge with a tx in between
@@ -318,7 +320,12 @@ contract RootChain is ERC721Receiver {
         coins[slot].state = State.DEPOSITED;
     }
 
-    function challengeAfter(uint64 slot, uint256 challengingBlockNumber, bytes challengingTransaction, bytes proof, bytes signature)
+    function challengeAfter(
+        uint64 slot,
+        uint256 challengingBlockNumber,
+        bytes challengingTransaction,
+        bytes proof,
+        bytes signature)
         external
         isState(slot, State.EXITING)
         cleanupExit(slot)
@@ -388,7 +395,6 @@ contract RootChain is ERC721Receiver {
         challengers[slot] = msg.sender;
         emit ChallengedExit(slot);
     }
-
 
     /******************** PROOF CHECKING ********************/
 
@@ -470,7 +476,6 @@ contract RootChain is ERC721Receiver {
         }
     }
 
-
     /******************** ERC721 ********************/
 
     function onERC721Received(address _from, uint256 _uid, bytes)
@@ -493,8 +498,17 @@ contract RootChain is ERC721Receiver {
         return 0;
     }
 
-    function checkMembership(bytes32 txHash, bytes32 root, uint64 slot, bytes proof) public returns (bool) {
-        return smt.checkMembership(txHash, root, slot, proof);
+    function checkMembership(
+        bytes32 txHash,
+        bytes32 root,
+        uint64 slot,
+        bytes proof) public returns (bool)
+    {
+        return smt.checkMembership(
+            txHash,
+            root,
+            slot,
+            proof);
     }
 
     function getPlasmaCoin(uint64 slot) external view returns(uint64, uint256, uint32, address, State) {

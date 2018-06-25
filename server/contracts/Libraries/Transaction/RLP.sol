@@ -17,13 +17,13 @@ library RLP {
 
 
     struct RLPItem {
-        uint _unsafe_memPtr;    // Pointer to the RLP-encoded bytes.
-        uint _unsafe_length;    // Number of bytes. This is the full length of the string.
+        uint _unsafeMemPtr;    // Pointer to the RLP-encoded bytes.
+        uint _unsafeLength;    // Number of bytes. This is the full length of the string.
     }
 
     struct Iterator {
-        RLPItem _unsafe_item;   // Item that's being iterated over.
-        uint _unsafe_nextPtr;   // Position of the next item in the list.
+        RLPItem _unsafeItem;   // Item that's being iterated over.
+        uint _unsafeNextPtr;   // Position of the next item in the list.
     }
 
     /* RLPItem */
@@ -84,23 +84,23 @@ library RLP {
     /// @param self The RLP item.
     /// @return An 'Iterator' over the item.
     function iterator(RLPItem memory self) private pure returns (Iterator memory it) {
-        uint ptr = self._unsafe_memPtr + _payloadOffset(self);
-        it._unsafe_item = self;
-        it._unsafe_nextPtr = ptr;
+        uint ptr = self._unsafeMemPtr + _payloadOffset(self);
+        it._unsafeItem = self;
+        it._unsafeNextPtr = ptr;
     }
 
     /* Iterator */
     function next(Iterator memory self) private pure returns (RLPItem memory subItem) {
-        uint ptr = self._unsafe_nextPtr;
+        uint ptr = self._unsafeNextPtr;
         uint itemLength = _itemLength(ptr);
-        subItem._unsafe_memPtr = ptr;
-        subItem._unsafe_length = itemLength;
-        self._unsafe_nextPtr = ptr + itemLength;
+        subItem._unsafeMemPtr = ptr;
+        subItem._unsafeLength = itemLength;
+        self._unsafeNextPtr = ptr + itemLength;
     }
 
     function hasNext(Iterator memory self) private pure returns (bool) {
-        RLPItem memory item = self._unsafe_item;
-        return self._unsafe_nextPtr < item._unsafe_memPtr + item._unsafe_length;
+        RLPItem memory item = self._unsafeItem;
+        return self._unsafeNextPtr < item._unsafeMemPtr + item._unsafeLength;
     }
 
     // Get the payload offset.
@@ -110,7 +110,7 @@ library RLP {
         returns (uint)
     {
         uint b0;
-        uint memPtr = self._unsafe_memPtr;
+        uint memPtr = self._unsafeMemPtr;
         assembly {
             b0 := byte(0, mload(memPtr))
         }
@@ -143,7 +143,7 @@ library RLP {
         returns (uint memPtr, uint len)
     {
         uint b0;
-        uint start = self._unsafe_memPtr;
+        uint start = self._unsafeMemPtr;
         assembly {
             b0 := byte(0, mload(start))
         }
@@ -153,14 +153,14 @@ library RLP {
             return;
         }
         if (b0 < DATA_LONG_START) {
-            len = self._unsafe_length - 1;
+            len = self._unsafeLength - 1;
             memPtr = start + 1;
         } else {
             uint bLen;
             assembly {
                 bLen := sub(b0, 0xB7) // DATA_LONG_OFFSET
             }
-            len = self._unsafe_length - 1 - bLen;
+            len = self._unsafeLength - 1 - bLen;
             memPtr = start + bLen + 1;
         }
         return;
@@ -174,11 +174,11 @@ library RLP {
         pure
         returns (bytes memory bts)
     {
-        uint len = self._unsafe_length;
+        uint len = self._unsafeLength;
         if (len == 0)
             return;
         bts = new bytes(len);
-        _copyToBytes(self._unsafe_memPtr, bts, len);
+        _copyToBytes(self._unsafeMemPtr, bts, len);
     }
 
     // Assumes that enough memory has been allocated to store in target.
