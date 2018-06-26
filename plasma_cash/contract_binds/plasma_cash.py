@@ -35,9 +35,20 @@ class PlasmaCash(Contract):
         )
 
     def respond_challenge_before(
-        self, slot, challenging_block_number, challenging_transaction, proof
+        self,
+        slot,
+        challenging_block_number,
+        challenging_transaction,
+        proof,
+        sig,
     ):
-        args = [slot, challenging_block_number, challenging_transaction, proof]
+        args = [
+            slot,
+            challenging_block_number,
+            challenging_transaction,
+            proof,
+            sig,
+        ]
         return self.sign_and_send(
             self.contract.functions.respond_challenge_before, args
         )
