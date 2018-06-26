@@ -3,15 +3,17 @@ from rlp.sedes import CountableList, binary
 from web3.auto import w3
 
 from child_chain.exceptions import InvalidBlockSignatureException
-from utils.merkle.sparse_merkle_tree import SparseMerkleTree
-from utils.utils import get_sender, sign
-
 from .transaction import Transaction
+from utils.utils import get_sender, sign
+from utils.merkle.sparse_merkle_tree import SparseMerkleTree
 
 
 class Block(rlp.Serializable):
 
-    fields = [('transaction_set', CountableList(Transaction)), ('sig', binary)]
+    fields = [
+        ('transaction_set', CountableList(Transaction)),
+        ('sig', binary)
+    ]
 
     def __init__(self, transaction_set=None, sig=b'\x00' * 65):
         if transaction_set is None:
@@ -35,12 +37,9 @@ class Block(rlp.Serializable):
         return get_sender(self.hash, self.sig)
 
     def merklize_transaction_set(self):
-        hashed_transaction_dict = {
-            tx.uid: tx.hash for tx in self.transaction_set
-        }
+        hashed_transaction_dict = {tx.uid: tx.hash
+                                   for tx in self.transaction_set}
         self.merkle = SparseMerkleTree(64, hashed_transaction_dict)
-        print("merklize_transaction_set-self.merkle.root-{}".format(self.merkle.root))
-        print("merklize_transaction_set-len-self.merkle.root-{}".format(len(self.merkle.root)))
         return self.merkle.root
 
     def add_tx(self, tx):

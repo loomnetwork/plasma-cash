@@ -1,10 +1,9 @@
 import rlp
-from ethereum import utils
 from web3.auto import w3
-
+from ethereum import utils
 from .block import Block
-from .exceptions import (CoinAlreadyIncludedException,
-                         InvalidTxSignatureException,
+from .exceptions import (InvalidTxSignatureException,
+                         CoinAlreadyIncludedException,
                          PreviousTxNotFoundException, TxAlreadySpentException)
 from .transaction import Transaction
 
@@ -47,12 +46,7 @@ class ChildChain(object):
         block.sign(self.key)
         block.make_immutable()
         self.current_block_number += self.child_block_interval
-        mset = block.merklize_transaction_set()
-        print("merkle_mset-{}".format(mset))
-        print("merkle_mset-len-{}".format(len(mset)))
-        merkle_hash = w3.toHex(mset)
-        print("merkle_hash-{}".format(merkle_hash))
-        print("merkle_hash-len-{}".format(len(merkle_hash)))
+        merkle_hash = w3.toHex(block.merklize_transaction_set())
         self.root_chain.submit_block(merkle_hash)
 
         self.blocks[self.current_block_number] = self.current_block
@@ -81,10 +75,8 @@ class ChildChain(object):
             if prev_tx.spent:
                 raise TxAlreadySpentException('failed to send transaction')
             # deposit tx if prev_block is 0
-            if (
-                prev_tx.prev_block % self.child_block_interval == 0
-                and utils.normalize_address(tx.sender) != prev_tx.new_owner
-            ):
+            if (prev_tx.prev_block % self.child_block_interval == 0
+                    and tx.sender != prev_tx.new_owner):
                 raise InvalidTxSignatureException('failed to send transaction')
             prev_tx.spent = True  # Mark the previous tx as spent
         self.current_block.add_tx(tx)
@@ -111,8 +103,5 @@ class ChildChain(object):
 
     def get_tx_and_proof(self, blknum, slot):
         tx = self.get_tx(blknum, slot)
-        if blknum % self.child_block_interval != 0:
-            proof = '00' * 8
-        else:
-            proof = self.get_proof(blknum, slot)
+        proof = self.get_proof(blknum, slot)
         return tx, proof
