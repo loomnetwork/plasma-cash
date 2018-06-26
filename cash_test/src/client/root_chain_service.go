@@ -80,30 +80,35 @@ func (d *RootChainService) RespondChallengeBefore(slot uint64, challengingBlockN
 
 func (d *RootChainService) ChallengeBetween(slot uint64, challengingBlockNumber int64,
 	challengingTx Tx, proof Proof, sig []byte) ([]byte, error) {
-	challengingTxBytes, err := challengingTx.RlpEncode()
-	if err != nil {
-		return nil, err
-	}
-	tx, err := d.plasmaContract.ChallengeBetween(
-		d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof, sig)
-	if err != nil {
-		return nil, err
-	}
-	return tx.Hash().Bytes(), nil
+	/*	challengingTxBytes, err := challengingTx.RlpEncode()
+		if err != nil {
+			return nil, err
+		}
+		tx, err := d.plasmaContract.ChallengeBetween(
+			d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof, sig)
+		if err != nil {
+			return nil, err
+		}
+		return tx.Hash().Bytes(), nil
+	*/
+	return nil, nil
 }
 
 func (d *RootChainService) ChallengeAfter(slot uint64, challengingBlockNumber int64,
 	challengingTx Tx, proof Proof, sig []byte) ([]byte, error) {
-	challengingTxBytes, err := challengingTx.RlpEncode()
-	if err != nil {
-		return nil, err
-	}
-	tx, err := d.plasmaContract.ChallengeAfter(
-		d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof, sig)
-	if err != nil {
-		return nil, err
-	}
-	return tx.Hash().Bytes(), nil
+	/*
+		challengingTxBytes, err := challengingTx.RlpEncode()
+		if err != nil {
+			return nil, err
+		}
+		tx, err := d.plasmaContract.ChallengeAfter(
+			d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof, sig)
+		if err != nil {
+			return nil, err
+		}
+		return tx.Hash().Bytes(), nil
+	*/
+	return nil, nil
 }
 
 func (d *RootChainService) StartExit(
@@ -155,8 +160,9 @@ func (d *RootChainService) DebugCoinMetaData() {
 	}
 	for x := uint64(0); x < coins; x++ {
 		//uid, c.depositBlock, c.denomination, c.owner, c.state
-		uid, _, _, _, state, err := d.plasmaContract.GetPlasmaCoin(d.callOpts, x)
-		fmt.Printf("Num coins -%d -(uid)-%v -(state)-%v\n", x, uid, state)
+		y := x*2 + 1
+		uid, _, _, owner, state, err := d.plasmaContract.GetPlasmaCoin(d.callOpts, y)
+		fmt.Printf("Num coins -(slot)-%v -(uid)-%v -(state)-%v -(owner)-%x\n", y, uid, state, owner)
 
 		if err != nil {
 			panic(err)

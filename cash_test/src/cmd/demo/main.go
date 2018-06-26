@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 )
 
 func main() {
@@ -28,6 +29,9 @@ func main() {
 	authority := client.NewClient(svc, client.GetRootChain("authority"),
 		client.GetTokenContract("authority"))
 
+	alice.DebugCoinMetaData()
+
+	panic("weeee")
 	// Give alice 5 tokens
 	err := alice.TokenContract.Register()
 	if err != nil {
@@ -57,8 +61,14 @@ func main() {
 	// utxos in return
 	tokenID := int64(1)
 	alice.Deposit(tokenID)
+	time.Sleep(3 * time.Second)
+	alice.DebugCoinMetaData()
 	alice.Deposit(tokenID + 1)
+	time.Sleep(3 * time.Second)
+	alice.DebugCoinMetaData()
 	alice.Deposit(tokenID + 2)
+	time.Sleep(3 * time.Second)
+	alice.DebugCoinMetaData()
 
 	//Alice to Bob, and Alice to Charlie. We care about the Alice to Bob
 	// transaction

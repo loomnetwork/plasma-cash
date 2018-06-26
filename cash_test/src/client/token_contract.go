@@ -3,6 +3,7 @@ package client
 import (
 	"crypto/ecdsa"
 	"ethcontract"
+	"fmt"
 	"log"
 	"math/big"
 
@@ -23,6 +24,7 @@ type TContract struct {
 }
 
 func (d *TContract) Deposit(tokenID int64) error {
+	fmt.Printf("Tcontract-deposit-%d\n", tokenID)
 	_, err := d.tokenContract.DepositToPlasma(d.transactOpts, big.NewInt(int64(tokenID)))
 	return err
 }
