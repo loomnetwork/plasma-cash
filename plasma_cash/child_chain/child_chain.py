@@ -1,11 +1,10 @@
 import rlp
-from web3.auto import w3
 from ethereum import utils
-from utils.utils import get_sender
+from web3.auto import w3
+
 from .block import Block
-from .exceptions import (InvalidBlockSignatureException,
+from .exceptions import (CoinAlreadyIncludedException,
                          InvalidTxSignatureException,
-                         CoinAlreadyIncludedException,
                          PreviousTxNotFoundException, TxAlreadySpentException)
 from .transaction import Transaction
 
@@ -19,34 +18,34 @@ class ChildChain(object):
     def __init__(self, root_chain):
         self.root_chain = root_chain  # PlasmaCash object from plasma_cash.py
         self.authority = self.root_chain.account.address
+        self.key = self.root_chain.account.privateKey
         self.blocks = {}
         self.current_block = Block()
         self.child_block_interval = 1000
         self.current_block_number = 0
 
         # Watch all deposit events, callback to self._send_deposit
-        self.root_chain.watch_event('Deposit', self._send_deposit, 1)
+        self.root_chain.watch_event('Deposit', self._send_deposit, 0.1)
 
     def _send_deposit(self, event):
         ''' Called by event watcher and creates a deposit block '''
         slot = event['args']['slot']
-        blknum = event['args']['blockNumber']
+        blknum = int(event['args']['blockNumber'])
         # Currently, denomination is always 1. This may change in the future.
         denomination = event['args']['denomination']
         depositor = event['args']['from']
-        deposit_tx = Transaction(slot, 0, denomination, depositor,
-                                 incl_block=blknum)
+        deposit_tx = Transaction(slot, 0, denomination, depositor)
+
         # create a new plasma block on deposit
         deposit_block = Block([deposit_tx])
         self.blocks[blknum] = deposit_block
 
-    def submit_block(self, block):
+    def submit_block(self):
         ''' Submit the merkle root to the chain from the authority '''
-        block = rlp.decode(utils.decode_hex(block), Block)
-        signature = block.sig
-        if (get_sender(block.hash, signature) != self.authority):
-            raise InvalidBlockSignatureException('failed to submit a block')
-
+        block = self.current_block
+        block.make_mutable()
+        block.sign(self.key)
+        block.make_immutable()
         self.current_block_number += self.child_block_interval
         mset = block.merklize_transaction_set()
         print("merkle_mset-{}".format(mset))
@@ -58,8 +57,7 @@ class ChildChain(object):
 
         self.blocks[self.current_block_number] = self.current_block
         self.current_block = Block()
-
-        return merkle_hash
+        return str(self.current_block_number)
 
     def send_transaction(self, transaction):
         tx = rlp.decode(utils.decode_hex(transaction), Transaction)
@@ -83,8 +81,10 @@ class ChildChain(object):
             if prev_tx.spent:
                 raise TxAlreadySpentException('failed to send transaction')
             # deposit tx if prev_block is 0
-            if (prev_tx.prev_block % self.child_block_interval == 0
-                    and tx.sender != prev_tx.new_owner):
+            if (
+                prev_tx.prev_block % self.child_block_interval == 0
+                and utils.normalize_address(tx.sender) != prev_tx.new_owner
+            ):
                 raise InvalidTxSignatureException('failed to send transaction')
             prev_tx.spent = True  # Mark the previous tx as spent
         self.current_block.add_tx(tx)
@@ -96,10 +96,23 @@ class ChildChain(object):
     def get_block(self, blknum):
         return rlp.encode(self.blocks[blknum]).hex()
 
-    def get_proof(self, blknum, uid):
-        block = self.blocks[blknum]
-        block.merklize_transaction_set()
-        return block.merkle.create_merkle_proof(uid)
-
     def get_block_number(self):
         return self.current_block_number
+
+    def get_proof(self, blknum, slot):
+        block = self.blocks[blknum]
+        block.merklize_transaction_set()
+        return block.merkle.create_merkle_proof(slot).hex()
+
+    def get_tx(self, blknum, slot):
+        block = self.blocks[blknum]
+        tx = block.get_tx_by_uid(slot)
+        return rlp.encode(tx).hex()
+
+    def get_tx_and_proof(self, blknum, slot):
+        tx = self.get_tx(blknum, slot)
+        if blknum % self.child_block_interval != 0:
+            proof = '00' * 8
+        else:
+            proof = self.get_proof(blknum, slot)
+        return tx, proof

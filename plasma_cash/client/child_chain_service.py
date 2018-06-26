@@ -4,7 +4,6 @@ from .exceptions import RequestFailedException
 
 
 class ChildChainService(object):
-
     def __init__(self, base_url, verify=False, timeout=5):
         self.base_url = base_url
         self.verify = verify
@@ -27,7 +26,8 @@ class ChildChainService(object):
             return response
         else:
             raise RequestFailedException(
-                        'failed with response: {}'.format(response))
+                'failed with response: {}'.format(response)
+            )
 
     def get_current_block(self):
         end_point = '/block'
@@ -44,16 +44,28 @@ class ChildChainService(object):
         response = self.request(end_point, 'GET')
         return response.text
 
-    def get_proof(self, blknum, uid):
+    def get_proof(self, blknum, slot):
         end_point = '/proof'
-        params = {'blknum': blknum, 'uid': uid}
+        params = {'blknum': blknum, 'slot': slot}
         response = self.request(end_point, 'GET', params=params)
         return response.text
 
-    def submit_block(self, block):
+    def get_tx_and_proof(self, blknum, slot):
+        end_point = '/tx_proof'
+        params = {'blknum': blknum, 'slot': slot}
+        response = self.request(end_point, 'GET', params=params)
+        return response.text
+
+    def get_tx(self, blknum, slot):
+        end_point = '/tx'
+        params = {'blknum': blknum, 'slot': slot}
+        response = self.request(end_point, 'GET', params=params)
+        return response.text
+
+    def submit_block(self):
         end_point = '/submit_block'
-        data = {'block': block}
-        self.request(end_point, 'POST', data=data)
+        response = self.request(end_point, 'POST')
+        return int(response.text)
 
     def send_transaction(self, tx):
         end_point = '/send_tx'

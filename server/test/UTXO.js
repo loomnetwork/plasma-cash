@@ -2,16 +2,17 @@ const RLP = require('rlp')
 const utils = require('web3-utils');
 const SparseMerkleTree = require('./SparseMerkleTree.js');
 const ethutil = require('ethereumjs-util');
+const BN = require('bn.js');
 
 const Promisify = (inner) =>
 new Promise((resolve, reject) =>
-        inner((err, res) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(res);
-            }
-        })
+    inner((err, res) => {
+        if (err) {
+            reject(err);
+        } else {
+            resolve(res);
+        }
+    })
 );
 
 
@@ -27,41 +28,37 @@ function signHash(from, hash) {
     return signature;
 };
 
-function createUTXO(slot, block, incBlock, from, to) {
-    let data = [ slot, block, 1, to ];
+function createUTXO(slot, block, from, to) {
+    let rlpSlot = slot instanceof web3.BigNumber ? (new BN(slot.toString())).toBuffer() : slot;
+    let data = [rlpSlot, block, 1, to];
     data = '0x' + RLP.encode(data).toString('hex');
 
     // If it's a deposit transaction txHash = hash of the slot
-    let txHash = incBlock % 1000 !== 0 ?
+    let txHash = block == 0 ?
         utils.soliditySha3({type: 'uint64', value: slot}) :
         utils.soliditySha3({type: 'bytes', value: data});
     let sig = signHash(from, txHash);
 
     let leaf = {};
-    leaf.slot = slot
+    leaf.slot = web3.toBigNumber(slot).toString();
     leaf.hash = txHash;
 
-    return {'tx' : data, 'sig' : sig, 'leaf' : leaf};
+    return {'tx': data, 'sig': sig, 'leaf': leaf};
 };
 
 async function submitTransactions(from, plasma, txs) {
     let tree;
-    if (txs) {
-        let leaves = {}
-        for (let l in txs) {
-            leaves[txs[l].slot] = txs[l].hash;
-        }
-        tree = new SparseMerkleTree(64, leaves);
-    } else {
-        tree = new SparseMerkleTree(64);
+    let leaves = {}
+    for (let l in txs) {
+        leaves[txs[l].slot] = txs[l].hash;
     }
-
+    tree = new SparseMerkleTree(64, leaves);
     await plasma.submitBlock(tree.root, {'from': from});
     return tree;
 }
 
 async function withdrawBonds(plasma, withdrawer, amount) {
-    await plasma.withdrawBonds({from: withdrawer });
+    await plasma.withdrawBonds({from: withdrawer});
     let withdrewBonds = plasma.WithdrewBonds({}, {fromBlock: 0, toBlock: 'latest'});
     let e = await Promisify(cb => withdrewBonds.get(cb));
     let withdraw = e[0].args;
@@ -74,5 +71,6 @@ module.exports = {
     signHash : signHash,
     createUTXO : createUTXO,
     submitTransactions: submitTransactions,
-    withdrawBonds: withdrawBonds
+    withdrawBonds: withdrawBonds,
+    Promisify: Promisify
 }

@@ -1,2 +1,2 @@
 [flake8]
-exclude = unit_test.py, contract.py, config.py
+exclude = unit_test.py, config.py

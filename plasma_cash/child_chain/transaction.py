@@ -1,9 +1,10 @@
-import rlp
 import ethereum.utils
-from web3.auto import w3
+import rlp
 from rlp.sedes import big_endian_int, binary
+from web3.auto import w3
 
 from utils.utils import get_sender, sign
+
 from .exceptions import InvalidTxSignatureException
 
 
@@ -14,14 +15,14 @@ class Transaction(rlp.Serializable):
         ('prev_block', big_endian_int),
         ('denomination', big_endian_int),
         ('new_owner', ethereum.utils.address),
-        ('sig', binary)
+        ('sig', binary),
     ]
 
-    def __init__(self, uid, prev_block, denomination, new_owner,
-                 sig=b'\x00' * 65, incl_block=0):
+    def __init__(
+        self, uid, prev_block, denomination, new_owner, sig=b'\x00' * 65
+    ):
         self.uid = uid
         self.prev_block = prev_block
-        self.incl_block = incl_block
         self.denomination = denomination
         self.new_owner = ethereum.utils.normalize_address(new_owner)
         self.sig = sig
@@ -30,7 +31,7 @@ class Transaction(rlp.Serializable):
 
     @property
     def hash(self):
-        if self.incl_block % 1000 == 0:
+        if self.prev_block != 0:
             ret = w3.sha3(rlp.encode(self, UnsignedTransaction))
         else:
             ret = w3.soliditySha3(['uint64'], [self.uid])
