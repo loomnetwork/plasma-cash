@@ -91,7 +91,7 @@ func (c *LoomChildChainService) SubmitBlock() error {
 	return nil
 }
 
-func (c *LoomChildChainService) SendTransaction(slot uint64, prevBlock int64, denomination int64, newOwner string) (Tx, error) {
+func (c *LoomChildChainService) SendTransaction(slot uint64, prevBlock int64, denomination int64, newOwner string, sig []byte) error {
 	logdebug("SendTransaction()")
 
 	loomAddress := fmt.Sprintf("chain:%s", newOwner)
@@ -102,6 +102,7 @@ func (c *LoomChildChainService) SendTransaction(slot uint64, prevBlock int64, de
 		PreviousBlock: &types.BigUInt{*loom.NewBigUIntFromInt(prevBlock)},
 		Denomination:  &types.BigUInt{*loom.NewBigUIntFromInt(denomination)},
 		NewOwner:      address.MarshalPB(),
+		Signature:     sig,
 	}
 
 	params := &pctypes.PlasmaTxRequest{
@@ -111,12 +112,12 @@ func (c *LoomChildChainService) SendTransaction(slot uint64, prevBlock int64, de
 	if err := c.loomcontract.CallContract("PlasmaTxRequest", params, nil); err != nil {
 		log.Fatalf("failed trying to send transaction - %v\n", err)
 
-		return nil, err
+		return err
 	}
 
 	log.Printf("Transaction succeeded")
 
-	return &LoomTx{}, nil
+	return nil
 }
 
 func NewLoomChildChainService(readuri, writeuri string) ChainServiceClient {

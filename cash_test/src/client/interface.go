@@ -8,6 +8,7 @@ import (
 type Tx interface {
 	RlpEncode() ([]byte, error)
 	Sign(key *ecdsa.PrivateKey) ([]byte, error)
+	Sig() []byte
 }
 
 type Block interface {
@@ -94,5 +95,5 @@ type ChainServiceClient interface {
 
 	SubmitBlock() error
 
-	SendTransaction(slot uint64, prevBlock int64, denomination int64, newOwner string) (Tx, error)
+	SendTransaction(slot uint64, prevBlock int64, denomination int64, newOwner string, sig []byte) error
 }

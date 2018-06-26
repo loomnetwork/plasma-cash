@@ -16,7 +16,7 @@ func main() {
 
 	var svc client.ChainServiceClient
 	if plasmaChain == "PROTOTYPE_SERVER" {
-		svc = client.NewChildChainService("http://localhost:8546")
+		//		svc = client.NewChildChainService("http://localhost:8546")
 	} else {
 		svc = client.NewLoomChildChainService("http://localhost:46658/rpc", "http://localhost:46658/query")
 	}
@@ -66,11 +66,11 @@ func main() {
 	blkNum := int64(3)
 	account, err := bob.TokenContract.Account()
 	exitIfError(err)
-	_, err = alice.SendTransaction(utxoID, blkNum, 1, account.Address) //aliceToBob
+	err = alice.SendTransaction(utxoID, blkNum, 1, account.Address) //aliceToBob
 	exitIfError(err)
 	account, err = charlie.TokenContract.Account()
 	exitIfError(err)
-	_, err = alice.SendTransaction(utxoID-1, blkNum-1, 1, account.Address) //randomTx
+	err = alice.SendTransaction(utxoID-1, blkNum-1, 1, account.Address) //randomTx
 	exitIfError(err)
 	authority.SubmitBlock()
 
@@ -78,7 +78,7 @@ func main() {
 	blkNum = 1000
 	account, err = charlie.TokenContract.Account() // the prev transaction was included in block 1000
 	exitIfError(err)
-	_, err = bob.SendTransaction(utxoID, blkNum, 1, account.Address) //bobToCharlie
+	err = bob.SendTransaction(utxoID, blkNum, 1, account.Address) //bobToCharlie
 	exitIfError(err)
 	authority.SubmitBlock()
 

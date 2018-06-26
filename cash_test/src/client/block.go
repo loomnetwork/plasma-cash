@@ -42,5 +42,6 @@ func (p *PbBlock) TxFromSlot(slot uint64) (Tx, error) {
 	return &LoomTx{Slot: slot,
 		PrevBlock:    big.NewInt(tx.GetPreviousBlock().Value.Int64()), //TODO ugh bad casting
 		Denomination: uint32(tx.Denomination.Value.Uint64()),          //TODO get this from somewhere
-		Owner:        ethAddress}, nil
+		Owner:        ethAddress,
+		Signature:    tx.Signature}, nil
 }

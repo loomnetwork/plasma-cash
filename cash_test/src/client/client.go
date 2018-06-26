@@ -93,16 +93,11 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]b
 	fmt.Printf("prevTxBlkNum-%d-txBlkNum-%d\n", prevTxBlkNum, txBlkNum)
 	fmt.Printf("exitingTxIncBlock MOD childBlockInterval %d\n", txBlkNum%1000)
 
-	exitingTxSig, err := exitingTx.Sign(account.PrivateKey)
-	if err != nil {
-		return nil, err
-	}
-
 	return c.RootChain.StartExit(
 		slot,
 		prevTx, exitingTx,
 		prevTxProof, exitingTxProof,
-		exitingTxSig,
+		exitingTx.Sig(),
 		prevTxBlkNum, txBlkNum)
 }
 
@@ -251,8 +246,28 @@ func (c *Client) SubmitBlock() error {
 	return c.RootChain.SubmitBlock(big.NewInt(blockNum), root)
 }
 
-func (c *Client) SendTransaction(slot uint64, prevBlock int64, denomination int64, newOwner string) (Tx, error) {
-	return c.childChain.SendTransaction(slot, prevBlock, denomination, newOwner)
+func (c *Client) SendTransaction(slot uint64, prevBlock int64, denomination int64, newOwner string) error {
+	ethAddress := common.HexToAddress(newOwner)
+	fmt.Printf("newowner -%s\n", ethAddress)
+
+	tx := &LoomTx{
+		Slot:         slot,
+		Denomination: uint32(denomination),
+		Owner:        ethAddress,
+		PrevBlock:    big.NewInt(prevBlock),
+	}
+
+	account, err := c.TokenContract.Account()
+	if err != nil {
+		return err
+	}
+
+	sig, err := tx.Sign(account.PrivateKey)
+	if err != nil {
+		return err
+	}
+
+	return c.childChain.SendTransaction(slot, prevBlock, denomination, newOwner, sig)
 }
 
 func (c *Client) getTxAndProof(blkHeight int64, slot uint64) (Tx, Proof, error) {
