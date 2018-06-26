@@ -92,6 +92,9 @@ contract RootChain is ERC721Receiver {
         EXITED
     }
 
+    // Track owners of txs that are pending a response
+    mapping (uint64 => address) responses;
+
     // tracking of NFTs deposited in each slot
     uint64 public numCoins = 0;
     mapping (uint64 => Coin) public coins;
@@ -278,7 +281,7 @@ contract RootChain is ERC721Receiver {
                 exitingTxInclusionProof, sig,
                 prevTxIncBlock, exitingTxIncBlock, false);
         }
-        setChallenged(slot);
+        setChallenged(slot, exitingTxBytes);
     }
 
     // If `challengeBefore` was successfully challenged, then set state to
@@ -288,10 +291,13 @@ contract RootChain is ERC721Receiver {
         uint64 slot,
         uint256 challengingBlockNumber,
         bytes challengingTransaction,
-        bytes proof)
+        bytes proof,
+        bytes signature)
         external
         isState(slot, State.CHALLENGED)
     {
+        bytes32 txHash = keccak256(challengingTransaction);
+        require(txHash.ecverify(signature, responses[slot]), "Invalid sig");
         checkTxIncluded(challengingTransaction, challengingBlockNumber, proof);
 
         // Mark exit as responded, which will allow it to be finalized once it has matured
@@ -391,13 +397,18 @@ contract RootChain is ERC721Receiver {
         emit StartedExit(slot, msg.sender);
     }
 
-    function setChallenged(uint64 slot) private {
+    function setChallenged(uint64 slot, bytes txBytes) private {
         // When an exit is challenged, its state is set to challenged and the
         // contract waits for the exitor's response. The exit is not
         // immediately deleted.
         coins[slot].state = State.CHALLENGED;
         // Save the challenger's address, for applying penalties
         challengers[slot] = msg.sender;
+
+        // Need to save the exiting transaction's owner, to verify
+        // that the response is valid
+        Transaction.TX memory txData = txBytes.getTx();
+        responses[slot] = txData.owner;
         emit ChallengedExit(slot);
     }
 
@@ -509,7 +520,7 @@ contract RootChain is ERC721Receiver {
         bytes32 txHash,
         bytes32 root,
         uint64 slot,
-        bytes proof) public returns (bool)
+        bytes proof) public view returns (bool)
     {
         return smt.checkMembership(
             txHash,

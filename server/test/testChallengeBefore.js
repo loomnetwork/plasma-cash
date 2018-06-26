@@ -136,10 +136,11 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
             );
 
             let responseTx = bob_to_charlie.tx;
+            sig = bob_to_charlie.sig;
             let responseProof = tree_charlie.createMerkleProof(UTXO.slot);
 
             await plasma.respondChallengeBefore(
-                UTXO.slot, 2000, responseTx, responseProof,
+                UTXO.slot, 2000, responseTx, responseProof, sig,
                 {'from': elliot}
             );
 
