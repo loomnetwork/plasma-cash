@@ -47,9 +47,13 @@ func (l *LoomTx) Sign(key *ecdsa.PrivateKey) ([]byte, error) {
 func (l *LoomTx) RlpEncode() ([]byte, error) {
 	logdebug("RlpEncode()")
 
+	fmt.Printf("rlpencode-%d-%d", len(l.Owner.Bytes()), len(l.Owner))
+
+	fmt.Printf("rlpencode-%v-%v", l.Owner.Bytes(), l.Owner)
+
 	return rlp.EncodeToBytes([]interface{}{
-		l.Slot,
-		l.PrevBlock,
+		uint64(l.Slot),
+		l.PrevBlock.Uint64(),
 		l.Denomination,
 		l.Owner,
 	})

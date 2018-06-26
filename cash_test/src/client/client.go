@@ -94,6 +94,8 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]b
 	fmt.Printf("exitingTxIncBlock MOD childBlockInterval %d\n", txBlkNum%1000)
 	sig := exitingTx.Sig()
 	fmt.Printf("exitingTx.Sig() %x\n", sig)
+	fmt.Printf("len(sig)- %d\n", len(sig))
+	fmt.Printf("byte 0(sig)- %d\n", sig[0])
 	fmt.Printf("prevTx-Owner -%v\n", prevTx.NewOwner().String())
 
 	return c.RootChain.StartExit(
