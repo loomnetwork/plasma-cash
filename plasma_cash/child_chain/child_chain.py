@@ -3,8 +3,7 @@ from ethereum import utils
 from web3.auto import w3
 
 from .block import Block
-from .exceptions import (CoinAlreadyIncludedException,
-                         InvalidTxSignatureException,
+from .exceptions import (InvalidTxSignatureException,
                          PreviousTxNotFoundException, TxAlreadySpentException)
 from .transaction import Transaction
 
@@ -57,22 +56,16 @@ class ChildChain(object):
     def send_transaction(self, transaction):
         tx = rlp.decode(utils.decode_hex(transaction), Transaction)
 
-        # a plasma cash block can only have 1 spend of a particular coin
-        tx_included = self.current_block.get_tx_by_uid(tx.uid)
-        if tx_included is not None and tx.uid == tx_included.uid:
-            raise CoinAlreadyIncludedException('double spend rejected')
-
         # If the tx we are spending is not a deposit tx
         if tx.prev_block % self.child_block_interval == 0:
-            # if the tx we are referencing is deposit transaction it does not
-            # have a sig
-            # The TX we are referencing should be included in a block, should
-            # not be spent.
             # If the TX we are referencing was initially a deposit TX, then it
             # does not have a signature attached
+
+            # The tx we are referencing should be included in a block
             prev_tx = self.blocks[tx.prev_block].get_tx_by_uid(tx.uid)
             if prev_tx is None:
                 raise PreviousTxNotFoundException('failed to send transaction')
+            # The tx we are referencing should not be spent
             if prev_tx.spent:
                 raise TxAlreadySpentException('failed to send transaction')
             # deposit tx if prev_block is 0
@@ -81,8 +74,13 @@ class ChildChain(object):
                 and utils.normalize_address(tx.sender) != prev_tx.new_owner
             ):
                 raise InvalidTxSignatureException('failed to send transaction')
+            # `add_tx` automatically checks if the coin has already been moved
+            # in the current block
+            self.current_block.add_tx(tx)
             prev_tx.spent = True  # Mark the previous tx as spent
-        self.current_block.add_tx(tx)
+        # If the tx we are spending is a deposit tx
+        else:
+            self.current_block.add_tx(tx)
         return tx.hash
 
     def get_current_block(self):
