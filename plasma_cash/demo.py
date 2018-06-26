@@ -69,6 +69,7 @@ authority.submit_block()
 bob_to_charlie = bob.send_transaction(
     deposit3_utxo, plasma_block1, charlie.token_contract.account.address
 )
+charlie.watch_exits(deposit3_utxo)
 
 # This is the info that bob is required to send to charlie. This happens on
 # the P2P layer

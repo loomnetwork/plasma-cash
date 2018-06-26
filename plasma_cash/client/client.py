@@ -311,6 +311,22 @@ class Client(object):
         self.child_chain.send_transaction(rlp.encode(tx, Transaction).hex())
         return tx
 
+    def watch_exits(self, slot):
+        # TODO figure out how to have this function be invoked automatically
+        print("the slot:", slot)
+        self.root_chain.watch_event('StartedExit',
+                                    self._respond_to_exit,
+                                    0.1,
+                                    filters={'slot': slot})
+
+    def _respond_to_exit(self, event):
+        ''' Called by event watcher and checks that the exit event is
+        legitimate
+        '''
+        slot = event['args']['slot']
+        owner = event['args']['owner']
+        print("EXIT DETECTED -- slot: {}, owner: {}".format(slot, owner))
+
     def get_block_number(self):
         return self.child_chain.get_block_number()
 
