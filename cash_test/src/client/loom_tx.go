@@ -2,13 +2,11 @@ package client
 
 import (
 	"crypto/ecdsa"
-	"errors"
 	"fmt"
 	"math/big"
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/sha3"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/loomnetwork/go-loom/common/evmcompat"
@@ -31,17 +29,13 @@ func (l *LoomTx) NewOwner() common.Address {
 }
 
 func (l *LoomTx) Sign(key *ecdsa.PrivateKey) ([]byte, error) {
-	sig, err := crypto.Sign(l.Hash(), key)
+	sig, err := SoliditySign(l.Hash(), key)
 	if err != nil {
 		return nil, err
 	}
-	if len(sig) != 65 {
-		return nil, errors.New(fmt.Sprintf("wrong size for signature: got %d, want 65", len(sig)))
-	}
 
-	r := make([]byte, 1, 65)
-	r = append(r, sig[:64]...)
-	return append(r, sig[64]+27), nil
+	// Left pad the sig by one zero byte... Why? Because the Python code does.
+	return append(make([]byte, 1, 65), sig...), nil
 }
 
 func (l *LoomTx) RlpEncode() ([]byte, error) {
