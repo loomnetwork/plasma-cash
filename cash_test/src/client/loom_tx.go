@@ -34,8 +34,9 @@ func (l *LoomTx) Sign(key *ecdsa.PrivateKey) ([]byte, error) {
 		return nil, err
 	}
 
-	// Left pad the sig by one zero byte... Why? Because the Python code does.
-	return append(make([]byte, 1, 65), sig...), nil
+	// The first byte should be the signature more, for details about the signature format refer to
+	// https://github.com/loomnetwork/plasma-erc721/blob/master/server/contracts/Libraries/ECVerify.sol
+	return append(make([]byte, 1, 66), sig...), nil
 }
 
 func (l *LoomTx) RlpEncode() ([]byte, error) {
