@@ -56,7 +56,7 @@ func (d *RootChainService) ChallengeBefore(slot uint64, prevTx Tx, exitingTx Tx,
 	}
 	tx, err := d.plasmaContract.ChallengeBefore(
 		d.transactOpts, slot, prevTxBytes, exitingTxBytes,
-		prevTxInclusionProof.Bytes(), exitingTxInclusionProof.Bytes(), sig,
+		prevTxInclusionProof, exitingTxInclusionProof, sig,
 		big.NewInt(prevTxBlockNum), big.NewInt(exitingTxBlockNum))
 	if err != nil {
 		return nil, err
@@ -71,7 +71,7 @@ func (d *RootChainService) RespondChallengeBefore(slot uint64, challengingBlockN
 		return nil, err
 	}
 	tx, err := d.plasmaContract.RespondChallengeBefore(
-		d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof.Bytes())
+		d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func (d *RootChainService) ChallengeBetween(slot uint64, challengingBlockNumber 
 		return nil, err
 	}
 	tx, err := d.plasmaContract.ChallengeBetween(
-		d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof.Bytes())
+		d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func (d *RootChainService) ChallengeAfter(slot uint64, challengingBlockNumber in
 		return nil, err
 	}
 	tx, err := d.plasmaContract.ChallengeAfter(
-		d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof.Bytes())
+		d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof)
 	if err != nil {
 		return nil, err
 	}
@@ -119,9 +119,10 @@ func (d *RootChainService) StartExit(
 	}
 	d.transactOpts.Value = big.NewInt(100000000000000000) //0.1 eth
 
+	fmt.Printf("\nprevTxInclusion.Bytes()-%v-len(%d)\n", prevTxInclusion, len(prevTxInclusion))
 	tx, err := d.plasmaContract.StartExit(
 		d.transactOpts, slot,
-		prevTxBytes, exitingTxBytes, prevTxInclusion.Bytes(), exitingTxInclusion.Bytes(),
+		prevTxBytes, exitingTxBytes, prevTxInclusion, exitingTxInclusion,
 		sigs, big.NewInt(prevTxIncBlock), big.NewInt(exitingTxIncBlock))
 
 	d.transactOpts.Value = big.NewInt(0)

@@ -39,9 +39,11 @@ func (p *PbBlock) TxFromSlot(slot uint64) (Tx, error) {
 	ethAddress := common.HexToAddress(address)
 	fmt.Printf("ethaddress-%s previous block -%d   Denomination-%d\n", ethAddress, tx.GetPreviousBlock().Value.Int64(), tx.Denomination.Value.Uint64())
 
+	fmt.Printf("tx.Proof-%x -len(%d)\n", tx.Proof, len(tx.Proof))
 	return &LoomTx{Slot: slot,
 		PrevBlock:    big.NewInt(tx.GetPreviousBlock().Value.Int64()), //TODO ugh bad casting
 		Denomination: uint32(tx.Denomination.Value.Uint64()),          //TODO get this from somewhere
 		Owner:        ethAddress,
-		Signature:    tx.Signature}, nil
+		Signature:    tx.Signature,
+		TXProof:      tx.Proof}, nil
 }

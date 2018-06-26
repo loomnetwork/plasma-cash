@@ -88,7 +88,7 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]b
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("exitingTx-%v exitingTxProof-%v\n", exitingTx, exitingTxProof)
+	fmt.Printf("exitingTx-%x exitingTxProof-%x\n", exitingTx, exitingTxProof)
 	fmt.Printf("prevTx-%v prevTxProof-%v\n", prevTx, prevTxProof)
 	fmt.Printf("prevTxBlkNum-%d-txBlkNum-%d\n", prevTxBlkNum, txBlkNum)
 	fmt.Printf("exitingTxIncBlock MOD childBlockInterval %d\n", txBlkNum%1000)
@@ -97,6 +97,7 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]b
 	fmt.Printf("len(sig)- %d\n", len(sig))
 	fmt.Printf("byte 0(sig)- %d\n", sig[0])
 	fmt.Printf("prevTx-Owner -%v\n", prevTx.NewOwner().String())
+	fmt.Printf("len(exitingTxProof)-%d\n", len(exitingTxProof))
 
 	return c.RootChain.StartExit(
 		slot,
@@ -275,7 +276,7 @@ func (c *Client) SendTransaction(slot uint64, prevBlock int64, denomination int6
 	return c.childChain.SendTransaction(slot, prevBlock, denomination, newOwner, sig)
 }
 
-func (c *Client) getTxAndProof(blkHeight int64, slot uint64) (Tx, Proof, error) {
+func (c *Client) getTxAndProof(blkHeight int64, slot uint64) (Tx, []byte, error) {
 	block, err := c.childChain.Block(blkHeight)
 	if err != nil {
 		return nil, nil, err
@@ -285,7 +286,7 @@ func (c *Client) getTxAndProof(blkHeight int64, slot uint64) (Tx, Proof, error) 
 		return nil, nil, err
 	}
 
-	return tx, &SimpleProof{block.MerkleHash()}, nil
+	return tx, tx.Proof(), nil
 }
 
 func (c *Client) GetBlockNumber() (int64, error) {

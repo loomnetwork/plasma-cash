@@ -12,6 +12,7 @@ type Tx interface {
 	Sign(key *ecdsa.PrivateKey) ([]byte, error)
 	Sig() []byte
 	NewOwner() common.Address
+	Proof() Proof
 }
 
 type Block interface {
@@ -19,6 +20,7 @@ type Block interface {
 	TxFromSlot(slot uint64) (Tx, error)
 }
 
+/*
 type Proof interface {
 	Bytes() []byte
 }
@@ -31,7 +33,7 @@ type SimpleProof struct {
 func (s SimpleProof) Bytes() []byte {
 	return s.proofdata
 }
-
+*/
 type Account struct {
 	Address    string
 	PrivateKey *ecdsa.PrivateKey
@@ -54,6 +56,8 @@ const (
 	PlasmaCoinResponded
 	PlasmaCoinExited
 )
+
+type Proof []byte
 
 type PlasmaCoin struct {
 	UID             uint64
