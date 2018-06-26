@@ -1,10 +1,13 @@
 package client
 
-import "math/big"
+import (
+	"crypto/ecdsa"
+	"math/big"
+)
 
 type Tx interface {
 	RlpEncode() ([]byte, error)
-	Sig() []byte
+	Sign(key *ecdsa.PrivateKey) ([]byte, error)
 }
 
 type Block interface {
@@ -26,7 +29,8 @@ func (s SimpleProof) Bytes() []byte {
 }
 
 type Account struct {
-	Address string
+	Address    string
+	PrivateKey *ecdsa.PrivateKey
 }
 
 type TokenContract interface {

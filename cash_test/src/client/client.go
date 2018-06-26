@@ -47,7 +47,10 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]b
 	// previous owners, this is a hacky way of getting the info from the
 	// operator which sould be changed in the future after the exiting
 	// process is more standardized
-	var txHash []byte
+	account, err := c.TokenContract.Account()
+	if err != nil {
+		return nil, err
+	}
 
 	if txBlkNum%c.childBlockInterval != 0 {
 		// In case the sender is exiting a Deposit transaction, they should
@@ -56,18 +59,17 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]b
 		fmt.Printf("exiting deposit transaction\n")
 		panic("TODO")
 
-		account, err := c.TokenContract.Account()
+		// prev_block = 0 , denomination = 1
+		exitingTx := Transaction(slot, 0, 1, account.Address)
+		exitingTxSig, err := exitingTx.Sign(account.PrivateKey)
 		if err != nil {
 			return nil, err
 		}
-		// prev_block = 0 , denomination = 1
-		exitingTx := Transaction(slot, 0, 1, account.Address)
-		//		exitingTx.sign(c.key)  //????
-		txHash, err = c.RootChain.StartExit(
+		txHash, err := c.RootChain.StartExit(
 			slot,
 			nil, exitingTx,
 			nil, nil, //proofs?
-			exitingTx.Sig(),
+			exitingTxSig,
 			0, txBlkNum)
 		if err != nil {
 			return nil, err
@@ -78,13 +80,11 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]b
 
 	// Otherwise, they should get the raw tx info from the block
 	// And the merkle proof and submit these
-	exitingTx, exitingTxProof, err := c.getTxAndProof(txBlkNum,
-		slot)
+	exitingTx, exitingTxProof, err := c.getTxAndProof(txBlkNum, slot)
 	if err != nil {
 		return nil, err
 	}
-	prevTx, prevTxProof, err := c.getTxAndProof(prevTxBlkNum,
-		slot)
+	prevTx, prevTxProof, err := c.getTxAndProof(prevTxBlkNum, slot)
 	if err != nil {
 		return nil, err
 	}
@@ -93,39 +93,42 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]b
 	fmt.Printf("prevTxBlkNum-%d-txBlkNum-%d\n", prevTxBlkNum, txBlkNum)
 	fmt.Printf("exitingTxIncBlock MOD childBlockInterval %d\n", txBlkNum%1000)
 
-	signedSig := c.sign(exitingTx.Sig())
+	exitingTxSig, err := exitingTx.Sign(account.PrivateKey)
+	if err != nil {
+		return nil, err
+	}
 
 	return c.RootChain.StartExit(
 		slot,
 		prevTx, exitingTx,
 		prevTxProof, exitingTxProof,
-		signedSig,
+		exitingTxSig,
 		prevTxBlkNum, txBlkNum)
-}
-func (c *Client) sign(data []byte) []byte {
-	panic("get signatures working from rootchain private key")
 }
 
 func (c *Client) ChallengeBefore(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]byte, error) {
+	account, err := c.TokenContract.Account()
+	if err != nil {
+		return nil, err
+	}
+
 	if txBlkNum%c.childBlockInterval != 0 {
 		// In case the sender is exiting a Deposit transaction, they should
 		// just create a signed transaction to themselves. There is no need
 		// for a merkle proof.
 		panic("TODO")
 
-		account, err := c.TokenContract.Account()
+		//  prev_block = 0 , denomination = 1
+		exitingTx := Transaction(slot, 0, 1, account.Address)
+		exitingTxSig, err := exitingTx.Sign(account.PrivateKey)
 		if err != nil {
 			return nil, err
 		}
-
-		//  prev_block = 0 , denomination = 1
-		exitingTx := Transaction(slot, 0, 1, account.Address)
-		//		exitingTx.sign(c.key) // todo??
 		txHash, err := c.RootChain.ChallengeBefore(
 			slot,
 			nil, exitingTx,
 			nil, nil,
-			exitingTx.Sig(),
+			exitingTxSig,
 			0, txBlkNum)
 
 		return txHash, err
@@ -143,13 +146,16 @@ func (c *Client) ChallengeBefore(slot uint64, prevTxBlkNum int64, txBlkNum int64
 		return nil, err
 	}
 
-	signedSig := c.sign(exitingTx.Sig())
+	exitingTxSig, err := exitingTx.Sign(account.PrivateKey)
+	if err != nil {
+		return nil, err
+	}
 
 	txHash, err := c.RootChain.ChallengeBefore(
 		slot,
 		prevTx, exitingTx,
 		prevTxProof, exitingTxProof,
-		signedSig,
+		exitingTxSig,
 		prevTxBlkNum, txBlkNum)
 	return txHash, err
 

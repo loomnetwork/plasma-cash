@@ -42,7 +42,8 @@ func (d *TContract) BalanceOf() (int64, error) {
 
 func (d *TContract) Account() (*Account, error) {
 	return &Account{
-		Address: d.callerAddr.String(),
+		Address:    d.callerAddr.String(),
+		PrivateKey: d.callerKey,
 	}, nil
 }
 

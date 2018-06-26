@@ -1,6 +1,7 @@
 package client
 
 import (
+	"crypto/ecdsa"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -112,8 +113,8 @@ func (c *ChildChainService) SubmitBlock() error {
 type ChildChainTx struct {
 }
 
-func (c *ChildChainTx) Sig() []byte {
-	return []byte{}
+func (c *ChildChainTx) Sign(key *ecdsa.PrivateKey) ([]byte, error) {
+	return []byte{}, nil
 }
 
 func (c *ChildChainTx) RlpEncode() ([]byte, error) {

@@ -1,10 +1,12 @@
 package client
 
 import (
+	"crypto/ecdsa"
 	"math/big"
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/sha3"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/loomnetwork/go-loom/common/evmcompat"
@@ -18,9 +20,8 @@ type LoomTx struct {
 	//IncludeBlock  *big.Int // TODO
 }
 
-//Python version signs here
-func (l *LoomTx) Sig() []byte {
-	return l.Hash()
+func (l *LoomTx) Sign(key *ecdsa.PrivateKey) ([]byte, error) {
+	return crypto.Sign(l.Hash(), key)
 }
 
 func (l *LoomTx) RlpEncode() ([]byte, error) {
