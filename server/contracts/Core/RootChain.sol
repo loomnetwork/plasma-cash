@@ -94,7 +94,7 @@ contract RootChain is ERC721Receiver {
 
     // tracking of NFTs deposited in each slot
     uint64 public numCoins = 0;
-    mapping (uint64 => Coin) public coins;
+    mapping (uint64 => Coin) coins;
     struct Coin {
         uint64 uid; // there are up to 2^64 cards, one for every leaf of
                     // a depth 64 Sparse Merkle Tree

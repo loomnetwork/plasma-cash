@@ -190,7 +190,9 @@ func (c *Client) ChallengeBetween(slot uint64, challengingBlockNumber int64) ([]
 		slot,
 		challengingBlockNumber,
 		challengingTx,
-		proof)
+		proof,
+		challengingTx.Sig(),
+	)
 	return txHash, err
 }
 
@@ -206,7 +208,8 @@ func (c *Client) ChallengeAfter(slot uint64, challengingBlockNumber int64) ([]by
 	txHash, err := c.RootChain.ChallengeAfter(
 		slot, challengingBlockNumber,
 		challengingTx,
-		proof)
+		proof,
+		challengingTx.Sig())
 	return txHash, err
 }
 

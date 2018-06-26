@@ -79,13 +79,13 @@ func (d *RootChainService) RespondChallengeBefore(slot uint64, challengingBlockN
 }
 
 func (d *RootChainService) ChallengeBetween(slot uint64, challengingBlockNumber int64,
-	challengingTx Tx, proof Proof) ([]byte, error) {
+	challengingTx Tx, proof Proof, sig []byte) ([]byte, error) {
 	challengingTxBytes, err := challengingTx.RlpEncode()
 	if err != nil {
 		return nil, err
 	}
 	tx, err := d.plasmaContract.ChallengeBetween(
-		d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof)
+		d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof, sig)
 	if err != nil {
 		return nil, err
 	}
@@ -93,13 +93,13 @@ func (d *RootChainService) ChallengeBetween(slot uint64, challengingBlockNumber 
 }
 
 func (d *RootChainService) ChallengeAfter(slot uint64, challengingBlockNumber int64,
-	challengingTx Tx, proof Proof) ([]byte, error) {
+	challengingTx Tx, proof Proof, sig []byte) ([]byte, error) {
 	challengingTxBytes, err := challengingTx.RlpEncode()
 	if err != nil {
 		return nil, err
 	}
 	tx, err := d.plasmaContract.ChallengeAfter(
-		d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof)
+		d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof, sig)
 	if err != nil {
 		return nil, err
 	}

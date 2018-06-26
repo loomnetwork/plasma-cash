@@ -83,10 +83,10 @@ type RootChainClient interface {
 		challengingTransaction Tx, proof Proof) ([]byte, error)
 
 	ChallengeBetween(slot uint64, challengingBlockNumber int64,
-		challengingTransaction Tx, proof Proof) ([]byte, error)
+		challengingTransaction Tx, proof Proof, sig []byte) ([]byte, error)
 
 	ChallengeAfter(slot uint64, challengingBlockNumber int64,
-		challengingTransaction Tx, proof Proof) ([]byte, error)
+		challengingTransaction Tx, proof Proof, sig []byte) ([]byte, error)
 
 	SubmitBlock(blockNum *big.Int, merkleRoot [32]byte) error
 
