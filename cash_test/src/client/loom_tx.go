@@ -2,6 +2,7 @@ package client
 
 import (
 	"crypto/ecdsa"
+	"errors"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -30,7 +31,17 @@ func (l *LoomTx) NewOwner() common.Address {
 }
 
 func (l *LoomTx) Sign(key *ecdsa.PrivateKey) ([]byte, error) {
-	return crypto.Sign(l.Hash(), key)
+	sig, err := crypto.Sign(l.Hash(), key)
+	if err != nil {
+		return nil, err
+	}
+	if len(sig) != 65 {
+		return nil, errors.New(fmt.Sprintf("wrong size for signature: got %d, want 65", len(sig)))
+	}
+
+	r := make([]byte, 1, 65)
+	r = append(r, sig[:64]...)
+	return append(r, sig[64]+27), nil
 }
 
 func (l *LoomTx) RlpEncode() ([]byte, error) {
