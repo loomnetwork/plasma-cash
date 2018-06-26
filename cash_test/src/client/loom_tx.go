@@ -2,6 +2,7 @@ package client
 
 import (
 	"crypto/ecdsa"
+	"fmt"
 	"math/big"
 	"strconv"
 
@@ -53,6 +54,9 @@ func (l *LoomTx) Hash() []byte {
 	data, err := soliditySha3(l.Slot)
 	if err != nil {
 		panic(err) //TODO
+	}
+	if len(data) != 32 {
+		panic(fmt.Sprintf("wrong hash size! expected 32, got %v", len(data)))
 	}
 	return data
 }
