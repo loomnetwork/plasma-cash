@@ -1,4 +1,3 @@
-const ValidatorManagerContract = artifacts.require("ValidatorManagerContract");
 const CryptoCards = artifacts.require("CryptoCards");
 const RootChain = artifacts.require("RootChain");
 import {increaseTimeTo, duration} from './helpers/increaseTime'
@@ -18,8 +17,6 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
 
     let cards;
     let plasma;
-    let vmc;
-
     let events;
     let t0;
 
@@ -29,11 +26,10 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
     let deposit_to_alice = [];
 
     beforeEach(async function() {
-        vmc = await ValidatorManagerContract.new({from: authority});
-        plasma = await RootChain.new(vmc.address, {from: authority});
+        plasma = await RootChain.new({from: authority});
         cards = await CryptoCards.new(plasma.address);
-        await vmc.toggleToken(cards.address);
-        await cards.register({from: alice});
+        plasma.setERC721(cards.address);
+        cards.register({from: alice});
         assert.equal(await cards.balanceOf.call(alice), 5);
 
         let ret;

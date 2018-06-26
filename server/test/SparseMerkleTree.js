@@ -11,17 +11,17 @@ module.exports = class SparseMerkleTree {
 
         if (leaves && Object.keys(leaves).length !== 0) {
             this.tree = this.createTree(this.leaves, this.depth, this.defaultNodes);
-            this.root = this.tree[this.depth]['0'];
+            this.root = this.tree[this.depth-1]['0'] || this.tree[this.depth-1]['1'];
         } else {
             this.tree = [];
-            this.root = this.defaultNodes[this.depth];
+            this.root = this.defaultNodes[this.depth-1];
         }
     }
 
     setdefaultNodes(depth) {
-        let defaultNodes = new Array(depth + 1);
+        let defaultNodes = new Array(depth);
         defaultNodes[0] = utils.soliditySha3(0);
-        for (let i = 1; i < depth + 1; i++) {
+        for (let i = 1; i < depth; i++) {
             defaultNodes[i] = utils.soliditySha3(defaultNodes[i-1], defaultNodes[i-1]);
         }
         return defaultNodes;
@@ -35,7 +35,7 @@ module.exports = class SparseMerkleTree {
         let halfIndex;
         let value;
 
-        for (let level = 0; level < depth; level++) {
+        for (let level = 0; level < depth - 1; level++) {
             nextLevel = {};
             for(let index in treeLevel) {
                 halfIndex = web3.toBigNumber(index).dividedToIntegerBy(2).toString();
@@ -64,7 +64,7 @@ module.exports = class SparseMerkleTree {
         let proofbits = new BN(0);
         let siblingIndex;
         let siblingHash;
-        for (let level=0; level < this.depth; level++) {
+        for (let level=0; level < this.depth - 1; level++) {
             siblingIndex = index.mod(2).eq(0) ? index.add(1) : index.sub(1);
             index = index.dividedToIntegerBy(2);
 
