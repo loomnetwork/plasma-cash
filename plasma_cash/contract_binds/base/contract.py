@@ -16,7 +16,7 @@ class Contract(object):
             abi = json.load(f)['abi']
         contract = w3.eth.contract(abi=abi, address=address)
         self.w3 = w3
-        # self.w3.eth.enable_unaudited_features()
+
         if keystore is not None:
             self.account = self.to_account(keystore)
         self.contract = contract
@@ -129,6 +129,7 @@ class Contract(object):
             args=(event_filter, callback, interval),
             daemon=True,
         ).start()
+        return event_filter
 
     def watcher(self, event_filter, callback, interval):
         while True:
