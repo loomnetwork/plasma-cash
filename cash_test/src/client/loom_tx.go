@@ -18,11 +18,14 @@ type LoomTx struct {
 	Owner        common.Address
 	PrevBlock    *big.Int
 	Signature    []byte
-	//IncludeBlock  *big.Int // TODO
 }
 
 func (l *LoomTx) Sig() []byte {
 	return l.Signature
+}
+
+func (l *LoomTx) NewOwner() common.Address {
+	return l.Owner
 }
 
 func (l *LoomTx) Sign(key *ecdsa.PrivateKey) ([]byte, error) {

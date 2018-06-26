@@ -3,12 +3,15 @@ package client
 import (
 	"crypto/ecdsa"
 	"math/big"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type Tx interface {
 	RlpEncode() ([]byte, error)
 	Sign(key *ecdsa.PrivateKey) ([]byte, error)
 	Sig() []byte
+	NewOwner() common.Address
 }
 
 type Block interface {
