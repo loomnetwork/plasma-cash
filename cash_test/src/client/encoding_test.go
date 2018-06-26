@@ -76,14 +76,20 @@ func (s *EncodingTestSuite) TestTxSignature(c *C) {
 		Denomination: 1,
 		Owner:        ownerAddr,
 	}
-	txBytes, err := tx.Sign(privKey)
+	sig, err := tx.Sign(privKey)
 	if err != nil {
 		c.Fatal(err)
 	}
 
-	hexStr := common.Bytes2Hex(txBytes)
+	hexStr := common.Bytes2Hex(sig)
 	c.Assert(hexStr, Equals, "00aae7dfa666cca7ab912ab327f704838213e73d9bceaac16210703fa2c07b60c65aec00214c0eaecec2710cd78680a74dad0cc2cf1ebf53d10657aa9e5b63c0af1b")
 	//c.Assert(hexStr, Equals, "00b0e4901dc74b9851dba3c52406e1325c2ac9c4fe9f4d0379099a3357b763c96c104d3fffb78e99515db2e583568588d740b743ad3105d63fb252014f806fd06b1b")
+
+	signer, err := SolidityRecover(tx.Hash(), sig[1:])
+	if err != nil {
+		c.Fatal(err)
+	}
+	c.Assert(signer.Hex(), Equals, ownerAddr.Hex())
 }
 
 func (s *EncodingTestSuite) TestUnsignedTxRlpEncode2(c *C) {
