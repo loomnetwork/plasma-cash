@@ -93,8 +93,8 @@ contract RootChain is ERC721Receiver {
     }
 
     // tracking of NFTs deposited in each slot
-    uint64 public numCoins;
-    mapping (uint64 => Coin) coins;
+    uint64 public numCoins = 0;
+    mapping (uint64 => Coin) public coins;
     struct Coin {
         uint64 uid; // there are up to 2^64 cards, one for every leaf of
                     // a depth 64 Sparse Merkle Tree
@@ -186,13 +186,8 @@ contract RootChain is ERC721Receiver {
         payable isBonded
         isState(slot, State.DEPOSITED)
     {
-<<<<<<< HEAD
-         // If we're exiting a deposit UTXO, we do a different inclusion check
-        if (exitingTxIncBlock % childBlockInterval != 0 ) {
-=======
         // If we're exiting a deposit UTXO, we do a different inclusion check
         if (exitingTxIncBlock % childBlockInterval != 0) {
->>>>>>> master
             checkDepositBlockInclusion(exitingTxBytes, sig, exitingTxIncBlock, true);
         } else {
             checkBlockInclusion(
@@ -202,7 +197,6 @@ contract RootChain is ERC721Receiver {
                 prevTxIncBlock, exitingTxIncBlock,
                 true
             );
-            
         }
         pushExit(slot, prevTxBytes, prevTxIncBlock, exitingTxIncBlock);
     }
@@ -453,7 +447,7 @@ contract RootChain is ERC721Receiver {
         Transaction.TX memory prevTxData = prevTxBytes.getTx();
 
         if (checkSender)
-        require(exitingTxData.owner == msg.sender, "Invalid sender");
+            require(exitingTxData.owner == msg.sender, "Invalid sender");
         require(keccak256(exitingTxBytes).ecverify(sig, prevTxData.owner), "Invalid sig");
         require(exitingTxData.slot == prevTxData.slot);
         require(prevTxIncBlock < exitingTxIncBlock);
