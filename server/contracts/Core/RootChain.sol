@@ -116,7 +116,6 @@ contract RootChain is ERC721Receiver {
         uint256 createdAt;
     }
 
-    uint256 public depositCount;
     mapping(uint256 => ChildBlock) public childChain;
     ValidatorManagerContract vmc;
     SparseMerkleTree smt;
