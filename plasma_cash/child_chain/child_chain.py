@@ -94,7 +94,10 @@ class ChildChain(object):
         return rlp.encode(self.current_block).hex()
 
     def get_block(self, blknum):
-        return rlp.encode(self.blocks[blknum]).hex()
+        if blknum > self.current_block_number:
+            return rlp.encode(Block()).hex()
+        else:
+            return rlp.encode(self.blocks[blknum]).hex()
 
     def get_block_number(self):
         return self.current_block_number
