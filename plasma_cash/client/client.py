@@ -312,9 +312,25 @@ class Client(object):
         self.child_chain.send_transaction(rlp.encode(tx, Transaction).hex())
         return tx
 
+    def watch_challenges(self, slot):
+        self.challenge_watchers[slot] = self.root_chain.watch_event(
+            'ChallengedExit',
+            self._respond_to_challenge,
+            0.1,
+            filters={'slot': slot}
+        )
+
+    def _respond_to_challenge(self, event):
+        print(event)
+
+    def stop_watching_challenges(self, slot):
+        # a user stops watching exits of a particular coin after transferring
+        # it to another plasma user
+        event_filter = self.challenge_watchers[slot]
+        self.root_chain.w3.eth.uninstallFilter(event_filter.filter_id)
+
     def watch_exits(self, slot):
         # TODO figure out how to have this function be invoked automatically
-        print("the slot:", slot)
         self.watchers[slot] = self.root_chain.watch_event(
             'StartedExit', self._respond_to_exit, 0.1, filters={'slot': slot}
         )
