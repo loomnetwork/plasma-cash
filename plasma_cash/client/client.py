@@ -340,7 +340,16 @@ class Client(object):
             [owner, prev_block, exit_block, state] = exit_details
 
             # fetch coin history
-            # coin_history = self.get_coin_history(slot)
+            incl_proofs, excl_proofs = self.get_coin_history(slot)
+            blocks = self.get_block_numbers(slot) # skip the deposit tx block
+            for blk in blocks:
+                if blk > exit_block and blk in incl_proofs:
+                    print('CHALLENGE AFTER -- {} at block {}'.format(slot, blk))
+                    self.challenge_after(slot, blk)
+                elif prev_block < blk < exit_block and blk in incl_proofs:
+                    print('CHALLENGE BETWEEN --  {} at block {}'.format(slot, blk))
+                    self.challenge_between(slot, blk)
+
 
             # -- challengeAfter
             # check coin's history to find block in which this coin was spent,
