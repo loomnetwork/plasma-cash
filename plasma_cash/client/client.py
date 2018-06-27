@@ -316,7 +316,7 @@ class Client(object):
         # TODO figure out how to have this function be invoked automatically
         print("the slot:", slot)
         self.watchers[slot] = self.root_chain.watch_event(
-            'StartedExit', self._respond_to_exit, 1, filters={'slot': slot}
+            'StartedExit', self._respond_to_exit, 0.1, filters={'slot': slot}
         )
 
     def _respond_to_exit(self, event):
