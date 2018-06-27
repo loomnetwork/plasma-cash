@@ -2,6 +2,7 @@ package client
 
 import (
 	"crypto/ecdsa"
+	"ethcontract"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -41,7 +42,7 @@ type Account struct {
 
 type TokenContract interface {
 	Register() error
-	Deposit(int64) error
+	Deposit(int64) (common.Hash, error)
 	BalanceOf() (int64, error)
 
 	Account() (*Account, error)
@@ -90,7 +91,8 @@ type RootChainClient interface {
 
 	SubmitBlock(blockNum *big.Int, merkleRoot [32]byte) error
 
-	DebugCoinMetaData()
+	DebugCoinMetaData(slots []uint64)
+	DepositEventData(txHash common.Hash) (*ethcontract.RootChainDeposit, error)
 }
 
 type ChainServiceClient interface {

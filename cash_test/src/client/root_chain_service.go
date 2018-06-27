@@ -1,7 +1,9 @@
 package client
 
 import (
+	"context"
 	"crypto/ecdsa"
+	"errors"
 	"ethcontract"
 	"fmt"
 	"log"
@@ -152,7 +154,7 @@ func (d *RootChainService) SubmitBlock(blockNum *big.Int, merkleRoot [32]byte) e
 	return err
 }
 
-func (d *RootChainService) DebugCoinMetaData() {
+func (d *RootChainService) DebugCoinMetaData(slots []uint64) {
 	coins, err := d.plasmaContract.NumCoins(d.callOpts) //todo make this readonly
 	fmt.Printf("Num coins -%v\n", coins)
 	if err != nil {
@@ -168,6 +170,17 @@ func (d *RootChainService) DebugCoinMetaData() {
 			panic(err)
 		}
 	}
+}
+
+func (d *RootChainService) DepositEventData(txHash common.Hash) (*ethcontract.RootChainDeposit, error) {
+	receipt, err := conn.TransactionReceipt(context.TODO(), txHash)
+	if err != nil {
+		return nil, err
+	}
+	if receipt == nil {
+		return nil, errors.New("failed to retrieve tx receipt")
+	}
+	return d.plasmaContract.DepositEventData(receipt)
 }
 
 var conn *ethclient.Client

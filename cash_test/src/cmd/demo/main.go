@@ -29,9 +29,9 @@ func main() {
 	authority := client.NewClient(svc, client.GetRootChain("authority"),
 		client.GetTokenContract("authority"))
 
-	alice.DebugCoinMetaData()
+	slots := []uint64{}
+	alice.DebugCoinMetaData(slots)
 
-	panic("weeee")
 	// Give alice 5 tokens
 	err := alice.TokenContract.Register()
 	if err != nil {
@@ -60,15 +60,26 @@ func main() {
 	// Alice deposits 3 of her coins to the plasma contract and gets 3 plasma nft
 	// utxos in return
 	tokenID := int64(1)
-	alice.Deposit(tokenID)
+	txHash := alice.Deposit(tokenID)
 	time.Sleep(3 * time.Second)
-	alice.DebugCoinMetaData()
-	alice.Deposit(tokenID + 1)
+	depEvent, err := alice.RootChain.DepositEventData(txHash)
+	exitIfError(err)
+	slots = append(slots, depEvent.Slot)
+	alice.DebugCoinMetaData(slots)
+
+	txHash = alice.Deposit(tokenID + 1)
 	time.Sleep(3 * time.Second)
-	alice.DebugCoinMetaData()
-	alice.Deposit(tokenID + 2)
+	depEvent, err = alice.RootChain.DepositEventData(txHash)
+	exitIfError(err)
+	slots = append(slots, depEvent.Slot)
+	alice.DebugCoinMetaData(slots)
+
+	txHash = alice.Deposit(tokenID + 2)
 	time.Sleep(3 * time.Second)
-	alice.DebugCoinMetaData()
+	depEvent, err = alice.RootChain.DepositEventData(txHash)
+	exitIfError(err)
+	slots = append(slots, depEvent.Slot)
+	alice.DebugCoinMetaData(slots)
 
 	//Alice to Bob, and Alice to Charlie. We care about the Alice to Bob
 	// transaction
@@ -97,12 +108,12 @@ func main() {
 	utxoID = uint64(2)
 	prevTxBlkNum := int64(1000)
 	exitingTxBlkNum := int64(2000)
-	charlie.DebugCoinMetaData()
+	charlie.DebugCoinMetaData(slots)
 	fmt.Printf("Before start exit\n")
 	_, err = charlie.StartExit(utxoID, prevTxBlkNum, exitingTxBlkNum)
 	exitIfError(err)
 	fmt.Printf("After start exit\n")
-	charlie.DebugCoinMetaData()
+	charlie.DebugCoinMetaData(slots)
 
 	// After 8 days pass, charlie's exit should be finalizable
 	//increaseTime(w3, 8*24*3600)
@@ -123,7 +134,7 @@ func main() {
 	// wallet.
 
 	fmt.Printf("withdraw-%d\n", utxoID)
-	charlie.DebugCoinMetaData()
+	charlie.DebugCoinMetaData(slots)
 	err = charlie.Withdraw(utxoID)
 	exitIfError(err)
 

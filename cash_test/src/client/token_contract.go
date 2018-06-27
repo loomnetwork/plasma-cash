@@ -23,10 +23,13 @@ type TContract struct {
 	transactOpts  *bind.TransactOpts
 }
 
-func (d *TContract) Deposit(tokenID int64) error {
+func (d *TContract) Deposit(tokenID int64) (common.Hash, error) {
 	fmt.Printf("Tcontract-deposit-%d\n", tokenID)
-	_, err := d.tokenContract.DepositToPlasma(d.transactOpts, big.NewInt(int64(tokenID)))
-	return err
+	tx, err := d.tokenContract.DepositToPlasma(d.transactOpts, big.NewInt(int64(tokenID)))
+	if err != nil {
+		return common.Hash{}, err
+	}
+	return tx.Hash(), err
 }
 
 func (d *TContract) Register() error {

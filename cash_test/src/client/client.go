@@ -22,8 +22,12 @@ func (c *Client) Register() {
 }
 
 // Deposit happens by a use calling the erc721 token contract
-func (c *Client) Deposit(tokenId int64) {
-	c.TokenContract.Deposit(tokenId)
+func (c *Client) Deposit(tokenID int64) common.Hash {
+	txHash, err := c.TokenContract.Deposit(tokenID)
+	if err != nil {
+		panic(err)
+	}
+	return txHash
 }
 
 // Plasma Functions
@@ -229,8 +233,8 @@ func (c *Client) PlasmaCoin(slot uint64) (*PlasmaCoin, error) {
 	return c.RootChain.PlasmaCoin(slot)
 }
 
-func (c *Client) DebugCoinMetaData() {
-	c.RootChain.DebugCoinMetaData()
+func (c *Client) DebugCoinMetaData(slots []uint64) {
+	c.RootChain.DebugCoinMetaData(slots)
 }
 
 // Child Chain Functions
