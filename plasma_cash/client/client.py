@@ -55,7 +55,6 @@ class Client(object):
         # previous owners, this is a hacky way of getting the info from the
         # operator which sould be changed in the future after the exiting
         # process is more standardized
-
         if tx_blk_num % self.child_block_interval != 0:
             # In case the sender is exiting a Deposit transaction, they should
             # just create a signed transaction to themselves. There is no need
@@ -332,7 +331,7 @@ class Client(object):
         )
         # fetch coin history
         incl_proofs, excl_proofs = self.get_coin_history(slot)
-        received_block = max(excl_proofs.keys())
+        received_block = max(incl_proofs.keys())
         self.respond_challenge_before(slot, received_block)
 
     def stop_watching_challenges(self, slot):
