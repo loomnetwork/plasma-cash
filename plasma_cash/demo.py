@@ -69,7 +69,6 @@ authority.submit_block()
 bob_to_charlie = bob.send_transaction(
     deposit3_utxo, plasma_block1, charlie.token_contract.account.address
 )
-charlie.watch_exits(deposit3_utxo)
 
 # This is the info that bob is required to send to charlie. This happens on
 # the P2P layer
@@ -82,9 +81,17 @@ assert charlie.verify_coin_history(deposit3_utxo, incl_proofs, excl_proofs)
 
 plasma_block2 = authority.submit_block()
 
+# Block has been submitted, now we start watching for exits of our coin
+charlie.watch_exits(deposit3_utxo)
+
 # Charlie should be able to submit an exit by referencing blocks 0 and 1 which
 # included his transaction.
 charlie.start_exit(deposit3_utxo, plasma_block1, plasma_block2)
+
+# We exited the coin so we should stop watching
+charlie.stop_watching_exits(deposit3_utxo)
+
+# Here we should start watching for challenges
 
 # After 8 days pass, charlie's exit should be finalizable
 increaseTime(w3, 8 * 24 * 3600)

@@ -25,13 +25,13 @@ deposit1_utxo = event_data[0]['args']['slot']
 time.sleep(2)
 
 # Eve sends her plasma coin to Bob
-# TODO stop manually setting these UTXOs
 coin = eve.get_plasma_coin(deposit1_utxo)
 eve_to_bob = eve.send_transaction(
     deposit1_utxo, coin['deposit_block'], bob.token_contract.account.address
 )
 authority.submit_block()
 eve_to_bob_block = authority.get_block_number()
+bob.watch_exits(deposit1_utxo)
 
 # Eve sends this same plasma coin to Alice
 eve_to_alice = eve.send_transaction(
@@ -42,11 +42,14 @@ authority.submit_block()
 eve_to_alice_block = authority.get_block_number()
 
 # Alice attempts to exit here double-spent coin
+# Bob auto-challenges Alice's exit
 alice.start_exit(deposit1_utxo, coin['deposit_block'], eve_to_alice_block)
 
-# Bob challenges Alice's exit
-bob.challenge_between(deposit1_utxo, eve_to_bob_block)
+# bob.challenge_between(deposit1_utxo, eve_to_bob_block)
+# Wait for challenge
+time.sleep(2)
 bob.start_exit(deposit1_utxo, coin['deposit_block'], eve_to_bob_block)
+bob.stop_watching_exits(deposit1_utxo)
 
 w3 = bob.root_chain.w3  # get w3 instance
 increaseTime(w3, 8 * 24 * 3600)

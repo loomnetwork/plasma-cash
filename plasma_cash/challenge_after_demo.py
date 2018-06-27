@@ -49,14 +49,20 @@ coin = mallory.get_plasma_coin(deposit1_utxo)
 mallory_to_dan = mallory.send_transaction(
     deposit1_utxo, coin['deposit_block'], dan.token_contract.account.address
 )
+incl_proofs, excl_proofs = mallory.get_coin_history(deposit1_utxo)
+assert dan.verify_coin_history(deposit1_utxo, incl_proofs, excl_proofs)
+
 plasma_block3 = authority.submit_block()
+dan.watch_exits(deposit1_utxo)
 
 # Mallory attempts to exit spent coin (the one sent to Dan)
+# This will be auto-challenged by Dan's client
 mallory.start_exit(deposit1_utxo, 0, coin['deposit_block'])
 
-# Dan's transaction was included in block 5000. He challenges!
-dan.challenge_after(deposit1_utxo, plasma_block3)
+# Wait until challenge is done
+time.sleep(2)
 dan.start_exit(deposit1_utxo, coin['deposit_block'], plasma_block3)
+dan.stop_watching_exits(deposit1_utxo)
 
 w3 = dan.root_chain.w3  # get w3 instance
 increaseTime(w3, 8 * 24 * 3600)
