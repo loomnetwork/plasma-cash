@@ -334,13 +334,15 @@ class Client(object):
         # owns a coin that has been exited by someone else
         if (owner != self.token_contract.account.address):
             print("invalid exit...challenging")
+
             # fetch exit information
-            # (owner, prevBlock, exitBlock, state) = getExit(slot)
             exit_details = self.root_chain.get_exit(slot)
             [owner, prev_block, exit_block, state] = exit_details
 
-            # -- challengeAfter
+            # fetch coin history
+            # coin_history = self.get_coin_history(slot)
 
+            # -- challengeAfter
             # check coin's history to find block in which this coin was spent,
             # submit this as challengeAfter
             # self.challenge_after(slot, challenging_block_number):
@@ -350,14 +352,15 @@ class Client(object):
 
             # -- challengeBefore
             # check if coin
+
         else:
             print("valid exit")
 
     def stop_watching_exits(self, slot):
         # a user stops watching exits of a particular coin after transferring
         # it to another plasma user
-        filter = self.watchers[slot]
-        self.root_chain.w3.eth.uninstallFilter(filter.filter_id)
+        event_filter = self.watchers[slot]
+        self.root_chain.w3.eth.uninstallFilter(event_filter.filter_id)
 
     def get_block_number(self):
         return self.child_chain.get_block_number()
