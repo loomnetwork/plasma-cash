@@ -58,10 +58,7 @@ func (s *EncodingTestSuite) TestTxHash(c *C) {
 		Owner:        ownerAddr,
 	}
 	hexStr := common.Bytes2Hex(tx.Hash())
-	//c.Assert(hexStr, Equals, "b10da41825f94bd447ebce74913e82ceae90c6ba27aa6781d611f8530f78ec4c")
-	// TODO: Currently this will pass, but it's actually the wrong hash because it's supposed to
-	// be a hash of tx.RlpEncode() not just a hash of tx.Slot!
-	c.Assert(hexStr, Equals, "fe07a98784cd1850eae35ede546d7028e6bf9569108995fc410868db775e5e6a")
+	c.Assert(hexStr, Equals, "b10da41825f94bd447ebce74913e82ceae90c6ba27aa6781d611f8530f78ec4c")
 }
 
 func (s *EncodingTestSuite) TestTxSignature(c *C) {
@@ -82,8 +79,7 @@ func (s *EncodingTestSuite) TestTxSignature(c *C) {
 	}
 
 	hexStr := common.Bytes2Hex(sig)
-	c.Assert(hexStr, Equals, "00aae7dfa666cca7ab912ab327f704838213e73d9bceaac16210703fa2c07b60c65aec00214c0eaecec2710cd78680a74dad0cc2cf1ebf53d10657aa9e5b63c0af1b")
-	//c.Assert(hexStr, Equals, "00b0e4901dc74b9851dba3c52406e1325c2ac9c4fe9f4d0379099a3357b763c96c104d3fffb78e99515db2e583568588d740b743ad3105d63fb252014f806fd06b1b")
+	c.Assert(hexStr, Equals, "00b0e4901dc74b9851dba3c52406e1325c2ac9c4fe9f4d0379099a3357b763c96c104d3fffb78e99515db2e583568588d740b743ad3105d63fb252014f806fd06b1b")
 
 	signer, err := SolidityRecover(tx.Hash(), sig[1:])
 	if err != nil {

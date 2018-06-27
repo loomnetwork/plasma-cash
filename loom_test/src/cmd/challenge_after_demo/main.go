@@ -3,22 +3,15 @@ package main
 import (
 	"client"
 	"log"
-	"os"
 	"time"
 )
 
 func main() {
 
-	plasmaChain := os.Getenv("PLASMA_CHAIN")
 	client.InitClients("http://localhost:8545")
 	client.InitTokenClient("http://localhost:8545")
 
-	var svc client.ChainServiceClient
-	if plasmaChain == "LOOM" {
-		svc = client.NewLoomChildChainService("http://localhost:46658/rpc", "http://localhost:46658/query")
-	} else {
-		svc = client.NewChildChainService("http://localhost:8546")
-	}
+	svc := client.NewLoomChildChainService("http://localhost:46658/rpc", "http://localhost:46658/query")
 
 	dan := client.NewClient(svc, client.GetRootChain("dan"), client.GetTokenContract("dan"))
 	mallory := client.NewClient(svc, client.GetRootChain("mallory"), client.GetTokenContract("mallory"))
@@ -30,19 +23,19 @@ func main() {
 
 	danTokensStart, err := dan.TokenContract.BalanceOf()
 	exitIfError(err)
-	log.Printf("Dan has %s tokens", danTokensStart)
+	log.Printf("Dan has %v tokens", danTokensStart)
 	if danTokensStart == 0 {
 		log.Fatal("START: Dan has incorrect number of tokens")
 	}
 	malloryTokensStart, err := mallory.TokenContract.BalanceOf()
 	exitIfError(err)
-	log.Printf("Mallory has %s tokens", malloryTokensStart)
+	log.Printf("Mallory has %v tokens", malloryTokensStart)
 	if malloryTokensStart == 5 {
 		log.Fatal("START: Mallory has incorrect number of tokens")
 	}
 	currentBlock, err := authority.GetBlockNumber()
 	exitIfError(err)
-	log.Printf("current block: %s", currentBlock)
+	log.Printf("current block: %v", currentBlock)
 
 	// Mallory deposits one of her coins to the plasma contract
 	mallory.Deposit(6)
@@ -52,19 +45,19 @@ func main() {
 
 	malloryTokensPostDeposit, err := mallory.TokenContract.BalanceOf()
 	exitIfError(err)
-	log.Printf("Mallory has %s tokens", malloryTokensPostDeposit)
+	log.Printf("Mallory has %v tokens", malloryTokensPostDeposit)
 	if malloryTokensPostDeposit == 3 {
 		log.Fatal("POST-DEPOSIT: Mallory has incorrect number of tokens")
 	}
 
 	currentBlock, err = authority.GetBlockNumber()
 	exitIfError(err)
-	log.Printf("current block: %s", currentBlock)
+	log.Printf("current block: %v", currentBlock)
 
 	authority.SubmitBlock()
 	currentBlock, err = authority.GetBlockNumber()
 	exitIfError(err)
-	log.Printf("current block: %s", currentBlock)
+	log.Printf("current block: %v", currentBlock)
 	block3000, err := authority.GetBlock(3000)
 	exitIfError(err)
 	log.Printf("block300-%v\n", block3000)
@@ -79,13 +72,14 @@ func main() {
 	danaccount, err := dan.TokenContract.Account()
 	exitIfError(err)
 
-	_, err = mallory.SendTransaction(utxoID, coin.DepositBlockNum, 1, danaccount.Address) //mallory_to_dan
+	err = mallory.SendTransaction(utxoID, coin.DepositBlockNum, 1, danaccount.Address) //mallory_to_dan
+	exitIfError(err)
 	authority.SubmitBlock()
 
 	// Mallory attempts to exit spent coin (the one sent to Dan)
 	currentBlock, err = authority.GetBlockNumber()
 	exitIfError(err)
-	log.Printf("current block: %s", currentBlock)
+	log.Printf("current block: %v", currentBlock)
 
 	mallory.StartExit(utxoID, 0, coin.DepositBlockNum)
 
@@ -115,14 +109,14 @@ func main() {
 
 	malloryTokensEnd, err := mallory.TokenContract.BalanceOf()
 	exitIfError(err)
-	log.Printf("Mallory has %s tokens", malloryTokensEnd)
+	log.Printf("Mallory has %v tokens", malloryTokensEnd)
 	if malloryTokensEnd == 3 {
 		log.Fatal("END: Mallory has incorrect number of tokens")
 	}
 
 	danTokensEnd, err := dan.TokenContract.BalanceOf()
 	exitIfError(err)
-	log.Printf("Dan has %s tokens", danTokensEnd)
+	log.Printf("Dan has %v tokens", danTokensEnd)
 	if danTokensEnd == 1 {
 		log.Fatal("END: Dan has incorrect number of tokens")
 	}
