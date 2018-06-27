@@ -50,7 +50,7 @@ class PlasmaCash(Contract):
             sig,
         ]
         return self.sign_and_send(
-            self.contract.functions.respond_challenge_before, args
+            self.contract.functions.respondChallengeBefore, args
         )
 
     def challenge_between(

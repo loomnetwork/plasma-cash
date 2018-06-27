@@ -26,7 +26,10 @@ class Client(object):
         self.incl_proofs = {}
         self.excl_proofs = {}
         self.txs = {}
+
+        # Event watchers
         self.watchers = {}
+        self.challenge_watchers = {}
 
     # Token Functions
 
@@ -52,7 +55,6 @@ class Client(object):
         # previous owners, this is a hacky way of getting the info from the
         # operator which sould be changed in the future after the exiting
         # process is more standardized
-
         if tx_blk_num % self.child_block_interval != 0:
             # In case the sender is exiting a Deposit transaction, they should
             # just create a signed transaction to themselves. There is no need
@@ -312,9 +314,34 @@ class Client(object):
         self.child_chain.send_transaction(rlp.encode(tx, Transaction).hex())
         return tx
 
+    def watch_challenges(self, slot):
+        self.challenge_watchers[slot] = self.root_chain.watch_event(
+            'ChallengedExit',
+            self._respond_to_challenge,
+            0.1,
+            filters={'slot': slot}
+        )
+
+    def _respond_to_challenge(self, event):
+        slot = event['args']['slot']
+        print(
+            "CHALLENGE DETECTED by {} -- slot: {}".format(
+                self.token_contract.account.address, slot
+            )
+        )
+        # fetch coin history
+        incl_proofs, excl_proofs = self.get_coin_history(slot)
+        received_block = max(incl_proofs.keys())
+        self.respond_challenge_before(slot, received_block)
+
+    def stop_watching_challenges(self, slot):
+        # a user stops watching exits of a particular coin after transferring
+        # it to another plasma user
+        event_filter = self.challenge_watchers[slot]
+        self.root_chain.w3.eth.uninstallFilter(event_filter.filter_id)
+
     def watch_exits(self, slot):
         # TODO figure out how to have this function be invoked automatically
-        print("the slot:", slot)
         self.watchers[slot] = self.root_chain.watch_event(
             'StartedExit', self._respond_to_exit, 0.1, filters={'slot': slot}
         )
