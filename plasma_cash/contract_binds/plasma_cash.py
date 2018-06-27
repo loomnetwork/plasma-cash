@@ -156,6 +156,10 @@ class PlasmaCash(Contract):
         ret = self.contract.functions.getBlockRoot(blknum).call()
         return ret
 
+    def get_exit(self, slot):
+        ret = self.contract.functions.getExit(slot).call()
+        return ret
+
     def check_inclusion(self, tx, root, slot, proof):
         if tx.prev_block == 0:  # deposit tx
             ret = tx.hash == root

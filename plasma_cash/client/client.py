@@ -336,6 +336,8 @@ class Client(object):
             print("invalid exit...challenging")
             # fetch exit information
             # (owner, prevBlock, exitBlock, state) = getExit(slot)
+            exit_details = self.root_chain.get_exit(slot)
+            [owner, prev_block, exit_block, state] = exit_details
 
             # -- challengeAfter
 
