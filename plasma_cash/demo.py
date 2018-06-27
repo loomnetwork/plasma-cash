@@ -35,13 +35,13 @@ print('ALICE EVENT DATA1', event_data[0]['args'])
 tx_hash, gas_used = alice.deposit(tokenId + 1)
 event_data = alice.root_chain.get_event_data('Deposit', tx_hash)
 deposit2_utxo = event_data[0]['args']['slot']
-deposit2_block_number = event_data[0]['args']['slot']
+deposit2_block_number = event_data[0]['args']['blockNumber']
 print('ALICE EVENT DATA2', event_data[0]['args'])
 
 tx_hash, gas_used = alice.deposit(tokenId + 2)
 event_data = alice.root_chain.get_event_data('Deposit', tx_hash)
 deposit3_utxo = event_data[0]['args']['slot']
-deposit3_block_number = event_data[0]['args']['slot']
+deposit3_block_number = event_data[0]['args']['blockNumber']
 print('ALICE EVENT DATA3', event_data[0]['args'])
 
 

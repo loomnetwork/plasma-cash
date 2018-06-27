@@ -3,7 +3,8 @@ from ethereum import utils
 from web3.auto import w3
 
 from .block import Block
-from .exceptions import (InvalidTxSignatureException,
+from .exceptions import (InvalidPrevBlockException,
+                         InvalidTxSignatureException,
                          PreviousTxNotFoundException, TxAlreadySpentException)
 from .transaction import Transaction
 
@@ -55,6 +56,12 @@ class ChildChain(object):
 
     def send_transaction(self, transaction):
         tx = rlp.decode(utils.decode_hex(transaction), Transaction)
+        # Reject transactions refering to a future block as prev_block
+        if (
+            tx.prev_block
+            > self.current_block_number + self.child_block_interval
+        ):
+            raise InvalidPrevBlockException('failed to send transaction')
 
         # If the tx we are spending is not a deposit tx
         if tx.prev_block % self.child_block_interval == 0:
