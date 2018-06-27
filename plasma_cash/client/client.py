@@ -26,6 +26,7 @@ class Client(object):
         self.incl_proofs = {}
         self.excl_proofs = {}
         self.txs = {}
+        self.watchers = {}
 
     # Token Functions
 
@@ -310,6 +311,74 @@ class Client(object):
         tx.make_immutable()
         self.child_chain.send_transaction(rlp.encode(tx, Transaction).hex())
         return tx
+
+    def watch_exits(self, slot):
+        # TODO figure out how to have this function be invoked automatically
+        print("the slot:", slot)
+        self.watchers[slot] = self.root_chain.watch_event(
+            'StartedExit', self._respond_to_exit, 0.1, filters={'slot': slot}
+        )
+
+    def _respond_to_exit(self, event):
+        ''' Called by event watcher and checks that the exit event is
+        legitimate
+        '''
+        slot = event['args']['slot']
+        owner = event['args']['owner']
+        print(
+            "EXIT DETECTED by {} -- slot: {}, owner: {}".format(
+                self.token_contract.account.address, slot, owner
+            )
+        )
+
+        # A coin-owner will automatically start a challenge if he believes he
+        # owns a coin that has been exited by someone else
+        if owner != self.token_contract.account.address:
+            print("invalid exit...challenging")
+
+            # fetch exit information
+            exit_details = self.root_chain.get_exit(slot)
+            [owner, prev_block, exit_block, state] = exit_details
+
+            # fetch coin history
+            incl_proofs, excl_proofs = self.get_coin_history(slot)
+            blocks = self.get_block_numbers(slot)  # skip the deposit tx block
+            for blk in blocks:
+                if blk not in incl_proofs:
+                    continue
+                if blk > exit_block:
+                    print(
+                        'CHALLENGE AFTER -- {} at block {}'.format(slot, blk)
+                    )
+                    self.challenge_after(slot, blk)
+                    break
+                elif prev_block < blk < exit_block:
+                    print(
+                        'CHALLENGE BETWEEN --  {} at block {}'.format(
+                            slot, blk
+                        )
+                    )
+                    self.challenge_between(slot, blk)
+                    break
+                elif blk < prev_block < exit_block:
+                    # Need to find a previous block
+                    tx = self.get_tx(blk, slot)
+                    print(
+                        'CHALLENGE BEFORE --  {} at prev block {} / block {}'
+                        .format(
+                            slot, tx.prev_block, blk
+                        )
+                    )
+                    self.challenge_before(slot, tx.prev_block, blk)
+                    break
+        else:
+            print("valid exit")
+
+    def stop_watching_exits(self, slot):
+        # a user stops watching exits of a particular coin after transferring
+        # it to another plasma user
+        event_filter = self.watchers[slot]
+        self.root_chain.w3.eth.uninstallFilter(event_filter.filter_id)
 
     def get_block_number(self):
         return self.child_chain.get_block_number()

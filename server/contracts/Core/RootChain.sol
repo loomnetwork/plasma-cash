@@ -63,7 +63,7 @@ contract RootChain is ERC721Receiver {
     modifier cleanupExit(uint64 slot) {
         _;
         delete coins[slot].exit;
-        delete exitSlots[getIndex(slot)];
+        delete exitSlots[getExitIndex(slot)];
     }
 
     struct Balance {
@@ -116,7 +116,6 @@ contract RootChain is ERC721Receiver {
         uint256 createdAt;
     }
 
-    uint256 public depositCount;
     mapping(uint256 => ChildBlock) public childChain;
     ValidatorManagerContract vmc;
     SparseMerkleTree smt;
@@ -203,6 +202,33 @@ contract RootChain is ERC721Receiver {
         pushExit(slot, prevTxBytes, prevTxIncBlock, exitingTxIncBlock);
     }
 
+    function pushExit(
+        uint64 slot,
+        bytes txBytes,
+        uint256 prevBlock,
+        uint256 exitingBlock) private
+    {
+        Transaction.TX memory txData = txBytes.getTx();
+
+        // Push exit to list
+        exitSlots.push(slot);
+
+        // Create exit
+        Coin storage c = coins[slot];
+        c.exit = Exit({
+            prevOwner: txData.owner,
+            owner: msg.sender,
+            createdAt: block.timestamp,
+            bond: msg.value,
+            prevBlock: prevBlock,
+            exitBlock: exitingBlock
+        });
+
+        // Update coin state
+        c.state = State.EXITING;
+        emit StartedExit(slot, msg.sender);
+    }
+
     function finalizeExit(uint64 slot) public {
         Coin storage coin = coins[slot];
 
@@ -231,7 +257,7 @@ contract RootChain is ERC721Receiver {
             emit FinalizedExit(slot, coin.owner);
         }
         delete coins[slot].exit;
-        delete exitSlots[getIndex(slot)];
+        delete exitSlots[getExitIndex(slot)];
     }
 
     function finalizeExits() external {
@@ -250,7 +276,8 @@ contract RootChain is ERC721Receiver {
     /******************** CHALLENGES ********************/
 
     // Submit proof of a transaction before prevTx
-    // Exitor has to call respondChallengeBefore and submit a transaction before prevTx or prevTx itself.
+    // Exitor has to call respondChallengeBefore and submit a transaction
+    // before prevTx or prevTx itself.
     function challengeBefore(
         uint64 slot,
         bytes prevTxBytes, bytes exitingTxBytes,
@@ -378,33 +405,6 @@ contract RootChain is ERC721Receiver {
         emit SlashedBond(from, to, BOND_AMOUNT);
     }
 
-    function pushExit(
-        uint64 slot,
-        bytes txBytes,
-        uint256 prevBlock,
-        uint256 exitingBlock) private
-    {
-        Transaction.TX memory txData = txBytes.getTx();
-
-        // Push exit to list
-        exitSlots.push(slot);
-
-        // Create exit
-        Coin storage c = coins[slot];
-        c.exit = Exit({
-            prevOwner: txData.owner,
-            owner: msg.sender,
-            createdAt: block.timestamp,
-            bond: msg.value,
-            prevBlock: prevBlock,
-            exitBlock: exitingBlock
-        });
-
-        // Update coin state
-        c.state = State.EXITING;
-        emit StartedExit(slot, msg.sender);
-    }
-
     function setChallenged(uint64 slot, bytes txBytes) private {
         // When an exit is challenged, its state is set to challenged and the
         // contract waits for the exitor's response. The exit is not
@@ -517,7 +517,7 @@ contract RootChain is ERC721Receiver {
 
     /******************** HELPERS ********************/
 
-    function getIndex(uint64 slot) private view returns (uint256) {
+    function getExitIndex(uint64 slot) private view returns (uint256) {
         uint256 len = exitSlots.length;
         for (uint256 i = 0; i < len; i++) {
             if (exitSlots[i] == slot)
