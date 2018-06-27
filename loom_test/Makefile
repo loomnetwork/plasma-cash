@@ -35,7 +35,10 @@ deps:
 		github.com/gorilla/mux \
 		github.com/inconshreveable/mousetrap \
 		gopkg.in/check.v1 \
-		github.com/stretchr/testify
+		github.com/stretchr/testify \
+		github.com/grpc-ecosystem/go-grpc-prometheus \
+		github.com/hashicorp/go-plugin \
+		github.com/prometheus/client_golang
 
 clean:
 	go clean
