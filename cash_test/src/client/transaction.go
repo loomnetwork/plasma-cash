@@ -17,7 +17,6 @@ type LoomTx struct {
 	Denomination uint32 //TODO should be bigint
 	Owner        common.Address
 	PrevBlock    *big.Int
-	IncludeBlock *big.Int
 	Signature    []byte
 	TXProof      []byte
 }
@@ -61,7 +60,7 @@ func (l *LoomTx) RlpEncode() ([]byte, error) {
 }
 
 func (l *LoomTx) Hash() []byte {
-	if l.IncludeBlock == nil || l.IncludeBlock.Mod(l.IncludeBlock, big.NewInt(1000)).Cmp(big.NewInt(0)) == 0 {
+	if l.PrevBlock.Int64() != 0 {
 		ret, err := l.rlpEncodeWithSha3()
 		if err != nil {
 			panic(err)
