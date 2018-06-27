@@ -35,5 +35,5 @@ make cli
 make oracle
 make test
 
-#cd ../
-#bash go_integration_test.sh
+cd ../
+bash go_integration_test.sh

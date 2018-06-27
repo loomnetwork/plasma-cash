@@ -5,17 +5,24 @@ function cleanup {
     kill -9 $loom_pid
 }
 
-trap cleanup EXIT
+LOOM_DIR=/tmp/loom-plasma-$BUILD_TAG
+BUILD_NUMBER=196
 
-mkdir loomtmp
-cd loomtmp
-# TODO download loom
-#export LOOM_BIN=
+mkdir -p $LOOM_DIR
+cd $LOOM_DIR
+wget https://private.delegatecall.com/loom/osx/build-$BUILD_NUMBER/loom
+chmod +x loom
+export LOOM_BIN=`pwd`/loom
 $LOOM_BIN init
+echo 'Loom DAppChain initialized in ' $LOOM_DIR
 
-cd ../server
-ganache_pid=$(npm run --silent migrate:dev)
-echo 'Launched ganache' $ganache_pid
+#rm -rf $LOOM_DIR
+
+# trap cleanup EXIT
+
+#cd ../server
+#ganache_pid=$(npm run --silent migrate:dev)
+#echo 'Launched ganache' $ganache_pid
 
 #cd ../loomtmp
 #loom_pid=$($LOOM_BIN run)
