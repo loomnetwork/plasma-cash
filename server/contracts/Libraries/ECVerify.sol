@@ -28,7 +28,11 @@ library ECVerify {
             hash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n\x20", hash));
         }
 
-        return ecrecover(hash, v, r, s);
+        return ecrecover(
+            hash,
+            v,
+            r,
+            s);
     }
 
     function ecverify(bytes32 hash, bytes sig, address signer) internal pure returns (bool) {

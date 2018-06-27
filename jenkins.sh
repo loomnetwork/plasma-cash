@@ -1,15 +1,5 @@
 #!/bin/bash
 
-mkdir -p gopath/bin ; true
-export GOPATH=`pwd`/gopath
-
-cd cash_test
-make deps
-make
-make test
-./plasmascash_tester ; true #remove true once finished
-
-
 set -exo pipefail
 
 # make test

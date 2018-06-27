@@ -1,3 +1,4 @@
+const ValidatorManagerContract = artifacts.require("ValidatorManagerContract");
 const CryptoCards = artifacts.require("CryptoCards");
 const RootChain = artifacts.require("RootChain");
 import {increaseTimeTo, duration} from './helpers/increaseTime'
@@ -17,15 +18,17 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
 
     let cards;
     let plasma;
+    let vmc;
     let events;
     let t0;
 
     let [authority, alice, bob, charlie, dylan, elliot, random_guy, random_guy2, challenger] = accounts;
 
     beforeEach(async function() {
-        plasma = await RootChain.new({from: authority});
+        vmc = await ValidatorManagerContract.new({from: authority});
+        plasma = await RootChain.new(vmc.address, {from: authority});
         cards = await CryptoCards.new(plasma.address);
-        plasma.setERC721(cards.address);
+        await vmc.toggleToken(cards.address);
         cards.register({from: alice});
         assert.equal(await cards.balanceOf.call(alice), 5);
 
@@ -63,11 +66,12 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
             let tree_charlie = ret.charlie.tree;
 
             let challengeTx = bob_to_charlie.tx;
+            let sig = bob_to_charlie.sig;
             let proof = tree_charlie.createMerkleProof(UTXO.slot);
             let block_number = 2000; // Charlie's transaction which is the valid one was included at block 2000
 
             await plasma.challengeBetween(
-                UTXO.slot, block_number, challengeTx, proof,
+                UTXO.slot, block_number, challengeTx, proof, sig,
                 {'from': challenger}
             );
 
@@ -75,7 +79,7 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
             let exiting_tx = bob_to_charlie.tx;
             let prev_tx_proof = tree_bob.createMerkleProof(UTXO.slot);
             let exiting_tx_proof = tree_charlie.createMerkleProof(UTXO.slot);
-            let sig = bob_to_charlie.sig;
+            sig = bob_to_charlie.sig;
 
             plasma.startExit(
                 UTXO.slot,
@@ -119,6 +123,54 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
             assert.equal(await cards.balanceOf.call(dylan), 1);
             assert.equal(await cards.balanceOf.call(plasma.address), 2);
 
+            await txlib.withdrawBonds(plasma, dylan, 0.1);
+        });
+
+        it("Bob gives a coin to Dylan. Dylan exits, gets challenged by an invalid tx by Charlie who colluded with the Operator. Invalid challenge fails", async function() {
+            let UTXO = {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()};
+
+            let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, alice, bob);
+            let txs = [ alice_to_bob.leaf ];
+            let tree_bob = await txlib.submitTransactions(authority, plasma, txs);
+
+            // Invalid transaction-block which is not signed by Bob, however will be used to challenge
+            let bob_to_charlie = txlib.createUTXO(UTXO.slot, 1000, challenger, charlie);
+            txs = [ bob_to_charlie.leaf ];
+            let tree_charlie = await txlib.submitTransactions(authority, plasma, txs);
+
+            let bob_to_dylan = txlib.createUTXO(UTXO.slot, 1000, bob, dylan);
+            txs = [ bob_to_dylan.leaf ];
+            let tree_dylan = await txlib.submitTransactions(authority, plasma, txs);
+
+            let exiting_tx = bob_to_dylan.tx;
+            let sig = bob_to_dylan.sig;
+            let prev_tx = alice_to_bob.tx;
+            let prev_tx_proof = tree_bob.createMerkleProof(UTXO.slot)
+            let exiting_tx_proof = tree_dylan.createMerkleProof(UTXO.slot)
+
+            await plasma.startExit(
+                UTXO.slot,
+                prev_tx, exiting_tx,
+                prev_tx_proof, exiting_tx_proof,
+                sig,
+                1000, 3000,
+                {'from': dylan, 'value': web3.toWei(0.1, 'ether')}
+            );
+
+            let challengeTx = bob_to_charlie.tx;
+            sig = bob_to_charlie.sig;
+            let proof = tree_charlie.createMerkleProof(UTXO.slot);
+            let block_number = 2000; // Charlie's transaction which is the valid one was included at block 2000
+
+            assertRevert(plasma.challengeBetween(
+                UTXO.slot, block_number, challengeTx, proof, sig,
+                {'from': challenger}
+            ));
+
+            t0 = (await web3.eth.getBlock('latest')).timestamp;
+            await increaseTimeTo(t0 + t1 + t2);
+            await plasma.finalizeExits({from: random_guy2});
+            await plasma.withdraw(UTXO.slot, {from: dylan});
             await txlib.withdrawBonds(plasma, dylan, 0.1);
         });
 

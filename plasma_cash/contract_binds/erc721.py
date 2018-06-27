@@ -1,14 +1,24 @@
 from .base.contract import Contract
-import pprint
+
 
 class ERC721(Contract):
     '''ERC721 bindings for python '''
+
     def __init__(self, private_key, abi_file, address, endpoint):
         super().__init__(private_key, address, abi_file, endpoint)
 
     def register(self):
         args = []
         return self.sign_and_send(self.contract.functions.register, args)
+
+    def transfer(self, to, tokenId, data=None):
+        if data is None:
+            args = [self.account.address, to, tokenId]
+        else:
+            args = [self.account.address, to, tokenId, data]
+        return self.sign_and_send(
+            self.contract.functions.safeTransferFrom, args
+        )
 
     def deposit(self, tokenId):
         '''
@@ -17,15 +27,9 @@ class ERC721(Contract):
         `NUM_COINS` in the plasma contract
         '''
         args = [tokenId]
-        print('token-{}'.format(tokenId))
-        pprint.pprint(self)
-        print("---------------------")
         return self.sign_and_send(
-                self.contract.functions.depositToPlasma,
-                args
+            self.contract.functions.depositToPlasma, args
         )
 
     def balance_of(self):
-        return self.contract.functions.balanceOf(
-                self.account.address
-        ).call()
+        return self.contract.functions.balanceOf(self.account.address).call()

@@ -8,3 +8,4 @@ include/
 lib/
 pip-selfcheck.json
 lib64/
+src/

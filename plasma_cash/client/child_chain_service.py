@@ -4,7 +4,6 @@ from .exceptions import RequestFailedException
 
 
 class ChildChainService(object):
-
     def __init__(self, base_url, verify=False, timeout=5):
         self.base_url = base_url
         self.verify = verify
@@ -27,7 +26,8 @@ class ChildChainService(object):
             return response
         else:
             raise RequestFailedException(
-                        'failed with response: {}'.format(response))
+                'failed with response: {}'.format(response)
+            )
 
     def get_current_block(self):
         end_point = '/block'
