@@ -25,3 +25,14 @@ make test
 
 cd ../
 bash integration_test.sh
+
+# build the Go tester and run the unit tests
+cd ../loom_test
+make clean
+make deps
+make cli
+make oracle
+make test
+
+#cd ../
+#bash go_integration_test.sh
