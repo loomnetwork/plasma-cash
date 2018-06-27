@@ -316,10 +316,8 @@ class Client(object):
         # TODO figure out how to have this function be invoked automatically
         print("the slot:", slot)
         self.watchers[slot] = self.root_chain.watch_event(
-            'StartedExit',
-            self._respond_to_exit,
-            0.1,
-            filters={'slot': slot})
+            'StartedExit', self._respond_to_exit, 0.1, filters={'slot': slot}
+        )
 
     def _respond_to_exit(self, event):
         ''' Called by event watcher and checks that the exit event is
@@ -327,12 +325,15 @@ class Client(object):
         '''
         slot = event['args']['slot']
         owner = event['args']['owner']
-        print("EXIT DETECTED by {} -- slot: {}, owner: {}"
-              .format(self.token_contract.account.address, slot, owner))
+        print(
+            "EXIT DETECTED by {} -- slot: {}, owner: {}".format(
+                self.token_contract.account.address, slot, owner
+            )
+        )
 
         # A coin-owner will automatically start a challenge if he believes he
         # owns a coin that has been exited by someone else
-        if (owner != self.token_contract.account.address):
+        if owner != self.token_contract.account.address:
             print("invalid exit...challenging")
 
             # fetch exit information
@@ -341,15 +342,20 @@ class Client(object):
 
             # fetch coin history
             incl_proofs, excl_proofs = self.get_coin_history(slot)
-            blocks = self.get_block_numbers(slot) # skip the deposit tx block
+            blocks = self.get_block_numbers(slot)  # skip the deposit tx block
             for blk in blocks:
                 if blk > exit_block and blk in incl_proofs:
-                    print('CHALLENGE AFTER -- {} at block {}'.format(slot, blk))
+                    print(
+                        'CHALLENGE AFTER -- {} at block {}'.format(slot, blk)
+                    )
                     self.challenge_after(slot, blk)
                 elif prev_block < blk < exit_block and blk in incl_proofs:
-                    print('CHALLENGE BETWEEN --  {} at block {}'.format(slot, blk))
+                    print(
+                        'CHALLENGE BETWEEN --  {} at block {}'.format(
+                            slot, blk
+                        )
+                    )
                     self.challenge_between(slot, blk)
-
 
             # -- challengeAfter
             # check coin's history to find block in which this coin was spent,
