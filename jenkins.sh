@@ -28,6 +28,7 @@ bash integration_test.sh
 
 # build the Go tester and run the unit tests
 cd loom_test
+export GOPATH=/tmp/gopath-$BUILD_TAG:`pwd`
 make clean
 make deps
 make cli
