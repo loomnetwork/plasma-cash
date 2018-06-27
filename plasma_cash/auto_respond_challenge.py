@@ -51,6 +51,7 @@ dan.watch_challenges(deposit1_utxo)
 trudy.challenge_before(deposit1_utxo, 0, coin['deposit_block'])
 
 # Wait for dan to automatically respond to the challenge
+time.sleep(2)
 
 # Dan successfully finalizes his exit
 w3 = dan.root_chain.w3

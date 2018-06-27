@@ -324,7 +324,16 @@ class Client(object):
         )
 
     def _respond_to_challenge(self, event):
-        print(event)
+        slot = event['args']['slot']
+        print(
+            "CHALLENGE DETECTED by {} -- slot: {}".format(
+                self.token_contract.account.address, slot
+            )
+        )
+        # fetch coin history
+        incl_proofs, excl_proofs = self.get_coin_history(slot)
+        received_block = max(excl_proofs.keys())
+        self.respond_challenge_before(slot, received_block)
 
     def stop_watching_challenges(self, slot):
         # a user stops watching exits of a particular coin after transferring
