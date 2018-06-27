@@ -344,30 +344,32 @@ class Client(object):
             incl_proofs, excl_proofs = self.get_coin_history(slot)
             blocks = self.get_block_numbers(slot)  # skip the deposit tx block
             for blk in blocks:
-                if blk > exit_block and blk in incl_proofs:
+                if blk not in incl_proofs:
+                    continue
+                if blk > exit_block:
                     print(
                         'CHALLENGE AFTER -- {} at block {}'.format(slot, blk)
                     )
                     self.challenge_after(slot, blk)
-                elif prev_block < blk < exit_block and blk in incl_proofs:
+                    break
+                elif prev_block < blk < exit_block:
                     print(
                         'CHALLENGE BETWEEN --  {} at block {}'.format(
                             slot, blk
                         )
                     )
                     self.challenge_between(slot, blk)
-
-            # -- challengeAfter
-            # check coin's history to find block in which this coin was spent,
-            # submit this as challengeAfter
-            # self.challenge_after(slot, challenging_block_number):
-
-            # -- challengeBetween
-            # check if coin
-
-            # -- challengeBefore
-            # check if coin
-
+                    break
+                elif blk < prev_block < exit_block:
+                    # Need to find a previous block
+                    tx = self.get_tx(blk, slot)
+                    print(
+                        'CHALLENGE BEFORE --  {} at prev block {} / block {}'.format(
+                            slot, tx.prev_block, blk
+                        )
+                    )
+                    self.challenge_before(slot, tx.prev_block, blk)
+                    break
         else:
             print("valid exit")
 

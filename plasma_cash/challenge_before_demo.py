@@ -27,6 +27,7 @@ danTokensStart = dan.token_contract.balance_of()
 
 coin = dan.get_plasma_coin(deposit1_utxo)
 authority.submit_block()
+dan.watch_exits(deposit1_utxo)
 
 # Trudy sends her invalid coin to Mallory
 trudy_to_mallory = trudy.send_transaction(
@@ -46,14 +47,15 @@ mallory_to_trudy_block = authority.get_block_number()
 
 # Trudy attemps to exit her illegitimate coin
 trudy.start_exit(deposit1_utxo, trudy_to_mallory_block, mallory_to_trudy_block)
+time.sleep(1) # need to wait a bit for authority to catch up
 
 w3 = dan.root_chain.w3
 
 # Dan challenges Trudy's exit
-dan.challenge_before(deposit1_utxo, 0, coin['deposit_block'])
 increaseTime(w3, 8 * 24 * 3600)
 authority.finalize_exits()
 dan.start_exit(deposit1_utxo, 0, coin['deposit_block'])
+dan.stop_watching_exits(deposit1_utxo)
 
 increaseTime(w3, 8 * 24 * 3600)
 authority.finalize_exits()
