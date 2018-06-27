@@ -38,7 +38,7 @@ deps:
 		github.com/stretchr/testify \
 		github.com/grpc-ecosystem/go-grpc-prometheus \
 		github.com/hashicorp/go-plugin \
-		github.com/prometheus/client_golang
+		github.com/prometheus/client_golang/prometheus
 
 clean:
 	go clean
