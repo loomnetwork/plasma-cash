@@ -61,37 +61,41 @@ func main() {
 	// utxos in return
 	tokenID := int64(1)
 	txHash := alice.Deposit(tokenID)
-	time.Sleep(3 * time.Second)
+	fmt.Printf("before deposit event data- %s\n", txHash)
+	time.Sleep(1 * time.Second)
 	depEvent, err := alice.RootChain.DepositEventData(txHash)
 	exitIfError(err)
+	depositSlot1 := depEvent.Slot
+	fmt.Printf("after deposit event data-%d\n", depositSlot1)
 	slots = append(slots, depEvent.Slot)
 	alice.DebugCoinMetaData(slots)
 
 	txHash = alice.Deposit(tokenID + 1)
-	time.Sleep(3 * time.Second)
+	time.Sleep(1 * time.Second)
 	depEvent, err = alice.RootChain.DepositEventData(txHash)
 	exitIfError(err)
+	depositSlot2 := depEvent.Slot
 	slots = append(slots, depEvent.Slot)
 	alice.DebugCoinMetaData(slots)
 
 	txHash = alice.Deposit(tokenID + 2)
-	time.Sleep(3 * time.Second)
+	time.Sleep(1 * time.Second)
 	depEvent, err = alice.RootChain.DepositEventData(txHash)
+	depositSlot3 := depEvent.Slot
 	exitIfError(err)
 	slots = append(slots, depEvent.Slot)
 	alice.DebugCoinMetaData(slots)
 
 	//Alice to Bob, and Alice to Charlie. We care about the Alice to Bob
 	// transaction
-	utxoID := uint64(2)
 	blkNum := int64(3)
 	account, err := bob.TokenContract.Account()
 	exitIfError(err)
-	err = alice.SendTransaction(utxoID, blkNum, 1, account.Address) //aliceToBob
+	err = alice.SendTransaction(depositSlot3, blkNum, 1, account.Address) //aliceToBob
 	exitIfError(err)
 	account, err = charlie.TokenContract.Account()
 	exitIfError(err)
-	err = alice.SendTransaction(utxoID-1, blkNum-1, 1, account.Address) //randomTx
+	err = alice.SendTransaction(depositSlot2, blkNum-1, 1, account.Address) //randomTx
 	exitIfError(err)
 	authority.SubmitBlock()
 
@@ -99,18 +103,17 @@ func main() {
 	blkNum = 1000
 	account, err = charlie.TokenContract.Account() // the prev transaction was included in block 1000
 	exitIfError(err)
-	err = bob.SendTransaction(utxoID, blkNum, 1, account.Address) //bobToCharlie
+	err = bob.SendTransaction(depositSlot3, blkNum, 1, account.Address) //bobToCharlie
 	exitIfError(err)
 	authority.SubmitBlock()
 
 	// Charlie should be able to submit an exit by referencing blocks 0 and 1 which
 	// included his transaction.
-	utxoID = uint64(2)
 	prevTxBlkNum := int64(1000)
 	exitingTxBlkNum := int64(2000)
 	charlie.DebugCoinMetaData(slots)
 	fmt.Printf("Before start exit\n")
-	_, err = charlie.StartExit(utxoID, prevTxBlkNum, exitingTxBlkNum)
+	_, err = charlie.StartExit(depositSlot3, prevTxBlkNum, exitingTxBlkNum)
 	exitIfError(err)
 	fmt.Printf("After start exit\n")
 	charlie.DebugCoinMetaData(slots)
@@ -133,9 +136,9 @@ func main() {
 	// Charlie should now be able to withdraw the utxo which included token 2 to his
 	// wallet.
 
-	fmt.Printf("withdraw-%d\n", utxoID)
+	fmt.Printf("withdraw-%d\n", depositSlot3)
 	charlie.DebugCoinMetaData(slots)
-	err = charlie.Withdraw(utxoID)
+	err = charlie.Withdraw(depositSlot3)
 	exitIfError(err)
 
 	aliceTokensEnd, err := alice.TokenContract.BalanceOf()
