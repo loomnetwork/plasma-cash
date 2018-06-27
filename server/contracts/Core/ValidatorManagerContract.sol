@@ -20,7 +20,7 @@ contract ValidatorManagerContract is Ownable {
     }
 
     function toggleToken(address _token) public {
-        checkValidator(msg.sender);
+        require(checkValidator(msg.sender), "not a validator");
         allowedTokens[_token] = !allowedTokens[_token];
     }
 
