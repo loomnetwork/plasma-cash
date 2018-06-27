@@ -20,7 +20,7 @@ eval "$(pyenv virtualenv-init -)"
 pyenv global general
 
 pip install -r requirements.txt
-make lint
+#make lint
 make test
 
 cd ../
