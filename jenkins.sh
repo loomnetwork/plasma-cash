@@ -27,7 +27,7 @@ cd ../
 bash integration_test.sh
 
 # build the Go tester and run the unit tests
-cd ../loom_test
+cd loom_test
 make clean
 make deps
 make cli
