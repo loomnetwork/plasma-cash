@@ -182,24 +182,23 @@ contract RootChain is ERC721Receiver {
         uint64 slot, bytes prevTxBytes,
         bytes exitingTxBytes, bytes prevTxInclusionProof,
         bytes exitingTxInclusionProof, bytes sig,
-        uint256 prevTxIncBlock, uint256 exitingTxIncBlock)
+        uint256[2] blk)
         external
         payable isBonded
         isState(slot, State.DEPOSITED)
     {
         // If we're exiting a deposit UTXO, we do a different inclusion check
-        if (exitingTxIncBlock % childBlockInterval != 0) {
-            checkDepositBlockInclusion(exitingTxBytes, sig, exitingTxIncBlock, true);
+        if (blk[1] % childBlockInterval != 0) {
+            checkDepositBlockInclusion(exitingTxBytes, sig, blk[1]);
         } else {
             checkBlockInclusion(
                 prevTxBytes, exitingTxBytes,
                 prevTxInclusionProof, exitingTxInclusionProof,
                 sig,
-                prevTxIncBlock, exitingTxIncBlock,
-                true
+                blk[0], blk[1]
             );
         }
-        pushExit(slot, prevTxBytes, prevTxIncBlock, exitingTxIncBlock);
+        pushExit(slot, prevTxBytes, blk[0], blk[1]);
     }
 
     function pushExit(
@@ -268,9 +267,9 @@ contract RootChain is ERC721Receiver {
     }
 
     // Withdraw a UTXO that has been exited
-    function withdraw(uint64 slot) external isState(slot, State.EXITED) {
+    function withdraw(uint64 slot, address to) external isState(slot, State.EXITED) {
         require(coins[slot].owner == msg.sender, "You do not own that UTXO");
-        ERC721(coins[slot].contractAddress).safeTransferFrom(address(this), msg.sender, uint256(coins[slot].uid));
+        ERC721(coins[slot].contractAddress).transferFrom(address(this), to, uint256(coins[slot].uid));
     }
 
     /******************** CHALLENGES ********************/
@@ -294,13 +293,12 @@ contract RootChain is ERC721Receiver {
             checkDepositBlockInclusion(
                 exitingTxBytes,
                 sig,
-                exitingTxIncBlock,
-                false);
+                exitingTxIncBlock);
         } else {
             checkBlockInclusion(
                 prevTxBytes, exitingTxBytes, prevTxInclusionProof,
                 exitingTxInclusionProof, sig,
-                prevTxIncBlock, exitingTxIncBlock, false);
+                prevTxIncBlock, exitingTxIncBlock);
         }
         setChallenged(slot, exitingTxBytes);
     }
@@ -390,12 +388,12 @@ contract RootChain is ERC721Receiver {
         emit FreedBond(from, BOND_AMOUNT);
     }
 
-    function withdrawBonds() external {
+    function withdrawBonds(address to) external {
         // Can only withdraw bond if the msg.sender
         uint256 amount = balances[msg.sender].withdrawable;
         balances[msg.sender].withdrawable = 0; // no reentrancy!
 
-        msg.sender.transfer(amount);
+        to.transfer(amount);
         emit WithdrewBonds(msg.sender, amount);
     }
 
@@ -433,17 +431,13 @@ contract RootChain is ERC721Receiver {
     function checkDepositBlockInclusion(
         bytes txBytes,
         bytes signature,
-        uint256 txIncBlock,
-        bool checkSender
+        uint256 txIncBlock
     )
          private
          view
          returns (bool)
     {
         Transaction.TX memory txData = txBytes.getTx();
-        if (checkSender)
-            require(txData.owner == msg.sender, "Invalid sender");
-
         bytes32 txHash = keccak256(abi.encodePacked(txData.slot));
         require(txHash.ecverify(signature, txData.owner), "Invalid sig");
         require(
@@ -458,16 +452,13 @@ contract RootChain is ERC721Receiver {
         bytes prevTxBytes, bytes exitingTxBytes,
         bytes prevTxInclusionProof, bytes exitingTxInclusionProof,
         bytes sig,
-        uint256 prevTxIncBlock, uint256 exitingTxIncBlock, bool checkSender)
+        uint256 prevTxIncBlock, uint256 exitingTxIncBlock)
         private
         view
         returns (bool)
     {
         Transaction.TX memory exitingTxData = exitingTxBytes.getTx();
         Transaction.TX memory prevTxData = prevTxBytes.getTx();
-
-        if (checkSender)
-            require(exitingTxData.owner == msg.sender, "Invalid sender");
 
         require(keccak256(exitingTxBytes).ecverify(sig, prevTxData.owner), "Invalid sig");
         require(exitingTxData.slot == prevTxData.slot);
