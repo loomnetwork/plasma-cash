@@ -202,6 +202,33 @@ contract RootChain is ERC721Receiver {
         pushExit(slot, prevTxBytes, prevTxIncBlock, exitingTxIncBlock);
     }
 
+    function pushExit(
+        uint64 slot,
+        bytes txBytes,
+        uint256 prevBlock,
+        uint256 exitingBlock) private
+    {
+        Transaction.TX memory txData = txBytes.getTx();
+
+        // Push exit to list
+        exitSlots.push(slot);
+
+        // Create exit
+        Coin storage c = coins[slot];
+        c.exit = Exit({
+            prevOwner: txData.owner,
+            owner: msg.sender,
+            createdAt: block.timestamp,
+            bond: msg.value,
+            prevBlock: prevBlock,
+            exitBlock: exitingBlock
+        });
+
+        // Update coin state
+        c.state = State.EXITING;
+        emit StartedExit(slot, msg.sender);
+    }
+
     function finalizeExit(uint64 slot) public {
         Coin storage coin = coins[slot];
 
@@ -376,33 +403,6 @@ contract RootChain is ERC721Receiver {
         balances[from].bonded = balances[from].bonded.sub(BOND_AMOUNT);
         balances[to].withdrawable = balances[to].withdrawable.add(BOND_AMOUNT);
         emit SlashedBond(from, to, BOND_AMOUNT);
-    }
-
-    function pushExit(
-        uint64 slot,
-        bytes txBytes,
-        uint256 prevBlock,
-        uint256 exitingBlock) private
-    {
-        Transaction.TX memory txData = txBytes.getTx();
-
-        // Push exit to list
-        exitSlots.push(slot);
-
-        // Create exit
-        Coin storage c = coins[slot];
-        c.exit = Exit({
-            prevOwner: txData.owner,
-            owner: msg.sender,
-            createdAt: block.timestamp,
-            bond: msg.value,
-            prevBlock: prevBlock,
-            exitBlock: exitingBlock
-        });
-
-        // Update coin state
-        c.state = State.EXITING;
-        emit StartedExit(slot, msg.sender);
     }
 
     function setChallenged(uint64 slot, bytes txBytes) private {
