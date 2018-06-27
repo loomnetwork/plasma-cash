@@ -88,19 +88,19 @@ func main() {
 
 	//Alice to Bob, and Alice to Charlie. We care about the Alice to Bob
 	// transaction
-	blkNum := int64(3)
+	//	blkNum := int64(3)
 	account, err := bob.TokenContract.Account()
 	exitIfError(err)
-	err = alice.SendTransaction(depositSlot3, blkNum, 1, account.Address) //aliceToBob
+	err = alice.SendTransaction(depositSlot3, int64(depositSlot3), 1, account.Address) //aliceToBob
 	exitIfError(err)
 	account, err = charlie.TokenContract.Account()
 	exitIfError(err)
-	err = alice.SendTransaction(depositSlot2, blkNum-1, 1, account.Address) //randomTx
+	err = alice.SendTransaction(depositSlot2, int64(depositSlot2), 1, account.Address) //randomTx
 	exitIfError(err)
 	authority.SubmitBlock()
 
 	// Bob to Charlie
-	blkNum = 1000
+	blkNum := int64(1000)
 	account, err = charlie.TokenContract.Account() // the prev transaction was included in block 1000
 	exitIfError(err)
 	err = bob.SendTransaction(depositSlot3, blkNum, 1, account.Address) //bobToCharlie

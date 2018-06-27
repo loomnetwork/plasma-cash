@@ -68,7 +68,7 @@ func (c *LoomChildChainService) Block(blknum int64) (Block, error) {
 }
 
 /*
-func (c *LoomChildChainService) Proof(blknum int64, uid uint64) (Proof, error) {
+func (c *LoomChildChainService) Proof(blknum int64, slot uint64) (Proof, error) {
 
 	return nil, nil
 }

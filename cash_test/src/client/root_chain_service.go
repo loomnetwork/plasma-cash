@@ -25,14 +25,14 @@ type RootChainService struct {
 }
 
 func (d *RootChainService) PlasmaCoin(slot uint64) (*PlasmaCoin, error) {
-	uid, depositBlockNum, denom, ownerAddr, state, err := d.plasmaContract.GetPlasmaCoin(&bind.CallOpts{
+	slot, depositBlockNum, denom, ownerAddr, state, err := d.plasmaContract.GetPlasmaCoin(&bind.CallOpts{
 		From: d.callerAddr,
 	}, slot)
 	if err != nil {
 		return nil, err
 	}
 	return &PlasmaCoin{
-		UID:             uid,
+		UID:             slot,
 		DepositBlockNum: depositBlockNum.Int64(),
 		Denomination:    denom,
 		Owner:           ownerAddr.Hex(),
@@ -68,20 +68,25 @@ func (d *RootChainService) ChallengeBefore(slot uint64, prevTx Tx, exitingTx Tx,
 
 func (d *RootChainService) RespondChallengeBefore(slot uint64, challengingBlockNumber int64,
 	challengingTx Tx, proof Proof) ([]byte, error) {
-	challengingTxBytes, err := challengingTx.RlpEncode()
-	if err != nil {
-		return nil, err
-	}
-	tx, err := d.plasmaContract.RespondChallengeBefore(
-		d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof)
-	if err != nil {
-		return nil, err
-	}
-	return tx.Hash().Bytes(), nil
+	/*
+		challengingTxBytes, err := challengingTx.RlpEncode()
+		if err != nil {
+			return nil, err
+		}
+		tx, err := d.plasmaContract.RespondChallengeBefore(
+			d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof)
+		if err != nil {
+			return nil, err
+		}
+		return tx.Hash().Bytes(), nil
+	*/
+	panic("duh3")
+	return nil, nil
 }
 
 func (d *RootChainService) ChallengeBetween(slot uint64, challengingBlockNumber int64,
 	challengingTx Tx, proof Proof, sig []byte) ([]byte, error) {
+	panic("duh1")
 	/*	challengingTxBytes, err := challengingTx.RlpEncode()
 		if err != nil {
 			return nil, err
@@ -98,6 +103,7 @@ func (d *RootChainService) ChallengeBetween(slot uint64, challengingBlockNumber 
 
 func (d *RootChainService) ChallengeAfter(slot uint64, challengingBlockNumber int64,
 	challengingTx Tx, proof Proof, sig []byte) ([]byte, error) {
+	panic("duh2")
 	/*
 		challengingTxBytes, err := challengingTx.RlpEncode()
 		if err != nil {
@@ -160,11 +166,10 @@ func (d *RootChainService) DebugCoinMetaData(slots []uint64) {
 	if err != nil {
 		panic(err)
 	}
-	for x := uint64(0); x < coins; x++ {
-		//uid, c.depositBlock, c.denomination, c.owner, c.state
-		y := x*2 + 1
-		uid, _, _, owner, state, err := d.plasmaContract.GetPlasmaCoin(d.callOpts, y)
-		fmt.Printf("Num coins -(slot)-%v -(uid)-%v -(state)-%v -(owner)-%x\n", y, uid, state, owner)
+	for _, y := range slots {
+		//slot, c.depositBlock, c.denomination, c.owner, c.state
+		returnSlot, _, _, owner, state, err := d.plasmaContract.GetPlasmaCoin(d.callOpts, y)
+		fmt.Printf("Num coins -(slot)-%v -(returnSlot)-%v -(state)-%v -(owner)-%x\n", y, returnSlot, state, owner)
 
 		if err != nil {
 			panic(err)

@@ -73,7 +73,7 @@ type RootChainClient interface {
 	Withdraw(slot uint64) error
 	WithdrawBonds() error
 	PlasmaCoin(slot uint64) (*PlasmaCoin, error)
-	StartExit(uid uint64, prevTx Tx, exitingTx Tx, prevTxProof Proof,
+	StartExit(slot uint64, prevTx Tx, exitingTx Tx, prevTxProof Proof,
 		exitingTxProof Proof, sigs []byte, prevTxBlkNum int64, txBlkNum int64) ([]byte, error)
 
 	ChallengeBefore(slot uint64, prevTx Tx, exitingTx Tx,
@@ -100,7 +100,7 @@ type ChainServiceClient interface {
 	BlockNumber() (int64, error)
 
 	Block(blknum int64) (Block, error)
-	//Proof(blknum int64, uid uint64) (Proof, error) //TODO what is the uid?
+	//Proof(blknum int64, slot uint64) (Proof, error)
 
 	SubmitBlock() error
 
