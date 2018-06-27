@@ -24,9 +24,9 @@ cd $REPO_ROOT/server
 ganache_pid=$(npm run --silent migrate:dev)
 echo 'Launched ganache' $ganache_pid
 
-#cd $LOOM_DIR
-#loom_pid=$($LOOM_BIN run)
-#echo 'Launched loom' $loom_pid
+cd $LOOM_DIR
+loom_pid=$($LOOM_BIN run)
+echo 'Launched loom' $loom_pid
 
 # Wait for Ganache & Loom to spin up
 sleep 10
@@ -34,5 +34,5 @@ sleep 10
 cd $REPO_ROOT/loom_test
 ./plasmascash_tester
 
-#kill -9 $loom_pid
+kill -9 $loom_pid
 rm -rf $LOOM_DIR
