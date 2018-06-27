@@ -96,7 +96,7 @@ contract RootChain is ERC721Receiver {
 
     // tracking of NFTs deposited in each slot
     uint64 public numCoins = 0;
-    mapping (uint64 => Coin) public coins;
+    mapping (uint64 => Coin) coins;
     struct Coin {
         uint64 uid; // there are up to 2^64 cards, one for every leaf of
                     // a depth 64 Sparse Merkle Tree
@@ -468,6 +468,7 @@ contract RootChain is ERC721Receiver {
 
         if (checkSender)
             require(exitingTxData.owner == msg.sender, "Invalid sender");
+
         require(keccak256(exitingTxBytes).ecverify(sig, prevTxData.owner), "Invalid sig");
         require(exitingTxData.slot == prevTxData.slot);
         require(prevTxIncBlock < exitingTxIncBlock);
