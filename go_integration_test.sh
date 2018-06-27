@@ -3,6 +3,10 @@
 function cleanup {
     kill -9 $ganache_pid ; true
     kill -9 $loom_pid ; true
+
+    if [[ $LOOM_DIR ]]; then 
+        rm -rf $LOOM_DIR
+    fi
 }
 
 REPO_ROOT=`pwd`
@@ -29,6 +33,7 @@ trap cleanup EXIT
 cd $REPO_ROOT/server
 npm run --silent migrate:dev
 sleep 1
+ganache_pid=`cat ganache.pid`
 echo 'Launched ganache' $ganache_pid
 
 cd $LOOM_DIR
@@ -42,5 +47,3 @@ sleep 10
 cd $REPO_ROOT/loom_test
 ./plasmascash_tester
 
-kill -9 $loom_pid
-rm -rf $LOOM_DIR
