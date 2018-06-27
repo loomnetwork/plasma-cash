@@ -26,7 +26,10 @@ class Client(object):
         self.incl_proofs = {}
         self.excl_proofs = {}
         self.txs = {}
+
+        # Event watchers
         self.watchers = {}
+        self.challenge_watchers = {}
 
     # Token Functions
 
