@@ -10,7 +10,7 @@ BUILD_NUMBER=196
 
 mkdir -p $LOOM_DIR
 cd $LOOM_DIR
-wget https://private.delegatecall.com/loom/osx/build-$BUILD_NUMBER/loom
+wget https://private.delegatecall.com/loom/linux/build-$BUILD_NUMBER/loom
 chmod +x loom
 export LOOM_BIN=`pwd`/loom
 $LOOM_BIN init
