@@ -1,8 +1,8 @@
 #!/bin/bash
 
 function cleanup {
-    kill -9 $ganache_pid
-    kill -9 $loom_pid
+    kill -9 $ganache_pid ; true
+    kill -9 $loom_pid ; true
 }
 
 REPO_ROOT=`pwd`
@@ -27,7 +27,8 @@ echo 'Loom DAppChain initialized in ' $LOOM_DIR
 trap cleanup EXIT
 
 cd $REPO_ROOT/server
-ganache_pid=$(npm run --silent migrate:dev)
+npm run --silent migrate:dev
+sleep 1
 echo 'Launched ganache' $ganache_pid
 
 cd $LOOM_DIR
