@@ -20,3 +20,7 @@ class TxAlreadySpentException(Exception):
 
 class TxAmountMismatchException(Exception):
     """tx input total amount is not equal to output total amount"""
+
+
+class InvalidPrevBlockException(Exception):
+    """prev block cannot be bigger than current block"""
