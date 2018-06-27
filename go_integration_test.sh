@@ -6,14 +6,20 @@ function cleanup {
 }
 
 REPO_ROOT=`pwd`
-LOOM_DIR=/tmp/loom-plasma-$BUILD_TAG
-BUILD_NUMBER=196
+LOOM_DIR=`pwd`/tmp/loom-plasma-$BUILD_TAG
+BUILD_NUMBER=201
 
+rm -rf  $LOOM_DIR; true
 mkdir -p $LOOM_DIR
 cd $LOOM_DIR
+if [[ "`uname`" == 'Darwin' ]]; then
+wget https://private.delegatecall.com/loom/osx/build-$BUILD_NUMBER/loom
+else 
 wget https://private.delegatecall.com/loom/linux/build-$BUILD_NUMBER/loom
+fi
 chmod +x loom
 export LOOM_BIN=`pwd`/loom
+echo $REPO_ROOT
 cp $REPO_ROOT/loom_test/loom-test.yml $LOOM_DIR/loom.yml
 $LOOM_BIN init
 echo 'Loom DAppChain initialized in ' $LOOM_DIR
@@ -25,7 +31,8 @@ ganache_pid=$(npm run --silent migrate:dev)
 echo 'Launched ganache' $ganache_pid
 
 cd $LOOM_DIR
-loom_pid=$($LOOM_BIN run)
+$LOOM_BIN run &
+loom_pid=$!
 echo 'Launched loom' $loom_pid
 
 # Wait for Ganache & Loom to spin up
