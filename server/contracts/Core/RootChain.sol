@@ -63,7 +63,7 @@ contract RootChain is ERC721Receiver {
     modifier cleanupExit(uint64 slot) {
         _;
         delete coins[slot].exit;
-        delete exitSlots[getIndex(slot)];
+        delete exitSlots[getExitIndex(slot)];
     }
 
     struct Balance {
@@ -231,7 +231,7 @@ contract RootChain is ERC721Receiver {
             emit FinalizedExit(slot, coin.owner);
         }
         delete coins[slot].exit;
-        delete exitSlots[getIndex(slot)];
+        delete exitSlots[getExitIndex(slot)];
     }
 
     function finalizeExits() external {
@@ -250,7 +250,8 @@ contract RootChain is ERC721Receiver {
     /******************** CHALLENGES ********************/
 
     // Submit proof of a transaction before prevTx
-    // Exitor has to call respondChallengeBefore and submit a transaction before prevTx or prevTx itself.
+    // Exitor has to call respondChallengeBefore and submit a transaction
+    // before prevTx or prevTx itself.
     function challengeBefore(
         uint64 slot,
         bytes prevTxBytes, bytes exitingTxBytes,
@@ -516,7 +517,7 @@ contract RootChain is ERC721Receiver {
 
     /******************** HELPERS ********************/
 
-    function getIndex(uint64 slot) private view returns (uint256) {
+    function getExitIndex(uint64 slot) private view returns (uint256) {
         uint256 len = exitSlots.length;
         for (uint256 i = 0; i < len; i++) {
             if (exitSlots[i] == slot)

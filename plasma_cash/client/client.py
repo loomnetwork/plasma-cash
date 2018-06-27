@@ -332,6 +332,24 @@ class Client(object):
 
         # A coin-owner will automatically start a challenge if he believes he
         # owns a coin that has been exited by someone else
+        if (owner != self.token_contract.account.address):
+            print("invalid exit...challenging")
+            # fetch exit information
+            # (owner, prevBlock, exitBlock, state) = getExit(slot)
+
+            # -- challengeAfter
+
+            # check coin's history to find block in which this coin was spent,
+            # submit this as challengeAfter
+            # self.challenge_after(slot, challenging_block_number):
+
+            # -- challengeBetween
+            # check if coin
+
+            # -- challengeBefore
+            # check if coin
+        else:
+            print("valid exit")
 
     def stop_watching_exits(self, slot):
         # a user stops watching exits of a particular coin after transferring
