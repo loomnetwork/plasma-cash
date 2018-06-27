@@ -47,7 +47,7 @@ mallory_to_trudy_block = authority.get_block_number()
 
 # Trudy attemps to exit her illegitimate coin
 trudy.start_exit(deposit1_utxo, trudy_to_mallory_block, mallory_to_trudy_block)
-time.sleep(1) # need to wait a bit for authority to catch up
+time.sleep(2)  # need to wait a bit for authority to catch up
 
 w3 = dan.root_chain.w3
 
