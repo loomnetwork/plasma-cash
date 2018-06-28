@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"os"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -152,6 +153,10 @@ func (d *RootChainService) SubmitBlock(blockNum *big.Int, merkleRoot [32]byte) e
 }
 
 func (d *RootChainService) DebugCoinMetaData(slots []uint64) {
+	if os.Getenv("DEBUG") != "true" {
+		return
+	}
+
 	coins, err := d.plasmaContract.NumCoins(d.callOpts) //todo make this readonly
 	fmt.Printf("Num coins -%v\n", coins)
 	if err != nil {
