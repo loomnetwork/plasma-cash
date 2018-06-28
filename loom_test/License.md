@@ -33,5 +33,5 @@ THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPL
 Governing law: This agreement shall be governed by the law of Hong Kong, without regard to conflicts of law rules.
 Dispute resolution: Any dispute arising from or related to this Agreement, including the existence, validity, interpretation, performance, breach or termination thereof or any dispute regarding non-contractual obligations arising out of or relating to it shall be referred to and finally resolved exclusively by arbitration under the UNCITRAL Arbitration Rules in force when a notice of arbitration is first submitted by a party to this Agreement. The law of this arbitration clause shall be Hong Kong. The place of arbitration shall be Hong Kong. The number of arbitrators shall be one. The arbitration proceedings shall be conducted in English.
 
-\Copyright Loom Network Inc 2018
+Copyright Loom Network Inc 2018
 
