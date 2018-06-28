@@ -1,6 +1,15 @@
 pragma solidity ^0.4.21;
+
+// This contract exposes the precompiled methods built into Loom binary
+// Don't use this class directly
+
 contract DappChain {
 
+    function loomtransferUxto(bytes data) public view {
+        callPFAssembly(9, data);
+    }
+
+ 
     function callPF(uint32 _addr, bytes _input) public view returns (bool) {
         address addr = _addr;
         return addr.call(_input);
