@@ -55,7 +55,19 @@ Under `demos/` there are various scenarios which can occur. You should have init
 ## Loom SDK integration
 
 To see the integrations run againist the Loom SDK instead of the prototype server
+
+
 ```
+cd server
+npm install
+cd .. 
+
+cd loom_test
+make clean
+make deps
+make
+
+cd ..
 ./go_integration_test.sh
 ```
 
@@ -77,4 +89,4 @@ Please note different directories have different licenses. Please see license fi
 
 * server directory -> GPLv2 [License](plasma_cash/License.md)
 * plasma_cash directory  -> GPLv2 [License](plasma_cash/License.md)
-* loom_test directory  -> Loom Public License [License](plasma_cash/License.md)
+* loom_test directory  -> Loom Public License [License](loom_test/License.md)
