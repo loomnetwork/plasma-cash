@@ -122,9 +122,8 @@ func (d *RootChainService) StartExit(
 	if err != nil {
 		return nil, err
 	}
-	d.transactOpts.Value = big.NewInt(100000000000000000) //0.1 eth
+	d.transactOpts.Value = big.NewInt(100000000000000000) //0.1 eth, TODO make the bond configurable
 
-	fmt.Printf("\nprevTxInclusion.Bytes()-%v-len(%d)\n", prevTxInclusion, len(prevTxInclusion))
 	tx, err := d.plasmaContract.StartExit(
 		d.transactOpts, slot,
 		prevTxBytes, exitingTxBytes, prevTxInclusion, exitingTxInclusion,
