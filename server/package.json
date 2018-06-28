@@ -11,7 +11,7 @@
     "babel-preset-es2015": "^6.24.1",
     "babel-preset-stage-2": "^6.24.1",
     "eth-gas-reporter": "^0.1.7",
-    "ganache-cli": "^6.1.0",
+    "ganache-cli": "^6.1.3",
     "openzeppelin-solidity": "1.10.0",
     "rlp": "^2.0.0",
     "solium": "^1.1.7",
@@ -29,7 +29,7 @@
     "lint": "solium --dir ./contracts",
     "ganache-cli:dev": "scripts/ganache-cli.sh",
     "migrate:dev": "rm -rf build && npm run ganache-cli:dev && npm run migrate:dev:contracts",
-    "migrate:dev:contracts": "truffle migrate --all --network rpc > /dev/null 2>&1",
+    "migrate:dev:contracts": "truffle migrate --all --network rpc > truffle_dev_contracts.log 2>&1",
     "migrate:prod": "truffle migrate --all --network prod",
     "prepublishOnly": "truffle compile --all"
   },

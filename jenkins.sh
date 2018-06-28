@@ -2,14 +2,14 @@
 
 set -exo pipefail
 
-# make test
+REPO_ROOT=`pwd`
 
-cd server
+cd $REPO_ROOT/server
 npm install
 npm run lint
 npm run test
 
-cd ../plasma_cash
+cd $REPO_ROOT/plasma_cash
 
 #virtualenv --python=python3.5 .
 #source bin/activate
@@ -27,7 +27,7 @@ cd ../
 bash integration_test.sh
 
 # build the Go tester and run the unit tests
-cd loom_test
+cd $REPO_ROOT/loom_test
 export GOPATH=/tmp/gopath-$BUILD_TAG:`pwd`
 make clean
 make deps
@@ -35,5 +35,5 @@ make cli
 make oracle
 make test
 
-#cd ../
-#bash go_integration_test.sh
+cd $REPO_ROOT
+bash go_integration_test.sh
