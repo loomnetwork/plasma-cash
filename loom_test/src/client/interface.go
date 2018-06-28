@@ -53,7 +53,7 @@ type RootChainClient interface {
 		sig []byte, prevTxBlockNum int64, exitingTxBlockNum int64) ([]byte, error)
 
 	RespondChallengeBefore(slot uint64, challengingBlockNumber int64,
-		challengingTransaction Tx, proof Proof) ([]byte, error)
+		challengingTransaction Tx, proof Proof, sig []byte) ([]byte, error)
 
 	ChallengeBetween(slot uint64, challengingBlockNumber int64,
 		challengingTransaction Tx, proof Proof, sig []byte) ([]byte, error)

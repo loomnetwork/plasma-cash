@@ -179,7 +179,8 @@ func (c *Client) RespondChallengeBefore(slot uint64, challengingBlockNumber int6
 	txHash, err := c.RootChain.RespondChallengeBefore(slot,
 		challengingBlockNumber,
 		challengingTx,
-		proof)
+		proof,
+		challengingTx.Sig())
 	return txHash, err
 }
 

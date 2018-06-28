@@ -68,56 +68,47 @@ func (d *RootChainService) ChallengeBefore(slot uint64, prevTx plasma_cash.Tx, e
 }
 
 func (d *RootChainService) RespondChallengeBefore(slot uint64, challengingBlockNumber int64,
-	challengingTx plasma_cash.Tx, proof plasma_cash.Proof) ([]byte, error) {
-	/*
-		challengingTxBytes, err := challengingTx.RlpEncode()
-		if err != nil {
-			return nil, err
-		}
-		tx, err := d.plasmaContract.RespondChallengeBefore(
-			d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof)
-		if err != nil {
-			return nil, err
-		}
-		return tx.Hash().Bytes(), nil
-	*/
-	panic("duh3")
-	return nil, nil
+	challengingTx plasma_cash.Tx, proof plasma_cash.Proof, sig []byte) ([]byte, error) {
+	challengingTxBytes, err := challengingTx.RlpEncode()
+	if err != nil {
+		return nil, err
+	}
+	tx, err := d.plasmaContract.RespondChallengeBefore(
+		d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof, sig)
+	if err != nil {
+		return nil, err
+	}
+	return tx.Hash().Bytes(), nil
 }
 
 func (d *RootChainService) ChallengeBetween(slot uint64, challengingBlockNumber int64,
 	challengingTx plasma_cash.Tx, proof plasma_cash.Proof, sig []byte) ([]byte, error) {
-	panic("duh1")
-	/*	challengingTxBytes, err := challengingTx.RlpEncode()
-		if err != nil {
-			return nil, err
-		}
-		tx, err := d.plasmaContract.ChallengeBetween(
-			d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof, sig)
-		if err != nil {
-			return nil, err
-		}
-		return tx.Hash().Bytes(), nil
-	*/
-	return nil, nil
+
+	challengingTxBytes, err := challengingTx.RlpEncode()
+	if err != nil {
+		return nil, err
+	}
+	tx, err := d.plasmaContract.ChallengeBetween(
+		d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof, sig)
+	if err != nil {
+		return nil, err
+	}
+	return tx.Hash().Bytes(), nil
 }
 
 func (d *RootChainService) ChallengeAfter(slot uint64, challengingBlockNumber int64,
 	challengingTx plasma_cash.Tx, proof plasma_cash.Proof, sig []byte) ([]byte, error) {
-	panic("duh2")
-	/*
-		challengingTxBytes, err := challengingTx.RlpEncode()
-		if err != nil {
-			return nil, err
-		}
-		tx, err := d.plasmaContract.ChallengeAfter(
-			d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof, sig)
-		if err != nil {
-			return nil, err
-		}
-		return tx.Hash().Bytes(), nil
-	*/
-	return nil, nil
+
+	challengingTxBytes, err := challengingTx.RlpEncode()
+	if err != nil {
+		return nil, err
+	}
+	tx, err := d.plasmaContract.ChallengeAfter(
+		d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof, sig)
+	if err != nil {
+		return nil, err
+	}
+	return tx.Hash().Bytes(), nil
 }
 
 func (d *RootChainService) StartExit(
