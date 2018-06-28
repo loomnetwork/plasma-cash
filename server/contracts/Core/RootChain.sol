@@ -185,6 +185,9 @@ contract RootChain is ERC721Receiver {
         smt = new SparseMerkleTree();
     }
 
+
+    /// @dev called by a Validator to append a Plamsa block to the Plasma chain
+    /// @param root The transaction root hash of the Plasma block being added
     function submitBlock(bytes32 root)
         public
         isValidator
@@ -203,6 +206,12 @@ contract RootChain is ERC721Receiver {
     }
 
     /// @dev Allows anyone to deposit funds into the Plasma chain, called when contract receives ERC721
+    /// @notice Appends a deposit block to the Plasma chain
+    /// @param from The address of the user who is depositing a coin
+    /// @param uid The uid of the ERC721 coin being deposited. This is an
+    ///            identifier allocated by the ERC721 token contract; it is not
+    ///            related to `slot`.
+    /// @param denomination The quantity of a particular coin being deposited
     function deposit(address from, uint64 uid, uint32 denomination)
         private
     {
