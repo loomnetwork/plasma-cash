@@ -27,12 +27,12 @@ cd ../
 bash integration_test.sh
 
 # build the Go tester and run the unit tests
-cd $REPO_ROOT/loom_test
-export GOPATH=/tmp/gopath-$BUILD_TAG:`pwd`
-make clean
-make deps
-make cli
-make test
+# cd $REPO_ROOT/loom_test
+# export GOPATH=/tmp/gopath-$BUILD_TAG:`pwd`
+# make clean
+# make deps
+# make cli
+# make test
 
-cd $REPO_ROOT
-bash go_integration_test.sh
+# cd $REPO_ROOT
+# bash go_integration_test.sh

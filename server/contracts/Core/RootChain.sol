@@ -415,9 +415,9 @@ contract RootChain is ERC721Receiver {
         setChallenged(slot, txBytes.getOwner());
     }
 
-    // If `challengeBefore` was successfully challenged, then set state to
-    // EXITING and allow the coin to be exited. No need to actually attach
-    // a bond when responding to a challenge
+    // If `challengeBefore` is successfully responded to, then set state to
+    // EXITING and allow the coin to be exited. No need to attach a bond
+    // when responding to a challenge.
     function respondChallengeBefore(
         uint64 slot,
         uint256 challengingBlockNumber,
