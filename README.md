@@ -11,7 +11,7 @@ Child Chain ALWAYS listens for events on the RootChain contract and acts on them
 
 ## Installation
 
-1. In plasma_cash folder follow the [README.md](plasmas_cash/README.md)
+1. In plasma_cash folder follow the [README.md](plasma_cash/README.md)
 
 
 ```
