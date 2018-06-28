@@ -11,7 +11,7 @@ function cleanup {
 
 REPO_ROOT=`pwd`
 LOOM_DIR=`pwd`/tmp/loom-plasma-$BUILD_TAG
-BUILD_NUMBER=203
+BUILD_NUMBER=206
 
 rm -rf  $LOOM_DIR; true
 mkdir -p $LOOM_DIR

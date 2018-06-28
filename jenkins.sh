@@ -35,4 +35,4 @@ make cli
 make test
 
 cd $REPO_ROOT
-bash go_integration_test.sh
+bash loom_integration_test.sh

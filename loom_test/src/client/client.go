@@ -11,8 +11,8 @@ import (
 
 type Client struct {
 	childChain         plasma_cash.ChainServiceClient
-	RootChain          RootChainClient
-	TokenContract      TokenContract
+	RootChain          plasma_cash.RootChainClient
+	TokenContract      plasma_cash.TokenContract
 	childBlockInterval int64
 }
 
@@ -93,16 +93,7 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]b
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("exitingTx-%x exitingTxProof-%x\n", exitingTx, exitingTxProof)
-	fmt.Printf("prevTx-%v prevTxProof-%v\n", prevTx, prevTxProof)
-	fmt.Printf("prevTxBlkNum-%d-txBlkNum-%d\n", prevTxBlkNum, txBlkNum)
-	fmt.Printf("exitingTxIncBlock MOD childBlockInterval %d\n", txBlkNum%1000)
 	sig := exitingTx.Sig()
-	fmt.Printf("exitingTx.Sig() %x\n", sig)
-	fmt.Printf("len(sig)- %d\n", len(sig))
-	fmt.Printf("byte 0(sig)- %d\n", sig[0])
-	fmt.Printf("prevTx-Owner -%v\n", prevTx.NewOwner().String())
-	fmt.Printf("len(exitingTxProof)-%d\n", len(exitingTxProof))
 
 	return c.RootChain.StartExit(
 		slot,
@@ -179,7 +170,8 @@ func (c *Client) RespondChallengeBefore(slot uint64, challengingBlockNumber int6
 	txHash, err := c.RootChain.RespondChallengeBefore(slot,
 		challengingBlockNumber,
 		challengingTx,
-		proof)
+		proof,
+		challengingTx.Sig())
 	return txHash, err
 }
 
@@ -230,7 +222,7 @@ func (c *Client) WithdrawBonds() error {
 	return c.RootChain.WithdrawBonds()
 }
 
-func (c *Client) PlasmaCoin(slot uint64) (*PlasmaCoin, error) {
+func (c *Client) PlasmaCoin(slot uint64) (*plasma_cash.PlasmaCoin, error) {
 	return c.RootChain.PlasmaCoin(slot)
 }
 
@@ -304,6 +296,6 @@ func (c *Client) GetBlock(blkHeight int64) (plasma_cash.Block, error) {
 	return c.childChain.Block(blkHeight)
 }
 
-func NewClient(childChainServer plasma_cash.ChainServiceClient, rootChain RootChainClient, tokenContract TokenContract) *Client {
+func NewClient(childChainServer plasma_cash.ChainServiceClient, rootChain plasma_cash.RootChainClient, tokenContract plasma_cash.TokenContract) *Client {
 	return &Client{childChain: childChainServer, childBlockInterval: 1000, RootChain: rootChain, TokenContract: tokenContract}
 }
