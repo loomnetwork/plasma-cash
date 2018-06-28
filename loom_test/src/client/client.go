@@ -5,10 +5,12 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/loomnetwork/go-loom/client/plasma_cash"
 )
 
 type Client struct {
-	childChain         ChainServiceClient
+	childChain         plasma_cash.ChainServiceClient
 	RootChain          RootChainClient
 	TokenContract      TokenContract
 	childBlockInterval int64
@@ -33,9 +35,9 @@ func (c *Client) Deposit(tokenID int64) common.Hash {
 // Plasma Functions
 
 //Placeholder
-func Transaction(slot uint64, prevTxBlkNum int64, domination uint32, address string) Tx {
+func Transaction(slot uint64, prevTxBlkNum int64, domination uint32, address string) plasma_cash.Tx {
 	panic(address)
-	return &LoomTx{Slot: slot,
+	return &plasma_cash.LoomTx{Slot: slot,
 		PrevBlock:    big.NewInt(prevTxBlkNum),
 		Denomination: domination,
 		Owner:        common.HexToAddress(address), //TODO: 0x?
@@ -60,8 +62,8 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]b
 		// In case the sender is exiting a Deposit transaction, they should
 		// just create a signed transaction to themselves. There is no need
 		// for a merkle proof.
+		panic("Debug this further")
 		fmt.Printf("exiting deposit transaction\n")
-		panic("TODO")
 
 		// prev_block = 0 , denomination = 1
 		exitingTx := Transaction(slot, 0, 1, account.Address)
@@ -80,7 +82,6 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]b
 		}
 		return txHash, nil
 	}
-	fmt.Printf("NOT exiting deposit transaction\n")
 
 	// Otherwise, they should get the raw tx info from the block
 	// And the merkle proof and submit these
@@ -261,9 +262,8 @@ func (c *Client) SubmitBlock() error {
 
 func (c *Client) SendTransaction(slot uint64, prevBlock int64, denomination int64, newOwner string) error {
 	ethAddress := common.HexToAddress(newOwner)
-	fmt.Printf("newowner -%s\n", ethAddress)
 
-	tx := &LoomTx{
+	tx := &plasma_cash.LoomTx{
 		Slot:         slot,
 		Denomination: uint32(denomination),
 		Owner:        ethAddress,
@@ -283,7 +283,7 @@ func (c *Client) SendTransaction(slot uint64, prevBlock int64, denomination int6
 	return c.childChain.SendTransaction(slot, prevBlock, denomination, newOwner, sig)
 }
 
-func (c *Client) getTxAndProof(blkHeight int64, slot uint64) (Tx, []byte, error) {
+func (c *Client) getTxAndProof(blkHeight int64, slot uint64) (plasma_cash.Tx, []byte, error) {
 	block, err := c.childChain.Block(blkHeight)
 	if err != nil {
 		return nil, nil, err
@@ -300,24 +300,10 @@ func (c *Client) GetBlockNumber() (int64, error) {
 	return c.childChain.BlockNumber()
 }
 
-func (c *Client) GetBlock(blkHeight int64) (Block, error) {
+func (c *Client) GetBlock(blkHeight int64) (plasma_cash.Block, error) {
 	return c.childChain.Block(blkHeight)
-	//return rlp.decode(utils.decode_hex(block), Block)
 }
 
-/*
-//These methods exist in python but are unused so we dont need them
-func (c *Client) CurrentBlock() (Block, error) {
-	return c.childChain.CurrentBlock()
-	//	return rlp.decode(utils.decode_hex(block), Block)
-}
-
-func (c *Client) Proof(blkHeight int64, slot uint64) (Proof, error) {
-	return c.childChain.Proof(blkHeight, slot)
-	//	return base64.b64decode(c.childChain.get_proof(blknum, slot))
-}
-*/
-
-func NewClient(childChainServer ChainServiceClient, rootChain RootChainClient, tokenContract TokenContract) *Client {
+func NewClient(childChainServer plasma_cash.ChainServiceClient, rootChain RootChainClient, tokenContract TokenContract) *Client {
 	return &Client{childChain: childChainServer, childBlockInterval: 1000, RootChain: rootChain, TokenContract: tokenContract}
 }

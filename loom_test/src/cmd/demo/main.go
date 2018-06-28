@@ -7,20 +7,25 @@ import (
 	"log"
 	"os"
 	"time"
+
+	"github.com/loomnetwork/go-loom/client/plasma_cash"
 )
 
 func main() {
-
 	plasmaChain := os.Getenv("PLASMA_CHAIN")
 	client.InitClients("http://localhost:8545")
 	client.InitTokenClient("http://localhost:8545")
 
-	var svc client.ChainServiceClient
+	fmt.Printf("1\n")
+	var svc plasma_cash.ChainServiceClient
+	var err error
 	if plasmaChain == "PROTOTYPE_SERVER" {
 		//		svc = client.NewChildChainService("http://localhost:8546")
 	} else {
-		svc = client.NewLoomChildChainService("http://localhost:46658/rpc", "http://localhost:46658/query")
+		svc, err = client.NewLoomChildChainService("http://localhost:46658/rpc", "http://localhost:46658/query")
+		exitIfError(err)
 	}
+	fmt.Printf("2\n")
 
 	alice := client.NewClient(svc, client.GetRootChain("alice"), client.GetTokenContract("alice"))
 
@@ -33,7 +38,7 @@ func main() {
 	alice.DebugCoinMetaData(slots)
 
 	// Give alice 5 tokens
-	err := alice.TokenContract.Register()
+	err = alice.TokenContract.Register()
 	if err != nil {
 		log.Fatalf("failed registering -%v\n", err)
 	}

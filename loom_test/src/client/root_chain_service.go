@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/loomnetwork/go-loom/client/plasma_cash"
 )
 
 type RootChainService struct {
@@ -45,8 +46,8 @@ func (d *RootChainService) Withdraw(slot uint64) error {
 	return err
 }
 
-func (d *RootChainService) ChallengeBefore(slot uint64, prevTx Tx, exitingTx Tx,
-	prevTxInclusionProof Proof, exitingTxInclusionProof Proof,
+func (d *RootChainService) ChallengeBefore(slot uint64, prevTx plasma_cash.Tx, exitingTx plasma_cash.Tx,
+	prevTxInclusionProof plasma_cash.Proof, exitingTxInclusionProof plasma_cash.Proof,
 	sig []byte, prevTxBlockNum int64, exitingTxBlockNum int64) ([]byte, error) {
 	prevTxBytes, err := prevTx.RlpEncode()
 	if err != nil {
@@ -67,7 +68,7 @@ func (d *RootChainService) ChallengeBefore(slot uint64, prevTx Tx, exitingTx Tx,
 }
 
 func (d *RootChainService) RespondChallengeBefore(slot uint64, challengingBlockNumber int64,
-	challengingTx Tx, proof Proof) ([]byte, error) {
+	challengingTx plasma_cash.Tx, proof plasma_cash.Proof) ([]byte, error) {
 	/*
 		challengingTxBytes, err := challengingTx.RlpEncode()
 		if err != nil {
@@ -85,7 +86,7 @@ func (d *RootChainService) RespondChallengeBefore(slot uint64, challengingBlockN
 }
 
 func (d *RootChainService) ChallengeBetween(slot uint64, challengingBlockNumber int64,
-	challengingTx Tx, proof Proof, sig []byte) ([]byte, error) {
+	challengingTx plasma_cash.Tx, proof plasma_cash.Proof, sig []byte) ([]byte, error) {
 	panic("duh1")
 	/*	challengingTxBytes, err := challengingTx.RlpEncode()
 		if err != nil {
@@ -102,7 +103,7 @@ func (d *RootChainService) ChallengeBetween(slot uint64, challengingBlockNumber 
 }
 
 func (d *RootChainService) ChallengeAfter(slot uint64, challengingBlockNumber int64,
-	challengingTx Tx, proof Proof, sig []byte) ([]byte, error) {
+	challengingTx plasma_cash.Tx, proof plasma_cash.Proof, sig []byte) ([]byte, error) {
 	panic("duh2")
 	/*
 		challengingTxBytes, err := challengingTx.RlpEncode()
@@ -120,7 +121,7 @@ func (d *RootChainService) ChallengeAfter(slot uint64, challengingBlockNumber in
 }
 
 func (d *RootChainService) StartExit(
-	slot uint64, prevTx Tx, exitingTx Tx, prevTxInclusion Proof, exitingTxInclusion Proof,
+	slot uint64, prevTx plasma_cash.Tx, exitingTx plasma_cash.Tx, prevTxInclusion plasma_cash.Proof, exitingTxInclusion plasma_cash.Proof,
 	sigs []byte, prevTxIncBlock int64, exitingTxIncBlock int64) ([]byte, error) {
 	prevTxBytes, err := prevTx.RlpEncode()
 	if err != nil {
