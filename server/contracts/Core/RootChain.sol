@@ -14,7 +14,27 @@ import "./ValidatorManagerContract.sol";
 
 
 contract RootChain is ERC721Receiver {
+
+    /**
+     * Event for coin deposit logging.
+     * @notice The Deposit event indicates that a deposit block has been added
+     *         to the Plasma chain
+     * @param slot Plasma slot, a unique identifier, assigned to the deposit
+     * @param blockNumber The index of the block in which a deposit transaction
+     *                    is included
+     * @param denomination Quantity of a particular coin deposited
+     * @param from The address of the depositor
+     */
     event Deposit(uint64 indexed slot, uint256 blockNumber, uint64 denomination, address indexed from);
+    /**
+     * Event for block submission logging
+     * @noteice The event indicates the addition of a new Plasma block
+     * @param blockNumber The index of the block in which a deposit transaction
+     *                    is included
+     * @param root The root hash of the Merkle tree containing all of a block's
+     *             transactions.
+     * @param timestamp The time when a block was added to the Plasma chain
+     */
     event SubmittedBlock(uint256 blockNumber, bytes32 root, uint256 timestamp);
 
     event StartedExit(uint64 indexed slot, address indexed owner);
