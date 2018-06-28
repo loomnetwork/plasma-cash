@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/loomnetwork/go-loom/client/plasma_cash"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/viper"
@@ -42,7 +43,7 @@ func GetContractHexAddress(name string) string {
 	return cfg.GetString(name)
 }
 
-func GetTokenContract(name string) TokenContract {
+func GetTokenContract(name string) plasma_cash.TokenContract {
 	cfg, err := parseConfig()
 	if err != nil {
 		log.Fatalf("failed to load config file: %v", err)
@@ -60,7 +61,7 @@ func GetTokenContract(name string) TokenContract {
 	return NewTokenContract(name, privKey, tokenContract)
 }
 
-func GetRootChain(name string) RootChainClient {
+func GetRootChain(name string) plasma_cash.RootChainClient {
 	cfg, err := parseConfig()
 	if err != nil {
 		log.Fatalf("failed to load config file: %v", err)

@@ -25,19 +25,19 @@ type RootChainService struct {
 	callOpts       *bind.CallOpts
 }
 
-func (d *RootChainService) PlasmaCoin(slot uint64) (*PlasmaCoin, error) {
+func (d *RootChainService) PlasmaCoin(slot uint64) (*plasma_cash.PlasmaCoin, error) {
 	slot, depositBlockNum, denom, ownerAddr, state, err := d.plasmaContract.GetPlasmaCoin(&bind.CallOpts{
 		From: d.callerAddr,
 	}, slot)
 	if err != nil {
 		return nil, err
 	}
-	return &PlasmaCoin{
+	return &plasma_cash.PlasmaCoin{
 		UID:             slot,
 		DepositBlockNum: depositBlockNum.Int64(),
 		Denomination:    denom,
 		Owner:           ownerAddr.Hex(),
-		State:           PlasmaCoinState(state),
+		State:           plasma_cash.PlasmaCoinState(state),
 	}, nil
 }
 
@@ -168,15 +168,16 @@ func (d *RootChainService) DebugCoinMetaData(slots []uint64) {
 	}
 }
 
-func (d *RootChainService) DepositEventData(txHash common.Hash) (*ethcontract.RootChainDeposit, error) {
+func (d *RootChainService) DepositEventData(txHash common.Hash) (*plasma_cash.DespositEvent, error) {
 	receipt, err := conn.TransactionReceipt(context.TODO(), txHash)
 	if err != nil {
-		return nil, err
+		return &plasma_cash.DespositEvent{}, err
 	}
 	if receipt == nil {
-		return nil, errors.New("failed to retrieve tx receipt")
+		return &plasma_cash.DespositEvent{}, errors.New("failed to retrieve tx receipt")
 	}
-	return d.plasmaContract.DepositEventData(receipt)
+	de, err := d.plasmaContract.DepositEventData(receipt)
+	return &plasma_cash.DespositEvent{Slot: de.Slot}, err
 }
 
 var conn *ethclient.Client

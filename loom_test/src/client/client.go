@@ -11,8 +11,8 @@ import (
 
 type Client struct {
 	childChain         plasma_cash.ChainServiceClient
-	RootChain          RootChainClient
-	TokenContract      TokenContract
+	RootChain          plasma_cash.RootChainClient
+	TokenContract      plasma_cash.TokenContract
 	childBlockInterval int64
 }
 
@@ -222,7 +222,7 @@ func (c *Client) WithdrawBonds() error {
 	return c.RootChain.WithdrawBonds()
 }
 
-func (c *Client) PlasmaCoin(slot uint64) (*PlasmaCoin, error) {
+func (c *Client) PlasmaCoin(slot uint64) (*plasma_cash.PlasmaCoin, error) {
 	return c.RootChain.PlasmaCoin(slot)
 }
 
@@ -296,6 +296,6 @@ func (c *Client) GetBlock(blkHeight int64) (plasma_cash.Block, error) {
 	return c.childChain.Block(blkHeight)
 }
 
-func NewClient(childChainServer plasma_cash.ChainServiceClient, rootChain RootChainClient, tokenContract TokenContract) *Client {
+func NewClient(childChainServer plasma_cash.ChainServiceClient, rootChain plasma_cash.RootChainClient, tokenContract plasma_cash.TokenContract) *Client {
 	return &Client{childChain: childChainServer, childBlockInterval: 1000, RootChain: rootChain, TokenContract: tokenContract}
 }

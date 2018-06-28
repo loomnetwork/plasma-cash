@@ -8,6 +8,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/loomnetwork/go-loom/client/plasma_cash"
 
 	"github.com/ethereum/go-ethereum/crypto"
 
@@ -43,8 +44,8 @@ func (d *TContract) BalanceOf() (int64, error) {
 	return bal.Int64(), nil
 }
 
-func (d *TContract) Account() (*Account, error) {
-	return &Account{
+func (d *TContract) Account() (*plasma_cash.Account, error) {
+	return &plasma_cash.Account{
 		Address:    d.callerAddr.String(),
 		PrivateKey: d.callerKey,
 	}, nil
@@ -60,7 +61,7 @@ func InitTokenClient(connStr string) {
 	}
 }
 
-func NewTokenContract(callerName string, callerKey *ecdsa.PrivateKey, boundContract *ethcontract.Cards) TokenContract {
+func NewTokenContract(callerName string, callerKey *ecdsa.PrivateKey, boundContract *ethcontract.Cards) plasma_cash.TokenContract {
 	auth := bind.NewKeyedTransactor(callerKey)
 	// If gas price isn't set explicitely then go-ethereum will attempt to query the suggested gas
 	// price, unfortunatley ganache-cli v6.1.2 seems to encode the gas price in a format go-ethereum
