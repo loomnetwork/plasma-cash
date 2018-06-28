@@ -205,7 +205,8 @@ contract RootChain is ERC721Receiver {
         emit SubmittedBlock(currentBlock, root, block.timestamp);
     }
 
-    /// @dev Allows anyone to deposit funds into the Plasma chain, called when contract receives ERC721
+    /// @dev Allows anyone to deposit funds into the Plasma chain, called when
+    //       contract receives ERC721
     /// @notice Appends a deposit block to the Plasma chain
     /// @param from The address of the user who is depositing a coin
     /// @param uid The uid of the ERC721 coin being deposited. This is an
@@ -316,6 +317,9 @@ contract RootChain is ERC721Receiver {
         emit StartedExit(slot, msg.sender);
     }
 
+    /// @dev Finalizes an exit, i.e. puts the exiting coin into the EXITED
+    ///      state which will allow it to be withdrawn, provided the exit has
+    ///      matured and has not been successfully challenged
     function finalizeExit(uint64 slot) public {
         Coin storage coin = coins[slot];
 
@@ -347,6 +351,8 @@ contract RootChain is ERC721Receiver {
         delete exitSlots[getExitIndex(slot)];
     }
 
+    /// @dev Iterates through all of the initiated exits and finalizes those
+    ///      which have matured without being successfully challenged
     function finalizeExits() external {
         uint256 exitSlotsLength = exitSlots.length;
         for (uint256 i = 0; i < exitSlotsLength; i++) {
@@ -354,7 +360,8 @@ contract RootChain is ERC721Receiver {
         }
     }
 
-    // Withdraw a UTXO that has been exited
+    /// @dev Withdraw a UTXO that has been exited
+    /// @param slot The slot of the coin being withdrawn
     function withdraw(uint64 slot) external isState(slot, State.EXITED) {
         require(coins[slot].owner == msg.sender, "You do not own that UTXO");
         ERC721(coins[slot].contractAddress).safeTransferFrom(address(this), msg.sender, uint256(coins[slot].uid));
