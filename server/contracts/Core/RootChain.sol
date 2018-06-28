@@ -28,7 +28,7 @@ contract RootChain is ERC721Receiver {
     event Deposit(uint64 indexed slot, uint256 blockNumber, uint64 denomination, address indexed from);
     /**
      * Event for block submission logging
-     * @noteice The event indicates the addition of a new Plasma block
+     * @notice The event indicates the addition of a new Plasma block
      * @param blockNumber The index of the block in which a deposit transaction
      *                    is included
      * @param root The root hash of the Merkle tree containing all of a block's
@@ -37,10 +37,34 @@ contract RootChain is ERC721Receiver {
      */
     event SubmittedBlock(uint256 blockNumber, bytes32 root, uint256 timestamp);
 
+
+    /**
+     * Event for logging exit starts
+     * @param slot The slot of the coin being exited
+     * @param owner The user who claims to own the coin being exited
+     */
     event StartedExit(uint64 indexed slot, address indexed owner);
+    /**
+     * Event for exit challenge logging
+     * @notice This event only fires if `challengeBefore` is called. Other
+     *         types of challenges cannot be responded to and thus do not
+     *         require an event.
+     * @param slot The slot of the coin whose exit was challenged
+     */
     event ChallengedExit(uint64 indexed slot);
+    /**
+     * Event for exit response logging
+     * @notice This only logs responses to `challengeBefore`, other challenges
+     *         do not require responses.
+     * @param slot The slot of the coin whose challenge was responded to
+     */
     event RespondedExitChallenge(uint64 indexed slot);
-    event FinalizedExit(uint64  indexed slot, address owner);
+    /**
+     * Event for exit finalization logging
+     * @param slot The slot of the coin whose exit has been finalized
+     * @param owner The owner of the coin whose exit has been finalized
+     */
+    event FinalizedExit(uint64 indexed slot, address owner);
 
     /**
      * Event to log the freeing of a bond
