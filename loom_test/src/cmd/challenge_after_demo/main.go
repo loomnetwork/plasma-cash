@@ -11,7 +11,8 @@ func main() {
 	client.InitClients("http://localhost:8545")
 	client.InitTokenClient("http://localhost:8545")
 
-	svc := client.NewLoomChildChainService("http://localhost:46658/rpc", "http://localhost:46658/query")
+	svc, err := client.NewLoomChildChainService("http://localhost:46658/rpc", "http://localhost:46658/query")
+	exitIfError(err)
 
 	dan := client.NewClient(svc, client.GetRootChain("dan"), client.GetTokenContract("dan"))
 	mallory := client.NewClient(svc, client.GetRootChain("mallory"), client.GetTokenContract("mallory"))
