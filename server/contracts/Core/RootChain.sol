@@ -415,18 +415,7 @@ contract RootChain is ERC721Receiver {
             signature,
             blocks
         );
-
-        // When an exit is challenged, its state is set to challenged and the
-        // contract waits for the exitor's response. The exit is not
-        // immediately deleted.
-        coins[slot].state = State.CHALLENGED;
-        // Save the challenger's address, for applying penalties
-        challengers[slot] = msg.sender;
-
-        // Need to save the exiting transaction's owner, to verify
-        // that the response is valid
-        responses[slot] = txBytes.getOwner();
-        emit ChallengedExit(slot);
+        setChallenged(slot, txBytes.getOwner());
     }
 
     // If `challengeBefore` was successfully challenged, then set state to
@@ -511,6 +500,22 @@ contract RootChain is ERC721Receiver {
         // Apply penalties and change state
         slashBond(coins[slot].exit.owner, msg.sender);
         coins[slot].state = State.DEPOSITED;
+    }
+
+    /// @param slot The slot of the coin being challenged
+    /// @param owner The user claimed to be the true ower of the coin
+    function setChallenged(uint64 slot, address owner) private {
+        // When an exit is challenged, its state is set to challenged and the
+        // contract waits for the exitor's response. The exit is not
+        // immediately deleted.
+        coins[slot].state = State.CHALLENGED;
+        // Save the challenger's address, for applying penalties
+        challengers[slot] = msg.sender;
+
+        // Need to save the exiting transaction's owner, to verify
+        // that the response is valid
+        responses[slot] = owner;
+        emit ChallengedExit(slot);
     }
 
     /******************** BOND RELATED ********************/
@@ -611,13 +616,18 @@ contract RootChain is ERC721Receiver {
 
     /******************** HELPERS ********************/
 
+    /// @notice If the slot's exit is not found, a large number is returned to
+    ///         ensure the exit array access fails
+    /// @param slot The slot being exited
+    /// @return The index of the slot's exit in the exitSlots array
     function getExitIndex(uint64 slot) private view returns (uint256) {
         uint256 len = exitSlots.length;
         for (uint256 i = 0; i < len; i++) {
             if (exitSlots[i] == slot)
                 return i;
         }
-        return 0;
+        // a defualt value to return larger than the possible number of coins
+        return 2**65;
     }
 
     function checkMembership(
