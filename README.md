@@ -11,7 +11,7 @@ Child Chain ALWAYS listens for events on the RootChain contract and acts on them
 
 ## Installation
 
-1. In plasma_cash folder follow the (README.md)[plasmas_cash/README.md]
+1. In plasma_cash folder follow the [README.md](plasmas_cash/README.md)
 
 
 ```
@@ -25,7 +25,7 @@ On OSX + Homebrew (may need this)
 source /usr/local/bin/virtualenvwrapper.sh
 ```
 
-2. In server folder follow the (README.md)[server/README.md]
+2. In server folder follow the [README.md](server/README.md)
 
 ```
 cd server
@@ -51,6 +51,15 @@ Under `demos/` there are various scenarios which can occur. You should have init
 6. Bob transfers the previous UTXO to Charlie and the operator submits that block as well
 5. Charlie tries to exit coin 1, Alice & Bob do not challenge
 6. After challenge period passes, charlie should be able to withdraw his coin
+
+## Loom SDK integration
+
+To see the integrations run againist the Loom SDK instead of the prototype server
+```
+./go_integration_test.sh
+```
+
+Under the `loom_test` directory there is all the samples in Go, that directly interact with Loom SDK. Usually the SDK is behind our latest research prototypes. As we only move stable Plasma features into the Loom SDK.
 
 ## For Developers
 
