@@ -29,8 +29,7 @@ contract RootChain is ERC721Receiver {
     /**
      * Event for block submission logging
      * @notice The event indicates the addition of a new Plasma block
-     * @param blockNumber The index of the block in which a deposit transaction
-     *                    is included
+     * @param blockNumber The block number of the submitted block
      * @param root The root hash of the Merkle tree containing all of a block's
      *             transactions.
      * @param timestamp The time when a block was added to the Plasma chain
@@ -91,8 +90,6 @@ contract RootChain is ERC721Receiver {
     using ECVerify for bytes32;
 
     uint256 constant BOND_AMOUNT = 0.1 ether;
-
-    address public authority;
 
     /*
      * Modifiers
@@ -186,7 +183,7 @@ contract RootChain is ERC721Receiver {
     }
 
 
-    /// @dev called by a Validator to append a Plamsa block to the Plasma chain
+    /// @dev called by a Validator to append a Plasma block to the Plasma chain
     /// @param root The transaction root hash of the Plasma block being added
     function submitBlock(bytes32 root)
         public
