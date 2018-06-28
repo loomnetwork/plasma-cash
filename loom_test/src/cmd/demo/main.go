@@ -3,7 +3,6 @@ package main
 import (
 	"client"
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -16,7 +15,6 @@ func main() {
 	client.InitClients("http://localhost:8545")
 	client.InitTokenClient("http://localhost:8545")
 
-	fmt.Printf("1\n")
 	var svc plasma_cash.ChainServiceClient
 	var err error
 	if plasmaChain == "PROTOTYPE_SERVER" {
@@ -25,7 +23,6 @@ func main() {
 		svc, err = client.NewLoomChildChainService("http://localhost:46658/rpc", "http://localhost:46658/query")
 		exitIfError(err)
 	}
-	fmt.Printf("2\n")
 
 	alice := client.NewClient(svc, client.GetRootChain("alice"), client.GetTokenContract("alice"))
 
@@ -66,12 +63,10 @@ func main() {
 	// utxos in return
 	tokenID := int64(1)
 	txHash := alice.Deposit(tokenID)
-	fmt.Printf("before deposit event data- %s\n", txHash)
 	time.Sleep(1 * time.Second)
 	depEvent, err := alice.RootChain.DepositEventData(txHash)
 	exitIfError(err)
-	depositSlot1 := depEvent.Slot
-	fmt.Printf("after deposit event data-%d\n", depositSlot1)
+	//depositSlot1 := depEvent.Slot
 	slots = append(slots, depEvent.Slot)
 	alice.DebugCoinMetaData(slots)
 
@@ -117,31 +112,22 @@ func main() {
 	prevTxBlkNum := int64(1000)
 	exitingTxBlkNum := int64(2000)
 	charlie.DebugCoinMetaData(slots)
-	fmt.Printf("Before start exit\n")
 	_, err = charlie.StartExit(depositSlot3, prevTxBlkNum, exitingTxBlkNum)
 	exitIfError(err)
-	fmt.Printf("After start exit\n")
 	charlie.DebugCoinMetaData(slots)
 
 	// After 8 days pass, charlie's exit should be finalizable
-	//increaseTime(w3, 8*24*3600)
-
-	fmt.Printf("increase time\n")
 	ganache, err := client.ConnectToGanache("http://localhost:8545")
 	exitIfError(err)
-	fmt.Printf("increase time2\n")
-	timeAdj, err := ganache.IncreaseTime(context.TODO(), 8*24*3600)
-	fmt.Printf("timeAdj-%v\n", timeAdj)
+	_, err = ganache.IncreaseTime(context.TODO(), 8*24*3600)
 	exitIfError(err)
 
 	err = authority.FinalizeExits()
-	fmt.Printf("finalize exits\n")
 	exitIfError(err)
 
 	// Charlie should now be able to withdraw the utxo which included token 2 to his
 	// wallet.
 
-	fmt.Printf("withdraw-%d\n", depositSlot3)
 	charlie.DebugCoinMetaData(slots)
 	err = charlie.Withdraw(depositSlot3)
 	exitIfError(err)

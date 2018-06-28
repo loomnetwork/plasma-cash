@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"os"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -25,19 +26,19 @@ type RootChainService struct {
 	callOpts       *bind.CallOpts
 }
 
-func (d *RootChainService) PlasmaCoin(slot uint64) (*PlasmaCoin, error) {
+func (d *RootChainService) PlasmaCoin(slot uint64) (*plasma_cash.PlasmaCoin, error) {
 	slot, depositBlockNum, denom, ownerAddr, state, err := d.plasmaContract.GetPlasmaCoin(&bind.CallOpts{
 		From: d.callerAddr,
 	}, slot)
 	if err != nil {
 		return nil, err
 	}
-	return &PlasmaCoin{
+	return &plasma_cash.PlasmaCoin{
 		UID:             slot,
 		DepositBlockNum: depositBlockNum.Int64(),
 		Denomination:    denom,
 		Owner:           ownerAddr.Hex(),
-		State:           PlasmaCoinState(state),
+		State:           plasma_cash.PlasmaCoinState(state),
 	}, nil
 }
 
@@ -68,56 +69,47 @@ func (d *RootChainService) ChallengeBefore(slot uint64, prevTx plasma_cash.Tx, e
 }
 
 func (d *RootChainService) RespondChallengeBefore(slot uint64, challengingBlockNumber int64,
-	challengingTx plasma_cash.Tx, proof plasma_cash.Proof) ([]byte, error) {
-	/*
-		challengingTxBytes, err := challengingTx.RlpEncode()
-		if err != nil {
-			return nil, err
-		}
-		tx, err := d.plasmaContract.RespondChallengeBefore(
-			d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof)
-		if err != nil {
-			return nil, err
-		}
-		return tx.Hash().Bytes(), nil
-	*/
-	panic("duh3")
-	return nil, nil
+	challengingTx plasma_cash.Tx, proof plasma_cash.Proof, sig []byte) ([]byte, error) {
+	challengingTxBytes, err := challengingTx.RlpEncode()
+	if err != nil {
+		return nil, err
+	}
+	tx, err := d.plasmaContract.RespondChallengeBefore(
+		d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof, sig)
+	if err != nil {
+		return nil, err
+	}
+	return tx.Hash().Bytes(), nil
 }
 
 func (d *RootChainService) ChallengeBetween(slot uint64, challengingBlockNumber int64,
 	challengingTx plasma_cash.Tx, proof plasma_cash.Proof, sig []byte) ([]byte, error) {
-	panic("duh1")
-	/*	challengingTxBytes, err := challengingTx.RlpEncode()
-		if err != nil {
-			return nil, err
-		}
-		tx, err := d.plasmaContract.ChallengeBetween(
-			d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof, sig)
-		if err != nil {
-			return nil, err
-		}
-		return tx.Hash().Bytes(), nil
-	*/
-	return nil, nil
+
+	challengingTxBytes, err := challengingTx.RlpEncode()
+	if err != nil {
+		return nil, err
+	}
+	tx, err := d.plasmaContract.ChallengeBetween(
+		d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof, sig)
+	if err != nil {
+		return nil, err
+	}
+	return tx.Hash().Bytes(), nil
 }
 
 func (d *RootChainService) ChallengeAfter(slot uint64, challengingBlockNumber int64,
 	challengingTx plasma_cash.Tx, proof plasma_cash.Proof, sig []byte) ([]byte, error) {
-	panic("duh2")
-	/*
-		challengingTxBytes, err := challengingTx.RlpEncode()
-		if err != nil {
-			return nil, err
-		}
-		tx, err := d.plasmaContract.ChallengeAfter(
-			d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof, sig)
-		if err != nil {
-			return nil, err
-		}
-		return tx.Hash().Bytes(), nil
-	*/
-	return nil, nil
+
+	challengingTxBytes, err := challengingTx.RlpEncode()
+	if err != nil {
+		return nil, err
+	}
+	tx, err := d.plasmaContract.ChallengeAfter(
+		d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof, sig)
+	if err != nil {
+		return nil, err
+	}
+	return tx.Hash().Bytes(), nil
 }
 
 func (d *RootChainService) StartExit(
@@ -131,9 +123,8 @@ func (d *RootChainService) StartExit(
 	if err != nil {
 		return nil, err
 	}
-	d.transactOpts.Value = big.NewInt(100000000000000000) //0.1 eth
+	d.transactOpts.Value = big.NewInt(100000000000000000) //0.1 eth, TODO make the bond configurable
 
-	fmt.Printf("\nprevTxInclusion.Bytes()-%v-len(%d)\n", prevTxInclusion, len(prevTxInclusion))
 	tx, err := d.plasmaContract.StartExit(
 		d.transactOpts, slot,
 		prevTxBytes, exitingTxBytes, prevTxInclusion, exitingTxInclusion,
@@ -162,6 +153,10 @@ func (d *RootChainService) SubmitBlock(blockNum *big.Int, merkleRoot [32]byte) e
 }
 
 func (d *RootChainService) DebugCoinMetaData(slots []uint64) {
+	if os.Getenv("DEBUG") != "true" {
+		return
+	}
+
 	coins, err := d.plasmaContract.NumCoins(d.callOpts) //todo make this readonly
 	fmt.Printf("Num coins -%v\n", coins)
 	if err != nil {
@@ -178,15 +173,16 @@ func (d *RootChainService) DebugCoinMetaData(slots []uint64) {
 	}
 }
 
-func (d *RootChainService) DepositEventData(txHash common.Hash) (*ethcontract.RootChainDeposit, error) {
+func (d *RootChainService) DepositEventData(txHash common.Hash) (*plasma_cash.DespositEvent, error) {
 	receipt, err := conn.TransactionReceipt(context.TODO(), txHash)
 	if err != nil {
-		return nil, err
+		return &plasma_cash.DespositEvent{}, err
 	}
 	if receipt == nil {
-		return nil, errors.New("failed to retrieve tx receipt")
+		return &plasma_cash.DespositEvent{}, errors.New("failed to retrieve tx receipt")
 	}
-	return d.plasmaContract.DepositEventData(receipt)
+	de, err := d.plasmaContract.DepositEventData(receipt)
+	return &plasma_cash.DespositEvent{Slot: de.Slot}, err
 }
 
 var conn *ethclient.Client
