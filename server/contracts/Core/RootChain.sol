@@ -267,6 +267,21 @@ contract RootChain is ERC721Receiver {
         pushExit(slot, prevTxBytes.getOwner(), blocks);
     }
 
+    /// @dev Verifies that consecutive two transaction involving the same coin
+    ///      are valid
+    /// @notice If exitingTxBytes corresponds to a deposit transaction,
+    ///         prevTxBytes cannot have a meaningul value and thus it is ignored.
+    /// @param prevTxBytes The RLP-encoded transaction involving a particular
+    ///        coin which took place directly before exitingTxBytes
+    /// @param exitingTxBytes The RLP-encoded transaction involving a particular
+    ///        coin which an exiting owner of the coin claims to be the latest
+    /// @param prevTxInclusionProof An inclusion proof of prevTx
+    /// @param exitingTxInclusionProof An inclusion proof of exitingTx
+    /// @param signature The signature of the exitingTxBytes by the coin
+    ///        owner indicated in prevTx
+    /// @param blocks An array of two block numbers, at index 0, the block
+    ///        containing the prevTx and at index 1, the block containing
+    ///        the exitingTx
     function doInclusionChecks(
         bytes prevTxBytes, bytes exitingTxBytes,
         bytes prevTxInclusionProof, bytes exitingTxInclusionProof,
@@ -369,9 +384,21 @@ contract RootChain is ERC721Receiver {
 
     /******************** CHALLENGES ********************/
 
-    // Submit proof of a transaction before prevTx
-    // Exitor has to call respondChallengeBefore and submit a transaction
-    // before prevTx or prevTx itself.
+    /// @dev Submits proof of a transaction before prevTx as an exit challenge
+    /// @notice Exitor has to call respondChallengeBefore and submit a
+    ///         transaction before prevTx or prevTx itself.
+    /// @param slot The slot corresponding to the coin whose exit is being challenged
+    /// @param prevTxBytes The RLP-encoded transaction involving a particular
+    ///        coin which took place directly before exitingTxBytes
+    /// @param txBytes The RLP-encoded transaction involving a particular
+    ///        coin which an exiting owner of the coin claims to be the latest
+    /// @param prevTxInclusionProof An inclusion proof of prevTx
+    /// @param txInclusionProof An inclusion proof of exitingTx
+    /// @param signature The signature of the txBytes by the coin
+    ///        owner indicated in prevTx
+    /// @param blocks An array of two block numbers, at index 0, the block
+    ///        containing the prevTx and at index 1, the block containing
+    ///        the exitingTx
     function challengeBefore(
         uint64 slot,
         bytes prevTxBytes, bytes txBytes,
@@ -388,7 +415,18 @@ contract RootChain is ERC721Receiver {
             signature,
             blocks
         );
-        setChallenged(slot, txBytes.getOwner());
+
+        // When an exit is challenged, its state is set to challenged and the
+        // contract waits for the exitor's response. The exit is not
+        // immediately deleted.
+        coins[slot].state = State.CHALLENGED;
+        // Save the challenger's address, for applying penalties
+        challengers[slot] = msg.sender;
+
+        // Need to save the exiting transaction's owner, to verify
+        // that the response is valid
+        responses[slot] = txBytes.getOwner();
+        emit ChallengedExit(slot);
     }
 
     // If `challengeBefore` was successfully challenged, then set state to
@@ -496,20 +534,6 @@ contract RootChain is ERC721Receiver {
         balances[from].bonded = balances[from].bonded.sub(BOND_AMOUNT);
         balances[to].withdrawable = balances[to].withdrawable.add(BOND_AMOUNT);
         emit SlashedBond(from, to, BOND_AMOUNT);
-    }
-
-    function setChallenged(uint64 slot, address owner) private {
-        // When an exit is challenged, its state is set to challenged and the
-        // contract waits for the exitor's response. The exit is not
-        // immediately deleted.
-        coins[slot].state = State.CHALLENGED;
-        // Save the challenger's address, for applying penalties
-        challengers[slot] = msg.sender;
-
-        // Need to save the exiting transaction's owner, to verify
-        // that the response is valid
-        responses[slot] = owner;
-        emit ChallengedExit(slot);
     }
 
     /******************** PROOF CHECKING ********************/
