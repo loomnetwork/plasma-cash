@@ -149,7 +149,11 @@ contract RootChain is ERC721Receiver {
     }
 
     // Track owners of txs that are pending a response
-    mapping (uint64 => address) responses;
+    struct Challenge {
+        address owner;
+        uint256 blockNumber;
+    }
+    mapping (uint64 => Challenge) challenges;
 
     // tracking of NFTs deposited in each slot
     uint64 public numCoins = 0;
@@ -413,7 +417,7 @@ contract RootChain is ERC721Receiver {
             signature,
             blocks
         );
-        setChallenged(slot, txBytes.getOwner());
+        setChallenged(slot, txBytes.getOwner(), blocks[1]);
     }
 
     // If `challengeBefore` is successfully responded to, then set state to
@@ -429,8 +433,9 @@ contract RootChain is ERC721Receiver {
         isState(slot, State.CHALLENGED)
     {
         Transaction.TX memory txData = challengingTransaction.getTx();
-        require(txData.hash.ecverify(signature, responses[slot]), "Invalid signature");
+        require(txData.hash.ecverify(signature, challenges[slot].owner), "Invalid signature");
         require(txData.slot == slot, "Tx is referencing another slot");
+        // require(challengingBlockNumber > challenges[slot].blockNumber);
         checkTxIncluded(txData.slot, txData.hash, challengingBlockNumber, proof);
 
         // If the exit was actually challenged and responded, penalize the challenger
@@ -502,7 +507,7 @@ contract RootChain is ERC721Receiver {
 
     /// @param slot The slot of the coin being challenged
     /// @param owner The user claimed to be the true ower of the coin
-    function setChallenged(uint64 slot, address owner) private {
+    function setChallenged(uint64 slot, address owner, uint256 challengingBlockNumber) private {
         // When an exit is challenged, its state is set to challenged and the
         // contract waits for the exitor's response. The exit is not
         // immediately deleted.
@@ -512,7 +517,11 @@ contract RootChain is ERC721Receiver {
 
         // Need to save the exiting transaction's owner, to verify
         // that the response is valid
-        responses[slot] = owner;
+        challenges[slot] = Challenge({
+            owner: owner, 
+            blockNumber: challengingBlockNumber
+        });
+
         emit ChallengedExit(slot);
     }
 
