@@ -14,7 +14,10 @@ type Client struct {
 	RootChain          plasma_cash.RootChainClient
 	TokenContract      plasma_cash.TokenContract
 	childBlockInterval int64
+	blocks             map[string]plasma_cash.Block
 }
+
+const ChildBlockInterval = 1000
 
 // Token Functions
 
@@ -29,6 +32,7 @@ func (c *Client) Deposit(tokenID int64) common.Hash {
 	if err != nil {
 		panic(err)
 	}
+
 	return txHash
 }
 
@@ -36,7 +40,6 @@ func (c *Client) Deposit(tokenID int64) common.Hash {
 
 //Placeholder
 func Transaction(slot uint64, prevTxBlkNum int64, domination uint32, address string) plasma_cash.Tx {
-	panic(address)
 	return &plasma_cash.LoomTx{Slot: slot,
 		PrevBlock:    big.NewInt(prevTxBlkNum),
 		Denomination: domination,
@@ -62,7 +65,6 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]b
 		// In case the sender is exiting a Deposit transaction, they should
 		// just create a signed transaction to themselves. There is no need
 		// for a merkle proof.
-		panic("Debug this further")
 		fmt.Printf("exiting deposit transaction\n")
 
 		// prev_block = 0 , denomination = 1
@@ -71,6 +73,7 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum int64, txBlkNum int64) ([]b
 		if err != nil {
 			return nil, err
 		}
+
 		txHash, err := c.RootChain.StartExit(
 			slot,
 			nil, exitingTx,
@@ -196,6 +199,7 @@ func (c *Client) ChallengeBetween(slot uint64, challengingBlockNumber int64) ([]
 // ChallengeAfter - `Exit Spent Coin Challenge`: Challenge an exit with a spend
 // after the exit's blocks
 func (c *Client) ChallengeAfter(slot uint64, challengingBlockNumber int64) ([]byte, error) { //
+	fmt.Printf("Challenege after getting block-%d - slot %d\n", challengingBlockNumber, slot)
 	challengingTx, proof, err := c.getTxAndProof(challengingBlockNumber,
 		slot)
 	if err != nil {
@@ -280,10 +284,20 @@ func (c *Client) getTxAndProof(blkHeight int64, slot uint64) (plasma_cash.Tx, []
 	if err != nil {
 		return nil, nil, err
 	}
+
 	tx, err := block.TxFromSlot(slot)
 	if err != nil {
 		return nil, nil, err
 	}
+
+	// server should handle this
+	/*
+		if blkHeight%ChildBlockInterval != 0 {
+			proof := []byte{00000000}
+		} else {
+
+		}
+	*/
 
 	return tx, tx.Proof(), nil
 }
