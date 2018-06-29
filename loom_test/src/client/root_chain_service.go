@@ -116,10 +116,16 @@ func (d *RootChainService) ChallengeAfter(slot uint64, challengingBlockNumber in
 func (d *RootChainService) StartExit(
 	slot uint64, prevTx plasma_cash.Tx, exitingTx plasma_cash.Tx, prevTxInclusion plasma_cash.Proof, exitingTxInclusion plasma_cash.Proof,
 	sigs []byte, prevTxIncBlock int64, exitingTxIncBlock int64) ([]byte, error) {
-	prevTxBytes, err := prevTx.RlpEncode()
-	if err != nil {
-		return nil, err
+
+	var prevTxBytes []byte
+	var err error
+	if prevTx != nil {
+		prevTxBytes, err = prevTx.RlpEncode()
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	exitingTxBytes, err := exitingTx.RlpEncode()
 	if err != nil {
 		return nil, err
