@@ -167,7 +167,8 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
             let txs = [alice_to_bob.leaf]
             let tree_1000 = await txlib.submitTransactions(authority, plasma, txs);
 
-            // Charlie creates a false transaction to himself and colludes with the operator to include it
+            // Charlie creates a false transaction to himself and colludes with
+            // the operator to include it in the plasma chain
             let bob_to_charlie = txlib.createUTXO(UTXO.slot, UTXO.block, charlie, charlie);
             txs = [bob_to_charlie.leaf]
             let tree_2000 = await txlib.submitTransactions(authority, plasma, txs);
