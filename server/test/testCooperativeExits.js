@@ -150,7 +150,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
 
         it("After 2 Plasma-Chain transfers", async function() {
             let UTXO = {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()};
-            let alice_to_bob = txlib.createUTXO(UTXO.slot, 3, alice, bob);
+            let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, alice, bob);
             let txs = [alice_to_bob.leaf];
             let tree_bob = await txlib.submitTransactions(authority, plasma, txs);
 

@@ -204,7 +204,7 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
             );
 
             // Challenger sees the invalid exit and proceeds to `challengeBefore`
-            // If the challenger is honest, 
+            // If the challenger is honest,
             // then there is no valid response to the challenge
             sig = alice_to_bob.sig;
             let tx_proof = tree_1000.createMerkleProof(UTXO.slot)
