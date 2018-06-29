@@ -77,24 +77,24 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
                     '0x0', '0x0',
                      sig,
                      [prevBlock, UTXO.block],
-                     {'from': charlie, 'value': web3.toWei(0.1, 'ether')}
+                     {'from': alice, 'value': web3.toWei(0.1, 'ether')}
             );
 
             t0 = (await web3.eth.getBlock('latest')).timestamp;
 
             await increaseTimeTo(t0 + t1);
             await plasma.finalizeExits({from: random_guy2});
-            // assertRevert(plasma.withdraw(UTXO.slot, {from: alice}));
-            // assert.equal(await cards.balanceOf.call(alice), 2);
-            // assert.equal(await cards.balanceOf.call(plasma.address), 3);
+            assertRevert(plasma.withdraw(UTXO.slot, {from: alice}));
+            assert.equal(await cards.balanceOf.call(alice), 2);
+            assert.equal(await cards.balanceOf.call(plasma.address), 3);
 
             await increaseTimeTo(t0 + t1 + t2);
             await plasma.finalizeExits({from: random_guy2});
-            await plasma.withdraw(UTXO.slot, {from: charlie});
-            assert.equal(await cards.balanceOf.call(charlie), 1);
-            // assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 2);
+            await plasma.withdraw(UTXO.slot, {from: alice});
+            assert.equal(await cards.balanceOf.call(alice), 3);
+            assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 2);
 
-            await txlib.withdrawBonds(plasma, charlie, 0.1);
+            await txlib.withdrawBonds(plasma, alice, 0.1);
         });
 
         it('After 1 Plasma-Chain transfer', async function() {
@@ -212,6 +212,44 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
 
             // Charlie is also able to withdraw his deposit bond of 0.1 ether
             await txlib.withdrawBonds(plasma, charlie, 0.1);
+        });
+
+        it("Dylan tries to steal Charlie's coin by providing an exit for it, fails", async function() {
+            let UTXO = {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()};
+            let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, alice, bob);
+            let txs = [alice_to_bob.leaf];
+            let tree_bob = await txlib.submitTransactions(authority, plasma, txs);
+
+            await plasma.submitBlock('0x0', {from: authority});
+
+            // Tx to Charlie from Bob referencing Bob's UTXO at block 1000
+            let prevBlock = 1000;
+            let bob_to_charlie = txlib.createUTXO(UTXO.slot, prevBlock, bob, charlie);
+            txs = [bob_to_charlie.leaf];
+
+
+            let tree_charlie = await txlib.submitTransactions(authority, plasma, txs);
+
+            let exitBlock = 3000;
+
+            // Concatenate the 2 signatures
+            let sig = bob_to_charlie.sig
+
+            let prev_tx_proof = tree_bob.createMerkleProof(UTXO.slot)
+            let exiting_tx_proof = tree_charlie.createMerkleProof(UTXO.slot)
+
+            let prev_tx = alice_to_bob.tx;
+            let exiting_tx = bob_to_charlie.tx;
+
+            // Dylan cannot submit an exit for Charlie's coin
+            assertRevert(plasma.startExit(
+                    UTXO.slot,
+                    prev_tx, exiting_tx,
+                    prev_tx_proof, exiting_tx_proof,
+                    sig,
+                    [prevBlock, exitBlock],
+                    {'from': dylan, 'value': web3.toWei(0.1, 'ether')}
+            ));
         });
 
     });

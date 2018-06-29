@@ -255,6 +255,7 @@ contract RootChain is ERC721Receiver {
         payable isBonded
         isState(slot, State.DEPOSITED)
     {
+        require(msg.sender == exitingTxBytes.getOwner());
         doInclusionChecks(
             prevTxBytes, exitingTxBytes,
             prevTxInclusionProof, exitingTxInclusionProof,
