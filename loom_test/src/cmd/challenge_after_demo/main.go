@@ -2,6 +2,8 @@ package main
 
 import (
 	"client"
+	"context"
+	"fmt"
 	"log"
 	"time"
 )
@@ -21,33 +23,45 @@ func main() {
 
 	// Give Mallory 5 tokens
 	mallory.TokenContract.Register()
+	slots := []uint64{}
 
 	danTokensStart, err := dan.TokenContract.BalanceOf()
 	exitIfError(err)
 	log.Printf("Dan has %v tokens", danTokensStart)
-	if danTokensStart == 0 {
+	if danTokensStart != 0 {
 		log.Fatal("START: Dan has incorrect number of tokens")
 	}
 	malloryTokensStart, err := mallory.TokenContract.BalanceOf()
 	exitIfError(err)
 	log.Printf("Mallory has %v tokens", malloryTokensStart)
-	if malloryTokensStart == 5 {
-		log.Fatal("START: Mallory has incorrect number of tokens")
+	if malloryTokensStart != 5 {
+		log.Fatal(fmt.Sprintf("START: Mallory has incorrect number of tokens -%d", malloryTokensStart))
 	}
 	currentBlock, err := authority.GetBlockNumber()
 	exitIfError(err)
 	log.Printf("current block: %v", currentBlock)
 
 	// Mallory deposits one of her coins to the plasma contract
-	mallory.Deposit(6)
-	mallory.Deposit(7)
+	txHash := mallory.Deposit(6)
+
+	depEvent, err := mallory.RootChain.DepositEventData(txHash)
+	exitIfError(err)
+	depositSlot1 := depEvent.Slot
+	slots = append(slots, depEvent.Slot)
+
+	txHash = mallory.Deposit(7)
+	depEvent, err = mallory.RootChain.DepositEventData(txHash)
+	exitIfError(err)
+	//depositSlot2 := depEvent.Slot
+	slots = append(slots, depEvent.Slot)
+
 	// wait to make sure that events get fired correctly
 	time.Sleep(2)
 
 	malloryTokensPostDeposit, err := mallory.TokenContract.BalanceOf()
 	exitIfError(err)
 	log.Printf("Mallory has %v tokens", malloryTokensPostDeposit)
-	if malloryTokensPostDeposit == 3 {
+	if malloryTokensPostDeposit != 3 {
 		log.Fatal("POST-DEPOSIT: Mallory has incorrect number of tokens")
 	}
 
@@ -65,15 +79,19 @@ func main() {
 
 	authority.SubmitBlock()
 
+	log.Printf("SubmitBlock\n")
 	// Mallory sends her coin to Dan
 	// Coin 6 was the first deposit of
-	utxoID := uint64(3)
-	coin, err := mallory.RootChain.PlasmaCoin(utxoID)
-	exitIfError(err)
-	danaccount, err := dan.TokenContract.Account()
+	coin, err := mallory.RootChain.PlasmaCoin(depositSlot1)
 	exitIfError(err)
 
-	err = mallory.SendTransaction(utxoID, coin.DepositBlockNum, 1, danaccount.Address) //mallory_to_dan
+	mallory.DebugCoinMetaData(slots)
+
+	danaccount, err := dan.TokenContract.Account()
+	exitIfError(err)
+	log.Printf("account\n")
+
+	err = mallory.SendTransaction(depositSlot1, coin.DepositBlockNum, 1, danaccount.Address) //mallory_to_dan
 	exitIfError(err)
 	authority.SubmitBlock()
 
@@ -82,19 +100,28 @@ func main() {
 	exitIfError(err)
 	log.Printf("current block: %v", currentBlock)
 
-	mallory.StartExit(utxoID, 0, coin.DepositBlockNum)
+	log.Printf("Mallory trying an exit %d on block number %d\n", depositSlot1, coin.DepositBlockNum)
+	mallory.StartExit(depositSlot1, 0, coin.DepositBlockNum)
+	log.Printf("StartExit\n")
 
-	// Dan"s transaction was included in block 5000. He challenges!
-	dan.ChallengeAfter(utxoID, 5000)
-	dan.StartExit(utxoID, coin.DepositBlockNum, 5000)
+	// Dan"s transaction depositSlot1 included in block 5000. He challenges!
+	dan.ChallengeAfter(depositSlot1, 5000)
+	log.Printf("ChallengeAfter\n")
+	dan.StartExit(depositSlot1, coin.DepositBlockNum, 5000)
+	log.Printf("StartExit\n")
 
-	//TODO hook in web3
-	//w3 = dan.root_chain.w3 // get w3 instance
-	//increaseTime(w3, 8*24*3600)
+	// After 8 days pass,
+	ganache, err := client.ConnectToGanache("http://localhost:8545")
+	exitIfError(err)
+	_, err = ganache.IncreaseTime(context.TODO(), 8*24*3600)
+	exitIfError(err)
+	log.Printf("increase time\n")
 
 	authority.FinalizeExits()
+	log.Printf("FinalizeExits\n")
 
-	dan.Withdraw(utxoID)
+	dan.Withdraw(depositSlot1)
+	log.Printf("withdraw\n")
 
 	//	accunt, err := dan.TokenContract.Account()
 	//	exitIfError(err)
