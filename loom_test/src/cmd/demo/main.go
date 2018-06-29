@@ -64,26 +64,23 @@ func main() {
 	tokenID := int64(1)
 	txHash := alice.Deposit(tokenID)
 	time.Sleep(1 * time.Second)
-	depEvent, err := alice.RootChain.DepositEventData(txHash)
+	deposit1, err := alice.RootChain.DepositEventData(txHash)
 	exitIfError(err)
-	//depositSlot1 := depEvent.Slot
-	slots = append(slots, depEvent.Slot)
+	slots = append(slots, deposit1.Slot)
 	alice.DebugCoinMetaData(slots)
 
 	txHash = alice.Deposit(tokenID + 1)
 	time.Sleep(1 * time.Second)
-	depEvent, err = alice.RootChain.DepositEventData(txHash)
+	deposit2, err := alice.RootChain.DepositEventData(txHash)
 	exitIfError(err)
-	depositSlot2 := depEvent.Slot
-	slots = append(slots, depEvent.Slot)
+	slots = append(slots, deposit2.Slot)
 	alice.DebugCoinMetaData(slots)
 
 	txHash = alice.Deposit(tokenID + 2)
 	time.Sleep(1 * time.Second)
-	depEvent, err = alice.RootChain.DepositEventData(txHash)
-	depositSlot3 := depEvent.Slot
+	deposit3, err := alice.RootChain.DepositEventData(txHash)
 	exitIfError(err)
-	slots = append(slots, depEvent.Slot)
+	slots = append(slots, deposit3.Slot)
 	alice.DebugCoinMetaData(slots)
 
 	//Alice to Bob, and Alice to Charlie. We care about the Alice to Bob
@@ -91,11 +88,11 @@ func main() {
 	//	blkNum := int64(3)
 	account, err := bob.TokenContract.Account()
 	exitIfError(err)
-	err = alice.SendTransaction(depositSlot3, int64(depositSlot3), 1, account.Address) //aliceToBob
+	err = alice.SendTransaction(deposit3.Slot, deposit3.BlockNum.Int64(), 1, account.Address) //aliceToBob
 	exitIfError(err)
 	account, err = charlie.TokenContract.Account()
 	exitIfError(err)
-	err = alice.SendTransaction(depositSlot2, int64(depositSlot2), 1, account.Address) //randomTx
+	err = alice.SendTransaction(deposit2.Slot, deposit2.BlockNum.Int64(), 1, account.Address) //randomTx
 	exitIfError(err)
 	authority.SubmitBlock()
 
@@ -103,7 +100,7 @@ func main() {
 	blkNum := int64(1000)
 	account, err = charlie.TokenContract.Account() // the prev transaction was included in block 1000
 	exitIfError(err)
-	err = bob.SendTransaction(depositSlot3, blkNum, 1, account.Address) //bobToCharlie
+	err = bob.SendTransaction(deposit3.Slot, blkNum, 1, account.Address) //bobToCharlie
 	exitIfError(err)
 	authority.SubmitBlock()
 
@@ -112,7 +109,7 @@ func main() {
 	prevTxBlkNum := int64(1000)
 	exitingTxBlkNum := int64(2000)
 	charlie.DebugCoinMetaData(slots)
-	_, err = charlie.StartExit(depositSlot3, prevTxBlkNum, exitingTxBlkNum)
+	_, err = charlie.StartExit(deposit3.Slot, prevTxBlkNum, exitingTxBlkNum)
 	exitIfError(err)
 	charlie.DebugCoinMetaData(slots)
 
@@ -129,7 +126,7 @@ func main() {
 	// wallet.
 
 	charlie.DebugCoinMetaData(slots)
-	err = charlie.Withdraw(depositSlot3)
+	err = charlie.Withdraw(deposit3.Slot)
 	exitIfError(err)
 
 	aliceTokensEnd, err := alice.TokenContract.BalanceOf()
