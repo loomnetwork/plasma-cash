@@ -435,7 +435,7 @@ contract RootChain is ERC721Receiver {
         Transaction.TX memory txData = challengingTransaction.getTx();
         require(txData.hash.ecverify(signature, challenges[slot].owner), "Invalid signature");
         require(txData.slot == slot, "Tx is referencing another slot");
-        // require(challengingBlockNumber > challenges[slot].blockNumber);
+        require(challengingBlockNumber > challenges[slot].blockNumber);
         checkTxIncluded(txData.slot, txData.hash, challengingBlockNumber, proof);
 
         // If the exit was actually challenged and responded, penalize the challenger
