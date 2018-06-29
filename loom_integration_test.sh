@@ -47,5 +47,5 @@ echo "Launched Loom - Log(loom.log) Pid(${loom_pid})"
 sleep 10
 
 cd $REPO_ROOT/loom_test
-./plasmascash_tester
+./plasmacash_tester
 cd ..

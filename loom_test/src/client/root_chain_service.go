@@ -58,10 +58,11 @@ func (d *RootChainService) ChallengeBefore(slot uint64, prevTx plasma_cash.Tx, e
 	if err != nil {
 		return nil, err
 	}
+	exitblocks := [2]*big.Int{big.NewInt(prevTxBlockNum), big.NewInt(exitingTxBlockNum)}
 	tx, err := d.plasmaContract.ChallengeBefore(
 		d.transactOpts, slot, prevTxBytes, exitingTxBytes,
 		prevTxInclusionProof, exitingTxInclusionProof, sig,
-		big.NewInt(prevTxBlockNum), big.NewInt(exitingTxBlockNum))
+		exitblocks)
 	if err != nil {
 		return nil, err
 	}
@@ -125,10 +126,11 @@ func (d *RootChainService) StartExit(
 	}
 	d.transactOpts.Value = big.NewInt(100000000000000000) //0.1 eth, TODO make the bond configurable
 
+	exitblocks := [2]*big.Int{big.NewInt(prevTxIncBlock), big.NewInt(exitingTxIncBlock)}
 	tx, err := d.plasmaContract.StartExit(
 		d.transactOpts, slot,
 		prevTxBytes, exitingTxBytes, prevTxInclusion, exitingTxInclusion,
-		sigs, big.NewInt(prevTxIncBlock), big.NewInt(exitingTxIncBlock))
+		sigs, exitblocks)
 
 	d.transactOpts.Value = big.NewInt(0)
 	if err != nil {

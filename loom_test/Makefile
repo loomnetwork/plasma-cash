@@ -5,7 +5,7 @@ CURRENT_DIRECTORY = $(shell pwd)
 .PHONY: all clean test lint deps cli oracle
 
 cli:
-	go build -tags "evm" -o plasmascash_tester src/cmd/demo/main.go
+	go build -tags "evm" -o plasmacash_tester src/cmd/demo/main.go
 
 oracle:
 	go build -tags "evm" -o plasma_orc src/cmd/oracle/main.go
