@@ -181,16 +181,16 @@ func (d *RootChainService) DebugCoinMetaData(slots []uint64) {
 	}
 }
 
-func (d *RootChainService) DepositEventData(txHash common.Hash) (*plasma_cash.DespositEvent, error) {
+func (d *RootChainService) DepositEventData(txHash common.Hash) (*plasma_cash.DepositEventData, error) {
 	receipt, err := conn.TransactionReceipt(context.TODO(), txHash)
 	if err != nil {
-		return &plasma_cash.DespositEvent{}, err
+		return &plasma_cash.DepositEventData{}, err
 	}
 	if receipt == nil {
-		return &plasma_cash.DespositEvent{}, errors.New("failed to retrieve tx receipt")
+		return &plasma_cash.DepositEventData{}, errors.New("failed to retrieve tx receipt")
 	}
 	de, err := d.plasmaContract.DepositEventData(receipt)
-	return &plasma_cash.DespositEvent{Slot: de.Slot}, err
+	return &plasma_cash.DepositEventData{Slot: de.Slot, BlockNum: de.BlockNumber}, err
 }
 
 var conn *ethclient.Client
