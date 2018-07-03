@@ -2,11 +2,16 @@ package client
 
 import (
 	"fmt"
+	"log"
 	"math/big"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/pkg/errors"
 
 	"github.com/loomnetwork/go-loom/client/plasma_cash"
+	"github.com/loomnetwork/loomchain/builtin/plugins/plasma_cash/oracle"
 )
 
 type Client struct {
@@ -15,6 +20,7 @@ type Client struct {
 	TokenContract      plasma_cash.TokenContract
 	childBlockInterval int64
 	blocks             map[string]plasma_cash.Block
+	plasmaEthClient    oracle.EthPlasmaClient
 }
 
 const ChildBlockInterval = 1000
@@ -31,6 +37,19 @@ func (c *Client) Deposit(tokenID int64) common.Hash {
 	txHash, err := c.TokenContract.Deposit(tokenID)
 	if err != nil {
 		panic(err)
+	}
+
+	//To prevent us to having to run the oracle, we are going to run the oracle manually here
+	//Normally this would run as a seperate process, in future tests we can spin it up independantly
+	deposits, err := c.plasmaEthClient.FetchDeposits(0, 1000)
+	if err != nil {
+		panic(errors.Wrap(err, "failed to fetch Plasma deposits from Ethereum"))
+	}
+
+	for _, deposit := range deposits {
+		if err := c.childChain.Deposit(deposit); err != nil {
+			panic(err)
+		}
 	}
 
 	return txHash
@@ -311,5 +330,23 @@ func (c *Client) GetBlock(blkHeight int64) (plasma_cash.Block, error) {
 }
 
 func NewClient(childChainServer plasma_cash.ChainServiceClient, rootChain plasma_cash.RootChainClient, tokenContract plasma_cash.TokenContract) *Client {
-	return &Client{childChain: childChainServer, childBlockInterval: 1000, RootChain: rootChain, TokenContract: tokenContract}
+	ethPrivKeyHexStr := GetTestAccountHexKey("authority")
+	ethPrivKey, err := crypto.HexToECDSA(strings.TrimPrefix(ethPrivKeyHexStr, "0x"))
+	if err != nil {
+		log.Fatalf("failed to load private key: %v", err)
+	}
+	ethCfg := oracle.EthPlasmaClientConfig{
+		EthereumURI:      "http://localhost:8545",
+		PlasmaHexAddress: GetContractHexAddress("root_chain"),
+		PrivateKey:       ethPrivKey,
+		OverrideGas:      true,
+	}
+
+	pbc := &oracle.EthPlasmaClientImpl{EthPlasmaClientConfig: ethCfg}
+	err = pbc.Init()
+	if err != nil {
+		panic(err) //todo return
+	}
+
+	return &Client{childChain: childChainServer, childBlockInterval: 1000, RootChain: rootChain, TokenContract: tokenContract, plasmaEthClient: pbc}
 }

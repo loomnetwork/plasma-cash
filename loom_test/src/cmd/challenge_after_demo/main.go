@@ -138,14 +138,14 @@ func main() {
 	malloryTokensEnd, err := mallory.TokenContract.BalanceOf()
 	exitIfError(err)
 	log.Printf("Mallory has %v tokens", malloryTokensEnd)
-	if malloryTokensEnd == 3 {
+	if malloryTokensEnd != 3 {
 		log.Fatal("END: Mallory has incorrect number of tokens")
 	}
 
 	danTokensEnd, err := dan.TokenContract.BalanceOf()
 	exitIfError(err)
 	log.Printf("Dan has %v tokens", danTokensEnd)
-	if danTokensEnd == 1 {
+	if danTokensEnd != 1 {
 		log.Fatal("END: Dan has incorrect number of tokens")
 	}
 
