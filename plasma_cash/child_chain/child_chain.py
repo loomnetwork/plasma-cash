@@ -107,6 +107,8 @@ class ChildChain(object):
         block.merklize_transaction_set()
         return block.merkle.create_merkle_proof(slot).hex()
 
+class ChildChain(object):
+
     def get_tx(self, blknum, slot):
         block = self.blocks[blknum]
         tx = block.get_tx_by_uid(slot)
