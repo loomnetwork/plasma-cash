@@ -1,7 +1,7 @@
 package client
 
 import (
-	"ethcontract"
+	"localethcontract"
 	"log"
 	"path/filepath"
 	"runtime"
@@ -9,6 +9,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/loomnetwork/go-loom/client/plasma_cash"
+	"github.com/loomnetwork/go-loom/client/plasma_cash/eth/ethcontract"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/viper"
@@ -54,7 +55,7 @@ func GetTokenContract(name string) plasma_cash.TokenContract {
 	if err != nil {
 		log.Fatalf("failed to load private key for %s: %v", name, err)
 	}
-	tokenContract, err := ethcontract.NewCards(tokenAddr, conn)
+	tokenContract, err := localethcontract.NewCards(tokenAddr, conn)
 	if err != nil {
 		log.Fatalf("Failed to instantiate a Token contract: %v", err)
 	}

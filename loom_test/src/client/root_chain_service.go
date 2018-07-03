@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"errors"
-	"ethcontract"
 	"fmt"
 	"log"
 	"math/big"
@@ -14,7 +13,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+
 	"github.com/loomnetwork/go-loom/client/plasma_cash"
+	"github.com/loomnetwork/go-loom/client/plasma_cash/eth/ethcontract"
 )
 
 type RootChainService struct {
