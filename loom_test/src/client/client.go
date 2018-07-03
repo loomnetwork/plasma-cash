@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/loomnetwork/go-loom/client/plasma_cash"
-	"github.com/loomnetwork/loomchain/builtin/plugins/plasma_cash/oracle"
+	"github.com/loomnetwork/go-loom/client/plasma_cash/eth"
 )
 
 type Client struct {
@@ -20,7 +20,7 @@ type Client struct {
 	TokenContract      plasma_cash.TokenContract
 	childBlockInterval int64
 	blocks             map[string]plasma_cash.Block
-	plasmaEthClient    oracle.EthPlasmaClient
+	plasmaEthClient    eth.EthPlasmaClient
 }
 
 const ChildBlockInterval = 1000
@@ -335,14 +335,14 @@ func NewClient(childChainServer plasma_cash.ChainServiceClient, rootChain plasma
 	if err != nil {
 		log.Fatalf("failed to load private key: %v", err)
 	}
-	ethCfg := oracle.EthPlasmaClientConfig{
+	ethCfg := eth.EthPlasmaClientConfig{
 		EthereumURI:      "http://localhost:8545",
 		PlasmaHexAddress: GetContractHexAddress("root_chain"),
 		PrivateKey:       ethPrivKey,
 		OverrideGas:      true,
 	}
 
-	pbc := &oracle.EthPlasmaClientImpl{EthPlasmaClientConfig: ethCfg}
+	pbc := eth.NewEthPlasmaClient(ethCfg)
 	err = pbc.Init()
 	if err != nil {
 		panic(err) //todo return
