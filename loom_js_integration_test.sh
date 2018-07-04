@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -exo pipefail
-
 function cleanup {
     echo "exiting ganache-pid(${ganache_pid})"
     echo "exiting loom-pid(${loom_pid})"
@@ -48,6 +46,9 @@ echo "Launched Loom - Log(loom.log) Pid(${loom_pid})"
 # Wait for Ganache & Loom to spin up
 sleep 10
 
-cd $REPO_ROOT/loom_test
-./plasmacash_tester
+cd $REPO_ROOT/loom_js_test
+yarn install
+yarn build
+yarn copy-contracts
+yarn jenkins:tape
 cd ..
