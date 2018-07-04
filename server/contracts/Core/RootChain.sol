@@ -237,10 +237,10 @@ contract RootChain is ERC721Receiver {
             createdAt: block.timestamp
         });
 
-        // create a utxo at `slot`  ]
+        // create a utxo at `slot`
         emit Deposit(
             slot,
-             ,
+            currentBlock,
             denomination,
             from);
 
