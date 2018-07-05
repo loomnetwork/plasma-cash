@@ -2,7 +2,7 @@ package client
 
 import (
 	"crypto/ecdsa"
-	"localethcontract"
+	"ethcontract"
 	"log"
 	"math/big"
 
@@ -17,7 +17,7 @@ import (
 
 type TContract struct {
 	Name          string
-	tokenContract *localethcontract.Cards
+	tokenContract *ethcontract.Cards
 	callerKey     *ecdsa.PrivateKey
 	callerAddr    common.Address
 	transactOpts  *bind.TransactOpts
@@ -61,7 +61,7 @@ func InitTokenClient(connStr string) {
 	}
 }
 
-func NewTokenContract(callerName string, callerKey *ecdsa.PrivateKey, boundContract *localethcontract.Cards) plasma_cash.TokenContract {
+func NewTokenContract(callerName string, callerKey *ecdsa.PrivateKey, boundContract *ethcontract.Cards) plasma_cash.TokenContract {
 	auth := bind.NewKeyedTransactor(callerKey)
 	// If gas price isn't set explicitely then go-ethereum will attempt to query the suggested gas
 	// price, unfortunatley ganache-cli v6.1.2 seems to encode the gas price in a format go-ethereum
