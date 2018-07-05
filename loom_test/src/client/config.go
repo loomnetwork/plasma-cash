@@ -9,6 +9,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/loomnetwork/go-loom/client/plasma_cash"
+	loom_ethcontract "github.com/loomnetwork/go-loom/client/plasma_cash/eth/ethcontract"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/viper"
@@ -72,7 +73,7 @@ func GetRootChain(name string) plasma_cash.RootChainClient {
 	if err != nil {
 		log.Fatalf("failed to load private key for %s: %v", name, err)
 	}
-	plasmaContract, err := ethcontract.NewRootChain(contractAddr, conn)
+	plasmaContract, err := loom_ethcontract.NewRootChain(contractAddr, conn)
 	if err != nil {
 		log.Fatalf("Failed to instantiate a Token contract: %v", err)
 	}

@@ -321,6 +321,14 @@ func (c *Client) getTxAndProof(blkHeight int64, slot uint64) (plasma_cash.Tx, []
 	return tx, tx.Proof(), nil
 }
 
+func (c *Client) WatchExits(slot uint64) error {
+	panic("TODO")
+}
+
+func (c *Client) StopWatchingExits(slot uint64) error {
+	panic("TODO")
+}
+
 func (c *Client) GetBlockNumber() (int64, error) {
 	return c.childChain.BlockNumber()
 }
