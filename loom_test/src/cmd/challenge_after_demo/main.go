@@ -5,7 +5,8 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"time"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 func main() {
@@ -55,9 +56,6 @@ func main() {
 	//depositSlot2 := depEvent.Slot
 	slots = append(slots, depEvent.Slot)
 
-	// wait to make sure that events get fired correctly
-	time.Sleep(2)
-
 	malloryTokensPostDeposit, err := mallory.TokenContract.BalanceOf()
 	exitIfError(err)
 	log.Printf("Mallory has %v tokens", malloryTokensPostDeposit)
@@ -69,15 +67,14 @@ func main() {
 	exitIfError(err)
 	log.Printf("current block: %v", currentBlock)
 
-	authority.SubmitBlock()
+	err = authority.SubmitBlock()
+	exitIfError(err)
 	currentBlock, err = authority.GetBlockNumber()
 	exitIfError(err)
 	log.Printf("current block: %v", currentBlock)
-	block3000, err := authority.GetBlock(3000)
-	exitIfError(err)
-	log.Printf("block300-%v\n", block3000)
 
-	authority.SubmitBlock()
+	err = authority.SubmitBlock()
+	exitIfError(err)
 
 	log.Printf("SubmitBlock\n")
 	// Mallory sends her coin to Dan
@@ -87,27 +84,28 @@ func main() {
 
 	mallory.DebugCoinMetaData(slots)
 
-	danaccount, err := dan.TokenContract.Account()
+	danAccount, err := dan.TokenContract.Account()
 	exitIfError(err)
 	log.Printf("account\n")
 
-	err = mallory.SendTransaction(depositSlot1, coin.DepositBlockNum, 1, danaccount.Address) //mallory_to_dan
+	err = mallory.SendTransaction(depositSlot1, coin.DepositBlockNum, 1, danAccount.Address) //mallory_to_dan
 	exitIfError(err)
-	authority.SubmitBlock()
+
+	err = authority.SubmitBlock()
+	exitIfError(err)
+	plasmaBlock3, err := authority.GetBlockNumber()
+	exitIfError(err)
+	log.Printf("current block: %v", plasmaBlock3)
 
 	// Mallory attempts to exit spent coin (the one sent to Dan)
-	currentBlock, err = authority.GetBlockNumber()
-	exitIfError(err)
-	log.Printf("current block: %v", currentBlock)
-
 	log.Printf("Mallory trying an exit %d on block number %d\n", depositSlot1, coin.DepositBlockNum)
 	mallory.StartExit(depositSlot1, 0, coin.DepositBlockNum)
 	log.Printf("StartExit\n")
 
-	// Dan"s transaction depositSlot1 included in block 5000. He challenges!
-	dan.ChallengeAfter(depositSlot1, 5000)
+	// Dan's transaction depositSlot1 included in plasmaBlock3. He challenges!
+	dan.ChallengeAfter(depositSlot1, plasmaBlock3)
 	log.Printf("ChallengeAfter\n")
-	dan.StartExit(depositSlot1, coin.DepositBlockNum, 5000)
+	dan.StartExit(depositSlot1, coin.DepositBlockNum, plasmaBlock3)
 	log.Printf("StartExit\n")
 
 	// After 8 days pass,
@@ -123,17 +121,16 @@ func main() {
 	dan.Withdraw(depositSlot1)
 	log.Printf("withdraw\n")
 
-	//	accunt, err := dan.TokenContract.Account()
-	//	exitIfError(err)
-	//TODO web3
-	/*
-		danBalanceBefore := w3.eth.getBalance(account.address)
-		dan.withdraw_bonds()
-		dan_balance_after = w3.eth.getBalance(dan.TokenContract.account.address)
-		if danBalanceBefore < dan_balance_after {
-			log.Fatal("END: Dan did not withdraw his bonds")
-		}
-	*/
+	danBalanceBefore, err := ganache.BalanceAt(context.TODO(), common.HexToAddress(danAccount.Address), nil)
+	exitIfError(err)
+	err = dan.WithdrawBonds()
+	exitIfError(err)
+	danBalanceAfter, err := ganache.BalanceAt(context.TODO(), common.HexToAddress(danAccount.Address), nil)
+	exitIfError(err)
+
+	if !(danBalanceBefore.Cmp(danBalanceAfter) < 0) {
+		log.Fatal("END: Dan did not withdraw his bonds")
+	}
 
 	malloryTokensEnd, err := mallory.TokenContract.BalanceOf()
 	exitIfError(err)
