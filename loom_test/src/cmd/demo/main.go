@@ -14,9 +14,10 @@ func main() {
 	plasmaChain := os.Getenv("PLASMA_CHAIN")
 	client.InitClients("http://localhost:8545")
 	client.InitTokenClient("http://localhost:8545")
+	ganache, err := client.ConnectToGanache("http://localhost:8545")
+	exitIfError(err)
 
 	var svc plasma_cash.ChainServiceClient
-	var err error
 	if plasmaChain == "PROTOTYPE_SERVER" {
 		//		svc = client.NewChildChainService("http://localhost:8546")
 	} else {
@@ -59,6 +60,9 @@ func main() {
 		log.Fatalf("START: Charlie has incorrect number of tokens")
 	}
 
+	startBlockHeader, err := ganache.HeaderByNumber(context.TODO(), nil)
+	exitIfError(err)
+
 	// Alice deposits 3 of her coins to the plasma contract and gets 3 plasma nft
 	// utxos in return
 	tokenID := int64(1)
@@ -82,6 +86,8 @@ func main() {
 	exitIfError(err)
 	slots = append(slots, deposit3.Slot)
 	alice.DebugCoinMetaData(slots)
+
+	authority.DebugForwardDepositEvents(startBlockHeader.Number.Uint64(), startBlockHeader.Number.Uint64()+100)
 
 	//Alice to Bob, and Alice to Charlie. We care about the Alice to Bob
 	// transaction
@@ -114,8 +120,6 @@ func main() {
 	charlie.DebugCoinMetaData(slots)
 
 	// After 8 days pass, charlie's exit should be finalizable
-	ganache, err := client.ConnectToGanache("http://localhost:8545")
-	exitIfError(err)
 	_, err = ganache.IncreaseTime(context.TODO(), 8*24*3600)
 	exitIfError(err)
 

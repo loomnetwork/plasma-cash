@@ -13,6 +13,8 @@ func main() {
 
 	client.InitClients("http://localhost:8545")
 	client.InitTokenClient("http://localhost:8545")
+	ganache, err := client.ConnectToGanache("http://localhost:8545")
+	exitIfError(err)
 
 	svc, err := client.NewLoomChildChainService("http://localhost:46658/rpc", "http://localhost:46658/query")
 	exitIfError(err)
@@ -42,6 +44,9 @@ func main() {
 	exitIfError(err)
 	log.Printf("current block: %v", currentBlock)
 
+	startBlockHeader, err := ganache.HeaderByNumber(context.TODO(), nil)
+	exitIfError(err)
+
 	// Mallory deposits one of her coins to the plasma contract
 	txHash := mallory.Deposit(6)
 
@@ -53,7 +58,6 @@ func main() {
 	txHash = mallory.Deposit(7)
 	depEvent, err = mallory.RootChain.DepositEventData(txHash)
 	exitIfError(err)
-	//depositSlot2 := depEvent.Slot
 	slots = append(slots, depEvent.Slot)
 
 	malloryTokensPostDeposit, err := mallory.TokenContract.BalanceOf()
@@ -62,6 +66,8 @@ func main() {
 	if malloryTokensPostDeposit != 3 {
 		log.Fatal("POST-DEPOSIT: Mallory has incorrect number of tokens")
 	}
+
+	authority.DebugForwardDepositEvents(startBlockHeader.Number.Uint64(), startBlockHeader.Number.Uint64()+100)
 
 	currentBlock, err = authority.GetBlockNumber()
 	exitIfError(err)
@@ -109,8 +115,6 @@ func main() {
 	log.Printf("StartExit\n")
 
 	// After 8 days pass,
-	ganache, err := client.ConnectToGanache("http://localhost:8545")
-	exitIfError(err)
 	_, err = ganache.IncreaseTime(context.TODO(), 8*24*3600)
 	exitIfError(err)
 	log.Printf("increase time\n")
