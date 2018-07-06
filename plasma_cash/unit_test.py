@@ -89,3 +89,22 @@ class TestSparseMerkleTree(object):
             proof = tree.create_merkle_proof(s)
             inc = tree.verify(s, proof)
             assert inc
+
+    def test_real_slot_proofs(self):
+        slot = 14414645988802088183
+        txHash = HexBytes('0x510a183d5457e0d22951440a273f0d8e28e01d15f750d79fd1b27442299f7220')
+        tree = SparseMerkleTree(64, {slot: txHash})
+        proof = tree.create_merkle_proof(slot)
+        inc = tree.verify(slot, proof)
+        assert inc
+
+    def test_real_tree_roots(self):
+        slot = 14414645988802088183
+        txHash = HexBytes('0x4b114962ecf0d681fa416dc1a6f0255d52d701ab53433297e8962065c9d439bd')
+        tree = SparseMerkleTree(64, {slot: txHash})
+        assert tree.root == bytes(HexBytes('0x0ed6599c03641e5a20d9688f892278dbb48bbcf8b1ff2c9a0e2b7423af831a83'))
+
+        slot = 14414645988802088183
+        txHash = HexBytes('0x510a183d5457e0d22951440a273f0d8e28e01d15f750d79fd1b27442299f7220')
+        tree = SparseMerkleTree(64, {slot: txHash})
+        assert tree.root == bytes(HexBytes('0x8d0ae4c94eaad54df5489e5f9d62eeb4bf06ff774a00b925e8a52776256e910f'))
