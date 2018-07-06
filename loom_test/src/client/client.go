@@ -38,21 +38,28 @@ func (c *Client) Deposit(tokenID int64) common.Hash {
 	if err != nil {
 		panic(err)
 	}
+	return txHash
+}
 
+// DebugForwardDepositEvents forwards deposit event data from the Plasma Cash contract on Ethereum
+// to the DAppChain. The parameters should used to specify the Ethereum block range from which
+// event data should be retrieved. In practice this will be done by the Plasma Cash Oracle, this
+// function is only for testing.
+//
+func (c *Client) DebugForwardDepositEvents(startBlockNum, endBlockNum uint64) {
 	//To prevent us to having to run the oracle, we are going to run the oracle manually here
 	//Normally this would run as a seperate process, in future tests we can spin it up independantly
-	deposits, err := c.plasmaEthClient.FetchDeposits(0, 1000)
+	deposits, err := c.plasmaEthClient.FetchDeposits(startBlockNum, endBlockNum)
 	if err != nil {
 		panic(errors.Wrap(err, "failed to fetch Plasma deposits from Ethereum"))
 	}
 
 	for _, deposit := range deposits {
+		fmt.Printf("Forwarded deposit event data for slot %v\n", deposit.Slot)
 		if err := c.childChain.Deposit(deposit); err != nil {
 			panic(err)
 		}
 	}
-
-	return txHash
 }
 
 // Plasma Functions
