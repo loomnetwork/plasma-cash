@@ -71,8 +71,6 @@ test('Plasma Cash Challenge Between Demo', async t => {
 
   const eveToAliceBlockNum = await authority.submitPlasmaBlockAsync()
 
-  // FIXME: the start exit tx is reverted by the evm, need to figure out why, perhaps tx proofs are
-  //        wrong?
   // Alice attempts to exit here double-spent coin
   await alice.startExitAsync({
     slot: deposit1Slot,
@@ -105,14 +103,14 @@ test('Plasma Cash Challenge Between Demo', async t => {
 
   const bobBalanceAfter = await getEthBalanceAtAddress(web3, bob.ethAddress)
 
-  t.ok(bobBalanceBefore.cmp(bobBalanceAfter) < 0, 'END: Bob did not withdraw his bonds')
+  t.ok(bobBalanceBefore.cmp(bobBalanceAfter) < 0, 'END: Bob withdrew his bonds')
 
   const bobTokensEnd = await cards.balanceOfAsync(bob.ethAddress)
 
   t.equal(
     bobTokensEnd.toNumber(),
     bobTokensStart.toNumber() + 1,
-    'END: Bob has incorrect number of tokens'
+    'END: Bob has correct number of tokens'
   )
 
   t.end()
