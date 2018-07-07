@@ -33,7 +33,7 @@ test('Plasma Cash Respond Challenge Before Demo', async t => {
 
   const startBlockNum = await web3.eth.getBlockNumber()
   // Trudy deposits a coin
-  await cards.depositToPlasmaAsync({ tokenId: 16, from: trudy.ethAddress })
+  await cards.depositToPlasmaAsync({ tokenId: 21, from: trudy.ethAddress })
 
   const depositEvents: any[] = await authority.plasmaCashContract.getPastEvents('Deposit', {
     fromBlock: startBlockNum
