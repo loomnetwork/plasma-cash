@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -exo pipefail
+
 function cleanup {
     echo "exiting ganache-pid(${ganache_pid})"
     echo "exiting loom-pid(${loom_pid})"
