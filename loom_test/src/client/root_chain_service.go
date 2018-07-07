@@ -51,9 +51,13 @@ func (d *RootChainService) Withdraw(slot uint64) error {
 func (d *RootChainService) ChallengeBefore(slot uint64, prevTx plasma_cash.Tx, exitingTx plasma_cash.Tx,
 	prevTxInclusionProof plasma_cash.Proof, exitingTxInclusionProof plasma_cash.Proof,
 	sig []byte, prevTxBlockNum int64, exitingTxBlockNum int64) ([]byte, error) {
-	prevTxBytes, err := prevTx.RlpEncode()
-	if err != nil {
-		return nil, err
+	var err error
+	var prevTxBytes []byte
+	if prevTx != nil {
+		prevTxBytes, err = prevTx.RlpEncode()
+		if err != nil {
+			return nil, err
+		}
 	}
 	exitingTxBytes, err := exitingTx.RlpEncode()
 	if err != nil {

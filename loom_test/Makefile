@@ -2,14 +2,13 @@ CURRENT_DIRECTORY = $(shell pwd)
 
 
 
-.PHONY: all clean test lint deps cli  challenge
+.PHONY: all clean test lint deps demos
 
-cli:
+demos:
 	go build -tags "evm" -o plasmacash_tester src/cmd/demo/main.go
 	go build -tags "evm" -o plasmacash_challenge_after_tester src/cmd/challenge_after_demo/main.go
-
-challenge:
 	go build -tags "evm" -o plasmacash_challenge_between_tester src/cmd/challenge_between_demo/main.go
+	go build -tags "evm" -o plasmacash_challenge_before_tester src/cmd/challenge_before_demo/main.go
 
 test: 
 	go test -tags "evm" ./...
