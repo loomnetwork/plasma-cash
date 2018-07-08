@@ -64,9 +64,9 @@ func (c *Client) DebugForwardDepositEvents(startBlockNum, endBlockNum uint64) {
 
 // Plasma Functions
 
-//Placeholder
 func Transaction(slot uint64, prevTxBlkNum int64, domination uint32, address string) plasma_cash.Tx {
-	return &plasma_cash.LoomTx{Slot: slot,
+	return &plasma_cash.LoomTx{
+		Slot:         slot,
 		PrevBlock:    big.NewInt(prevTxBlkNum),
 		Denomination: domination,
 		Owner:        common.HexToAddress(address), //TODO: 0x?
@@ -139,25 +139,24 @@ func (c *Client) ChallengeBefore(slot uint64, prevTxBlkNum int64, txBlkNum int64
 	}
 
 	if txBlkNum%c.childBlockInterval != 0 {
-		// In case the sender is exiting a Deposit transaction, they should
-		// just create a signed transaction to themselves. There is no need
-		// for a merkle proof.
-		panic("TODO")
-
-		//  prev_block = 0 , denomination = 1
+		// If the client is challenging an exit with a deposit they can create a signed transaction themselves.
+		// There is no need for a merkle proof.
 		exitingTx := Transaction(slot, 0, 1, account.Address)
 		exitingTxSig, err := exitingTx.Sign(account.PrivateKey)
 		if err != nil {
 			return nil, err
 		}
+
 		txHash, err := c.RootChain.ChallengeBefore(
 			slot,
 			nil, exitingTx,
 			nil, nil,
 			exitingTxSig,
 			0, txBlkNum)
-
-		return txHash, err
+		if err != nil {
+			return nil, err
+		}
+		return txHash, nil
 	}
 
 	// Otherwise, they should get the raw tx info from the block

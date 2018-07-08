@@ -31,8 +31,7 @@ cd $REPO_ROOT/loom_test
 export GOPATH=/tmp/gopath-$BUILD_TAG:`pwd`
 make clean
 make deps
-make cli
-make challenge
+make demos
 make test
 
 cd $REPO_ROOT
