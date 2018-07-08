@@ -9,6 +9,7 @@ demos:
 	go build -tags "evm" -o plasmacash_challenge_after_tester src/cmd/challenge_after_demo/main.go
 	go build -tags "evm" -o plasmacash_challenge_between_tester src/cmd/challenge_between_demo/main.go
 	go build -tags "evm" -o plasmacash_challenge_before_tester src/cmd/challenge_before_demo/main.go
+	go build -tags "evm" -o plasmacash_respond_challenge_before_tester src/cmd/respond_challenge_before_demo/main.go
 
 test: 
 	go test -tags "evm" ./...
