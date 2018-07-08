@@ -53,4 +53,5 @@ cd $REPO_ROOT/loom_test
 ./plasmacash_challenge_after_tester
 ./plasmacash_challenge_between_tester
 ./plasmacash_challenge_before_tester
+./plasmacash_respond_challenge_before_tester
 cd ..
