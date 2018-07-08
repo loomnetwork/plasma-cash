@@ -3,6 +3,7 @@ package main
 import (
 	"client"
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -28,6 +29,9 @@ func main() {
 	exitIfError(err)
 	malloryAccount, err := mallory.TokenContract.Account()
 	exitIfError(err)
+
+	curBlockNum, err := authority.GetBlockNumber()
+	fmt.Printf("Current Plasma Block %v\n", curBlockNum)
 
 	// Give Dan 5 tokens
 	dan.TokenContract.Register()
@@ -66,10 +70,12 @@ func main() {
 	malloryToTrudyBlockNum, err := authority.GetBlockNumber()
 	exitIfError(err)
 
+	fmt.Println("Trudy attempts to exit...")
 	// Trudy attempts to exit her invalid coin
 	_, err = trudy.StartExit(depositSlot1, trudyToMalloryBlockNum, malloryToTrudyBlockNum)
 	exitIfError(err)
 
+	fmt.Println("Dan attempts to challenge...")
 	// Dan challenges Trudy's exit (in practice this will be done automatically by Dan's client
 	// (once watching is implemented)
 	_, err = dan.ChallengeBefore(depositSlot1, 0, coin.DepositBlockNum)
@@ -79,8 +85,10 @@ func main() {
 	_, err = ganache.IncreaseTime(context.TODO(), 8*24*3600)
 	exitIfError(err)
 
+	fmt.Println("Finalizing exits...")
 	exitIfError(authority.FinalizeExits())
 
+	fmt.Println("Dan attempts to exit...")
 	// Having successfully challenged Trudy's exit Dan should be able to exit the coin
 	_, err = dan.StartExit(depositSlot1, 0, coin.DepositBlockNum)
 	exitIfError(err)
