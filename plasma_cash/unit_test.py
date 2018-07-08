@@ -22,6 +22,10 @@ class TestSparseMerkleTree(object):
     def test_empty_SMT(self):
         emptyTree = SparseMerkleTree(64, {})
         assert len(emptyTree.leaves) == 0
+        assert (
+            emptyTree.root
+            == bytes(HexBytes('0x6f35419d1da1260bc0f33d52e8f6d73fc5d672c0dca13bb960b4ae1adec17937'))
+        )
 
     def test_all_leaves_with_val(self):
         leaves = {0: dummy_val, 1: dummy_val, 2: dummy_val, 3: dummy_val}
