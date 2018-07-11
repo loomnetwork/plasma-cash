@@ -301,7 +301,7 @@ func (c *Client) SendTransaction(slot uint64, prevBlock int64, denomination int6
 		return err
 	}
 
-	return c.childChain.SendTransaction(slot, prevBlock, denomination, newOwner, sig)
+	return c.childChain.SendTransaction(slot, prevBlock, denomination, newOwner, account.Address, sig)
 }
 
 func (c *Client) getTxAndProof(blkHeight int64, slot uint64) (plasma_cash.Tx, []byte, error) {
