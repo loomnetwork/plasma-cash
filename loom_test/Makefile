@@ -2,7 +2,7 @@ CURRENT_DIRECTORY = $(shell pwd)
 
 
 
-.PHONY: all clean test lint deps demos abigen
+.PHONY: all clean test lint deps demos abigen contracts
 
 demos:
 	go build -tags "evm" -o plasmacash_tester src/cmd/demo/main.go
@@ -10,6 +10,11 @@ demos:
 	go build -tags "evm" -o plasmacash_challenge_between_tester src/cmd/challenge_between_demo/main.go
 	go build -tags "evm" -o plasmacash_challenge_before_tester src/cmd/challenge_before_demo/main.go
 	go build -tags "evm" -o plasmacash_respond_challenge_before_tester src/cmd/respond_challenge_before_demo/main.go
+
+contracts: contracts/hostileoperator.1.0.0
+
+contracts/hostileoperator.1.0.0:
+	go build -tags "evm" -o $@ src/hostile_operator/plugin/hostile_operator_plugin.go
 
 test: 
 	go test -tags "evm" ./...
@@ -40,7 +45,8 @@ deps:
 		github.com/stretchr/testify \
 		github.com/grpc-ecosystem/go-grpc-prometheus \
 		github.com/hashicorp/go-plugin \
-		github.com/prometheus/client_golang/prometheus
+		github.com/prometheus/client_golang/prometheus \
+		github.com/loomnetwork/mamamerkle
 
 clean:
 	go clean

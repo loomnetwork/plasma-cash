@@ -3,27 +3,27 @@ package main
 import (
 	"client"
 	"context"
+	"flag"
 	"log"
-	"os"
 	"time"
-
-	"github.com/loomnetwork/go-loom/client/plasma_cash"
 )
 
 func main() {
-	plasmaChain := os.Getenv("PLASMA_CHAIN")
+	var hostile bool
+	flag.BoolVar(&hostile, "hostile", false, "run the demo with a hostile Plasma Cash operator")
+	flag.Parse()
+
+	if hostile {
+		log.Println("Testing with a hostile Plasma Cash operator")
+	}
+
 	client.InitClients("http://localhost:8545")
 	client.InitTokenClient("http://localhost:8545")
 	ganache, err := client.ConnectToGanache("http://localhost:8545")
 	exitIfError(err)
 
-	var svc plasma_cash.ChainServiceClient
-	if plasmaChain == "PROTOTYPE_SERVER" {
-		//		svc = client.NewChildChainService("http://localhost:8546")
-	} else {
-		svc, err = client.NewLoomChildChainService("http://localhost:46658/rpc", "http://localhost:46658/query")
-		exitIfError(err)
-	}
+	svc, err := client.NewLoomChildChainService(hostile, "http://localhost:46658/rpc", "http://localhost:46658/query")
+	exitIfError(err)
 
 	alice := client.NewClient(svc, client.GetRootChain("alice"), client.GetTokenContract("alice"))
 

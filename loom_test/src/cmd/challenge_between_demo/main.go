@@ -16,7 +16,7 @@ func main() {
 	ganache, err := client.ConnectToGanache("http://localhost:8545")
 	exitIfError(err)
 
-	svc, err := client.NewLoomChildChainService("http://localhost:46658/rpc", "http://localhost:46658/query")
+	svc, err := client.NewLoomChildChainService(true, "http://localhost:46658/rpc", "http://localhost:46658/query")
 	exitIfError(err)
 
 	alice := client.NewClient(svc, client.GetRootChain("alice"), client.GetTokenContract("alice"))

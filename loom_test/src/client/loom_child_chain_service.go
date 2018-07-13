@@ -9,7 +9,11 @@ import (
 	"github.com/loomnetwork/go-loom/client/plasma_cash"
 )
 
-func NewLoomChildChainService(writeuri, readuri string) (plasma_cash.ChainServiceClient, error) {
+// NewLoomChildChainService creates a new client for interacting with the Plasma Cash contract
+// running on the DAppChain at the given URLs. If the hostile parameter is set to true then the
+// client will interact with a "hostile" version of the Plasma Cash contract that doesn't verify
+// coin transfers like the real Plasma Cash contract does.
+func NewLoomChildChainService(hostile bool, writeuri, readuri string) (plasma_cash.ChainServiceClient, error) {
 	privFile := "test.key" // hard coded for integration tests
 
 	privKeyB64, err := ioutil.ReadFile(privFile)
@@ -24,5 +28,9 @@ func NewLoomChildChainService(writeuri, readuri string) (plasma_cash.ChainServic
 
 	signer := auth.NewEd25519Signer(privKey)
 
-	return client.NewPlasmaCashClient(signer, "", writeuri, readuri)
+	contractName := "plasmacash"
+	if hostile {
+		contractName = "hostileoperator"
+	}
+	return client.NewPlasmaCashClient(contractName, signer, "", writeuri, readuri)
 }
