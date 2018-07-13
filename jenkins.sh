@@ -32,10 +32,14 @@ export GOPATH=/tmp/gopath-$BUILD_TAG:`pwd`
 make clean
 make deps
 make demos
+make contracts
 make test
+
+# build the JS e2e tests
+cd $REPO_ROOT/loom_js_test
+yarn install
+yarn build
+yarn copy-contracts
 
 cd $REPO_ROOT
 bash loom_integration_test.sh
-
-cd $REPO_ROOT
-bash loom_js_integration_test.sh

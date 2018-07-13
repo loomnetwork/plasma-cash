@@ -43,6 +43,11 @@ export function getTestUrls() {
   }
 }
 
+var useHostileOperator = false
+export function enableHostilePlasmaCashOperator(enable: boolean) {
+  useHostileOperator = enable
+}
+
 export function createTestEntity(web3: Web3, ethPrivateKey: string): Entity {
   const ethAccount = web3.eth.accounts.privateKeyToAccount(ethPrivateKey)
   const ethPlasmaClient = new EthereumPlasmaClient(web3, ADDRESSES.root_chain)
@@ -57,7 +62,8 @@ export function createTestEntity(web3: Web3, ethPrivateKey: string): Entity {
     new SignedTxMiddleware(privKey)
   ]
   const callerAddress = new Address('default', LocalAddress.fromPublicKey(pubKey))
-  const dAppPlasmaClient = new DAppChainPlasmaClient({ dAppClient, callerAddress })
+  const contractName = useHostileOperator ? 'hostileoperator' : undefined
+  const dAppPlasmaClient = new DAppChainPlasmaClient({ dAppClient, callerAddress, contractName })
   return new Entity(web3, {
     ethAccount,
     ethPlasmaClient,

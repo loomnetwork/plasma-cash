@@ -18,13 +18,15 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "test": "yarn copy-contracts && tsc && yarn tape",
     "copy-contracts": "node ./scripts/copy-contracts.js",
-    "tape": "tape -r dotenv/config dotenv_config_path=./.env.test dist/index.js | tap-spec",
-    "jenkins:tape": "tape -r dotenv/config dotenv_config_path=./.env.test.jenkins dist/index.js | tap-spec"
+    "tape:honest": "tape -r dotenv/config dotenv_config_path=./.env.test dist/test-honest-operator.js | tap-spec",
+    "tape:hostile": "tape -r dotenv/config dotenv_config_path=./.env.test dist/test-hostile-operator.js | tap-spec",
+    "jenkins:test:honest": "tape -r dotenv/config dotenv_config_path=./.env.test.jenkins dist/test-honest-operator.js | tap-spec",
+    "jenkins:test:hostile": "tape -r dotenv/config dotenv_config_path=./.env.test.jenkins dist/test-hostile-operator.js | tap-spec"
   },
   "dependencies": {
     "bn.js": "^4.11.8",
     "ethereumjs-util": "^5.2.0",
-    "loom-js": "^1.12.0",
+    "loom-js": "^1.12.2",
     "rlp": "^2.1.0",
     "web3": "^1.0.0-beta.34"
   },

@@ -16,4 +16,11 @@ yarn build:browser
 yarn test
 # auto-format source files
 yarn format
+# run e2e tests with the built-in Plasma Cash contract
+yarn tape:honest
+# run e2e challenge tests with a hostile Plasma Cash contract
+yarn tape:hostile
+# Same as above but for Jenkins 
+yarn jenkins:tape:honest
+yarn jenkins:tape:hostile
 ```

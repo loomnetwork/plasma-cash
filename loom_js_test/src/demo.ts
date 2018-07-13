@@ -19,7 +19,7 @@ function setupContracts(web3: Web3): { cards: EthCardsContract } {
   return { cards }
 }
 
-test('Plasma Cash with ERC721 Demo', async t => {
+export async function runDemo(t: test.Test) {
   const web3 = new Web3('http://localhost:8545')
   const { cards } = setupContracts(web3)
   const authority = createTestEntity(web3, ACCOUNTS.authority)
@@ -124,4 +124,4 @@ test('Plasma Cash with ERC721 Demo', async t => {
   t.equal(balance.toNumber(), 1, 'charlie should have 1 token in cards contract')
 
   t.end()
-})
+}

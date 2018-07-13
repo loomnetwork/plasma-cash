@@ -19,7 +19,7 @@ function setupContracts(web3: Web3): { cards: EthCardsContract } {
   return { cards }
 }
 
-test('Plasma Cash Challenge Before Demo', async t => {
+export async function runChallengeBeforeDemo(t: test.Test) {
   const web3 = new Web3('http://localhost:8545')
   const { cards } = setupContracts(web3)
   const authority = createTestEntity(web3, ACCOUNTS.authority)
@@ -115,4 +115,4 @@ test('Plasma Cash Challenge Before Demo', async t => {
   t.equal(danTokensEnd.toNumber(), 6, 'END: Dan has correct number of tokens')
 
   t.end()
-})
+}
