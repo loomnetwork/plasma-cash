@@ -11,9 +11,10 @@ library Transaction {
     struct TX {
         uint64 slot;
         address owner;
-        bytes32 hash;
+        uint256 denomination; 
         uint256 prevBlock;
         uint256 denomination; 
+        bytes32 hash;
     }
 
     function getTx(bytes memory txBytes) internal pure returns (TX memory) {
