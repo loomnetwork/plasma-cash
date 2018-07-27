@@ -14,6 +14,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "../Libraries/Transaction/Transaction.sol";
 import "../Libraries/ECVerify.sol";
 import "../Libraries/ChallengeLib.sol";
+import "../Libraries/CheckpointChallengeLib.sol";
 
 // SMT and VMC
 import "./SparseMerkleTree.sol";
@@ -115,6 +116,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
     using Transaction for bytes;
     using ECVerify for bytes32;
     using ChallengeLib for ChallengeLib.Challenge[];
+	using CheckpointChallengeLib for CheckpointChallengeLib.CheckpointChallenge[];
 
     uint256 constant BOND_AMOUNT = 0.1 ether;
     // An exit can be finalized after it has matured,
@@ -125,6 +127,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
     // between T1 and T2
     uint256 constant MATURITY_PERIOD = 7 days;
     uint256 constant CHALLENGE_WINDOW = 3 days + 12 hours;
+    uint16 constant MAX_CHECKPOINT_CHALLENGES = 256;
 
     /*
      * Modifiers
@@ -472,6 +475,71 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
             uid,
             denomination
         );
+    }
+
+    /******************** CHECKPOINTS ********************/
+
+    enum CheckpointState {
+        INITIATED,
+        CHALLENGED,
+        FINALIZED
+    }
+
+    struct Checkpoint {
+        uint16 bitmap;
+        CheckpointState state;
+        uint256 zoneIndex;
+        bytes32 root;
+        uint256 initTime;
+        address initiator;
+        CheckpointChallengeLib.CheckpointChallenge[] checkpointChalenge;
+    }
+
+    mapping (uint256 => Checkpoint) checkpoints;
+    event CheckpointInitiated(uint256 zoneIndex, uint16 bitmap, uint256 blockNumber, bytes32 root);
+
+    /// @dev Initiates a checkpoint for some coins.
+    /// @notice Each checkpoint zone is 8192 coins long so we add zoneIndexes
+    /// @param zoneIndex The index of the zone (0-8192, 8193-16834 etc.)
+    /// @param bitmap the bitmap showing which coins to checkpoint
+    /// @param blockNumber The block number to checkpoint the coins at
+    /// @param root The state root of the merkle tree for the owners 
+    ///        of each coin to be checkpointed
+    function initCheckpoint(uint256 zoneIndex, uint16 bitmap, uint256 blockNumber, bytes32 root)
+        external 
+        payable isBonded
+    {
+        // Can't checkpoint at blocks haven't been created yet
+        // require(blockNumber <= currentBlock);
+
+        // Initiate the checkpoint in the state
+
+        Checkpoint storage checkpoint = checkpoints[blockNumber];
+        checkpoint.bitmap = bitmap;
+        checkpoint.zoneIndex = zoneIndex;
+        checkpoint.root = root;
+
+        // Need to store the timestamp and who initiated for penalizing. Adds 40k gas cost :/
+        checkpoint.initTime = block.timestamp;
+        checkpoint.initiator = msg.sender;
+    
+        // Emit an event for it
+        emit CheckpointInitiated(zoneIndex, bitmap, blockNumber, root);
+    }
+
+    function finalizeCheckpoint(uint256 blockNumber) external {
+        Checkpoint storage checkpoint = checkpoints[blockNumber];
+
+        // Ensure that the challenge period has passed
+        require(block.timestamp > checkpoint.initTime + MATURITY_PERIOD);
+
+        // Ensure that the checkpoint has not been challenged 
+        require(checkpoint.state != CheckpointState.CHALLENGED && 
+                checkpoint.state != CheckpointState.FINALIZED);
+
+        checkpoint.state = CheckpointState.FINALIZED;
+        freeBond(msg.sender);
+    
     }
 
     /******************** CHALLENGES ********************/
