@@ -37,5 +37,5 @@ make test
 cd $REPO_ROOT
 bash loom_integration_test.sh
 
-cd $REPO_ROOT
-bash loom_js_integration_test.sh
+#cd $REPO_ROOT
+#bash loom_js_integration_test.sh
