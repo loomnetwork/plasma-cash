@@ -75,6 +75,7 @@ cd $REPO_ROOT/loom_test
 make contracts
 mkdir $LOOM_DIR/contracts
 cp contracts/hostileoperator.1.0.0 $LOOM_DIR/contracts/hostileoperator.1.0.0
+chmod +x $LOOM_DIR/contracts/hostileoperator.1.0.0
 cp hostile.genesis.json $LOOM_DIR/genesis.json
 
 start_chains
