@@ -9,7 +9,7 @@ npm install
 npm run lint
 npm run test
 
-cd $REPO_ROOT/plasma_cash
+#cd $REPO_ROOT/plasma_cash
 
 #virtualenv --python=python3.5 .
 #source bin/activate

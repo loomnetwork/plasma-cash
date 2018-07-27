@@ -46,7 +46,6 @@ chmod +x loom
 export LOOM_BIN=`pwd`/loom
 echo $REPO_ROOT
 cp $REPO_ROOT/loom_test/loom-test.yml $LOOM_DIR/loom.yml
-cp $REPO_ROOT/loom_test/test.genesis.json $LOOM_DIR/genesis.json
 
 $LOOM_BIN init
 echo 'Loom DAppChain initialized in ' $LOOM_DIR
@@ -63,29 +62,28 @@ cd $REPO_ROOT/loom_test
 cd ..
 
 stop_chains
-exit 1
-#sleep 10
+sleep 10
 
 # Most challenge tests require a hostile/dumb Plasma Cash operator
-#cd $LOOM_DIR
-#rm -rf app.db
-#rm -rf chaindata
-#$LOOM_BIN init -f
-#echo 'Loom DAppChain initialized in ' $LOOM_DIR
+cd $LOOM_DIR
+rm -rf app.db
+rm -rf chaindata
+$LOOM_BIN init -f
+echo 'Loom DAppChain initialized in ' $LOOM_DIR
 
-#cd $REPO_ROOT/loom_test
-#make contracts
-#mkdir $LOOM_DIR/contracts
-#cp contracts/hostileoperator.1.0.0 $LOOM_DIR/contracts/hostileoperator.1.0.0
-#cp hostile.genesis.json $LOOM_DIR/genesis.json
+cd $REPO_ROOT/loom_test
+make contracts
+mkdir $LOOM_DIR/contracts
+cp contracts/hostileoperator.1.0.0 $LOOM_DIR/contracts/hostileoperator.1.0.0
+cp hostile.genesis.json $LOOM_DIR/genesis.json
 
-#start_chains
-#sleep 10
+start_chains
+sleep 10
 
-#cd $REPO_ROOT/loom_test
-#./plasmacash_tester -hostile
-#./plasmacash_challenge_after_tester -hostile
-#./plasmacash_challenge_between_tester -hostile
-#./plasmacash_challenge_before_tester -hostile
-#./plasmacash_respond_challenge_before_tester -hostile
-#cd ..
+cd $REPO_ROOT/loom_test
+./plasmacash_tester -hostile
+./plasmacash_challenge_after_tester -hostile
+./plasmacash_challenge_between_tester -hostile
+./plasmacash_challenge_before_tester -hostile
+./plasmacash_respond_challenge_before_tester -hostile
+cd ..
