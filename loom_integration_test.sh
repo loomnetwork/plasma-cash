@@ -46,6 +46,7 @@ chmod +x loom
 export LOOM_BIN=`pwd`/loom
 echo $REPO_ROOT
 cp $REPO_ROOT/loom_test/loom-test.yml $LOOM_DIR/loom.yml
+cp $REPO_ROOT/loom_test/test.genesis.json $LOOM_DIR/genesis.json
 
 $LOOM_BIN init
 echo 'Loom DAppChain initialized in ' $LOOM_DIR
@@ -62,6 +63,7 @@ cd $REPO_ROOT/loom_test
 cd ..
 
 stop_chains
+exit 1
 #sleep 10
 
 # Most challenge tests require a hostile/dumb Plasma Cash operator
