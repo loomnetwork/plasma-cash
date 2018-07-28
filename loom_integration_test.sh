@@ -79,7 +79,11 @@ chmod +x $LOOM_DIR/contracts/hostileoperator.1.0.0
 cp hostile.genesis.json $LOOM_DIR/genesis.json
 
 # let's see if this plugin can start...
-sh -c $LOOM_DIR/contracts/hostileoperator.1.0.0
+cd $LOOM_DIR/contracts
+LOOM_CONTRACT=loomrocks ./hostileoperator.1.0.0
+contract_pid=$!
+sleep 10
+kill -9 "${contract_pid}" &> /dev/null
 
 #start_chains
 #sleep 10
