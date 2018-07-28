@@ -62,7 +62,7 @@ cd $REPO_ROOT/loom_test
 cd ..
 
 stop_chains
-sleep 10
+sleep 60
 
 # Most challenge tests require a hostile/dumb Plasma Cash operator
 cd $LOOM_DIR
