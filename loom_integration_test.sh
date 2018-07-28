@@ -78,13 +78,16 @@ cp contracts/hostileoperator.1.0.0 $LOOM_DIR/contracts/hostileoperator.1.0.0
 chmod +x $LOOM_DIR/contracts/hostileoperator.1.0.0
 cp hostile.genesis.json $LOOM_DIR/genesis.json
 
-start_chains
-sleep 10
+# let's see if this plugin can start...
+sh -c $LOOM_DIR/contracts/hostileoperator.1.0.0
 
-cd $REPO_ROOT/loom_test
-./plasmacash_tester -hostile
-./plasmacash_challenge_after_tester -hostile
-./plasmacash_challenge_between_tester -hostile
-./plasmacash_challenge_before_tester -hostile
-./plasmacash_respond_challenge_before_tester -hostile
-cd ..
+#start_chains
+#sleep 10
+
+#cd $REPO_ROOT/loom_test
+#./plasmacash_tester -hostile
+#./plasmacash_challenge_after_tester -hostile
+#./plasmacash_challenge_between_tester -hostile
+#./plasmacash_challenge_before_tester -hostile
+#./plasmacash_respond_challenge_before_tester -hostile
+#cd ..
