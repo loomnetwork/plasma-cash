@@ -90,6 +90,14 @@ contract RootChain is ERC721Receiver {
     using ECVerify for bytes32;
 
     uint256 constant BOND_AMOUNT = 0.1 ether;
+    // An exit can be finalized after it has matured,
+    // after T2 = T0 + MATURITY_PERIOD
+    // An exit can be challenged in the first window
+    // between T0 and T1 ( T1 = T0 + CHALLENGE_WINDOW)
+    // A challenge can be responded to in the second window
+    // between T1 and T2
+    uint256 constant MATURITY_PERIOD = 7 days;
+    uint256 constant CHALLENGE_WINDOW = 3 days + 12 hours;
 
     /*
      * Modifiers
@@ -114,6 +122,13 @@ contract RootChain is ERC721Receiver {
 
     modifier isState(uint64 slot, State state) {
         require(coins[slot].state == state, "Wrong state");
+        _;
+    }
+
+    modifier isExitingOrChallenged(uint64 slot) {
+        require(coins[slot].state == State.EXITING ||
+                coins[slot].state == State.CHALLENGED,
+                "Wrong state");
         _;
     }
 
@@ -347,7 +362,7 @@ contract RootChain is ERC721Receiver {
             return;
 
         // If an exit is not matured, ignore it
-        if ((block.timestamp - coin.exit.createdAt) <= 7 days)
+        if ((block.timestamp - coin.exit.createdAt) <= MATURITY_PERIOD)
             return;
 
         // If a coin has been challenged AND not responded, slash it
@@ -411,7 +426,7 @@ contract RootChain is ERC721Receiver {
         uint256[2] blocks)
         external
         payable isBonded
-        isState(slot, State.EXITING)
+        isExitingOrChallenged(slot)
     {
         doInclusionChecks(
             prevTxBytes, txBytes,
@@ -510,6 +525,10 @@ contract RootChain is ERC721Receiver {
     /// @param slot The slot of the coin being challenged
     /// @param owner The user claimed to be the true ower of the coin
     function setChallenged(uint64 slot, address owner, uint256 challengingBlockNumber) private {
+        // Require that the challenge is in the first half of the challenge window
+        require(block.timestamp <= coins[slot].exit.createdAt + CHALLENGE_WINDOW);
+
+
         // When an exit is challenged, its state is set to challenged and the
         // contract waits for the exitor's response. The exit is not
         // immediately deleted.
