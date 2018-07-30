@@ -15,12 +15,12 @@ library ChallengeLib {
     }
 
     function contains(Challenge[] storage _array, bytes32 txHash) internal view returns (bool) {
-        int index = _indexOf(_array, txHash);
+        int index = indexOf(_array, txHash);
         return index != -1;
     }
 
     function remove(Challenge[] storage _array, bytes32 txHash) internal returns (bool) {
-        int index = _indexOf(_array, txHash);
+        int index = indexOf(_array, txHash);
         if (index == -1) {
             return false; // Tx not in challenge arraey
         }
@@ -34,7 +34,7 @@ library ChallengeLib {
         return true;
     }
 
-    function _indexOf(Challenge[] storage _array, bytes32 txHash) private view returns (int) {
+    function indexOf(Challenge[] storage _array, bytes32 txHash) internal view returns (int) {
         for (uint i = 0; i < _array.length; i++) {
             if (_array[i].txHash == txHash) {
                 return int(i);
