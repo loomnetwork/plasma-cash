@@ -434,7 +434,7 @@ contract RootChain is ERC721Receiver {
             signature,
             blocks
         );
-        setChallenged(slot, txBytes.getOwner(), blocks[1]);
+        setChallenged(slot, txBytes.getOwner(), blocks[1], txBytes.getHash());
     }
 
     // If `challengeBefore` is successfully responded to, then set state to
@@ -524,7 +524,7 @@ contract RootChain is ERC721Receiver {
 
     /// @param slot The slot of the coin being challenged
     /// @param owner The user claimed to be the true ower of the coin
-    function setChallenged(uint64 slot, address owner, uint256 challengingBlockNumber) private {
+    function setChallenged(uint64 slot, address owner, uint256 challengingBlockNumber, bytes32 txHash) private {
         // Require that the challenge is in the first half of the challenge window
         require(block.timestamp <= coins[slot].exit.createdAt + CHALLENGE_WINDOW);
 

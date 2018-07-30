@@ -32,6 +32,18 @@ library Transaction {
         return transaction;
     }
 
+    function getHash(bytes memory txBytes) internal pure returns (bytes32 hash) {
+        RLP.RLPItem[] memory rlpTx = txBytes.toRLPItem().toList(4);
+        uint64 slot = uint64(rlpTx[0].toUint());
+        uint256 prevBlock = uint256(rlpTx[1].toUint());
+
+        if (prevBlock == 0) { // deposit transaction
+            hash = keccak256(abi.encodePacked(slot));
+        } else {
+            hash = keccak256(txBytes);
+        }
+    }
+
     function getOwner(bytes memory txBytes) internal pure returns (address owner) {
         RLP.RLPItem[] memory rlpTx = txBytes.toRLPItem().toList(4);
         owner = rlpTx[3].toAddress();
