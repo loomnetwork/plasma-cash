@@ -447,14 +447,12 @@ contract RootChain is ERC721Receiver {
     function respondChallengeBefore(
         uint64 slot,
         uint256 challengingBlockNumber,
-        bytes challengingTransaction,
+        bytes32 challengingTxHash,
         bytes respondingTransaction,
         bytes proof,
         bytes signature)
         external
     {
-        bytes32 challengingTxHash = challengingTransaction.getHash();
-
         // Check that the transaction being challenged exists
         require(challenges[slot].contains(challengingTxHash), "Responding to non existing challenge");
 

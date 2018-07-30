@@ -179,12 +179,13 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
                 {'from': challenger, 'value': web3.toWei(0.1, 'ether')}
             );
 
+            let challengingTxHash = alice_to_bob.leaf.hash;
             let responseTx = alice_to_bob.tx;
             sig = alice_to_bob.sig;
             let responseProof = tree_bob.createMerkleProof(UTXO.slot);
 
             assertRevert(plasma.respondChallengeBefore(
-                UTXO.slot, 1000, responseTx, responseProof, sig,
+                UTXO.slot, 1000, challengingTxHash, responseTx, responseProof, sig,
                 {'from': elliot}
             ));
 
@@ -222,12 +223,13 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
                 {'from': challenger, 'value': web3.toWei(0.1, 'ether')}
             );
 
+            let challengingTxHash = alice_to_bob.leaf.hash;
             let responseTx = bob_to_charlie.tx;
             sig = bob_to_charlie.sig;
             let responseProof = tree_charlie.createMerkleProof(UTXO.slot);
 
             await plasma.respondChallengeBefore(
-                UTXO.slot, 2000, responseTx, responseProof, sig,
+                UTXO.slot, 2000, challengingTxHash, responseTx, responseProof, sig,
                 {'from': elliot}
             );
 
@@ -312,10 +314,12 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
             sig = bob_to_charlie.sig;
             tx_proof = tree_2000.createMerkleProof(UTXO.slot)
             tx = bob_to_charlie.tx;
+            let challengingTxHash = alice_to_bob.leaf.hash;
 
             assertRevert(plasma.respondChallengeBefore(
                 UTXO.slot,
                 2000,
+                challengingTxHash,
                 tx,
                 tx_proof,
                 sig,
