@@ -351,14 +351,14 @@ contract RootChain is ERC721Receiver {
         Coin storage coin = coins[slot];
 
         // If a coin is not under exit/challenge, then ignore it
-        if (coin.state == State.DEPOSITED || coin.state == State.EXITED)
+        if (coin.state != State.EXITING)
             return;
 
         // If an exit is not matured, ignore it
         if ((block.timestamp - coin.exit.createdAt) <= MATURITY_PERIOD)
             return;
 
-        // Check if there are any pending challenges for the coin
+        // Check if there are any pending challenges for the coin.
         // `checkPendingChallenges` will also penalize
         // for each challenge that has not been responded to
         bool hasChallenges = checkPendingChallenges(slot);
@@ -382,9 +382,11 @@ contract RootChain is ERC721Receiver {
         uint256 length = challenges[slot].length;
         for (uint i = 0; i < length; i++) {
             if (challenges[slot][i].txHash != 0x0) {
-                // There is a challenge that needs to be penalized
-                hasChallenges = true;
+                // Penalize the exitor. Also free the bond of the challenger.
                 slashBond(coins[slot].exit.owner, challenges[slot][i].challenger);
+                freeBond(challenges[slot][i].challenger);
+
+                hasChallenges = true;
             }
         }
     }
