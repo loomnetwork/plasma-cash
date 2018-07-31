@@ -13,7 +13,7 @@ module.exports = async function(deployer, network, accounts) {
         console.log(`RootChain deployed at address: ${root.address}`);
 
         await deployer.deploy(CryptoCards, root.address);
-        const cards = await RootChain.deployed();
+        const cards = await CryptoCards.deployed();
         console.log(`CryptoCards deployed at address: ${cards.address}`);
 
         await vmc.toggleToken(cards.address);
