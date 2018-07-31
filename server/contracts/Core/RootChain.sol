@@ -50,8 +50,9 @@ contract RootChain is ERC721Receiver {
      *         types of challenges cannot be responded to and thus do not
      *         require an event.
      * @param slot The slot of the coin whose exit was challenged
+     * @param txHash The hash of the tx used for the challenge
      */
-    event ChallengedExit(uint64 indexed slot);
+    event ChallengedExit(uint64 indexed slot, bytes32 txHash);
     /**
      * Event for exit response logging
      * @notice This only logs responses to `challengeBefore`, other challenges
@@ -443,13 +444,21 @@ contract RootChain is ERC721Receiver {
         setChallenged(slot, txBytes.getOwner(), blocks[1], txBytes.getHash());
     }
 
-    // If `challengeBefore` is successfully responded to, then set state to
-    // EXITING and allow the coin to be exited. No need to attach a bond
-    // when responding to a challenge.
+    /// @dev Submits proof of a later transaction that corresponds to a challenge
+    /// @notice Can only be called in the second window of the exit period.
+    /// @param slot The slot corresponding to the coin whose exit is being challenged
+    /// @param challengingTxHash The hash of the transaction
+    ///        corresponding to the challenge we're responding to
+    /// @param respondingBlockNumber The block number which included the transaction
+    ///        we are responding with
+    /// @param respondingTransaction The RLP-encoded transaction involving a particular
+    ///        coin which took place directly after challengingTransaction
+    /// @param proof An inclusion proof of respondingTransaction
+    /// @param signature The signature which proves a direct spend from the challenger
     function respondChallengeBefore(
         uint64 slot,
-        uint256 challengingBlockNumber,
         bytes32 challengingTxHash,
+        uint256 respondingBlockNumber,
         bytes respondingTransaction,
         bytes proof,
         bytes signature)
@@ -461,7 +470,7 @@ contract RootChain is ERC721Receiver {
         // Get index of challenge in the challenges array
         uint256 index = uint256(challenges[slot].indexOf(challengingTxHash));
 
-        checkResponse(slot, index, respondingTransaction, signature, challengingBlockNumber, proof);
+        checkResponse(slot, index, respondingBlockNumber, respondingTransaction, signature, proof);
 
         // If the exit was actually challenged and responded, penalize the challenger
         slashBond(challenges[slot][index].challenger, coins[slot].exit.owner);
@@ -473,12 +482,22 @@ contract RootChain is ERC721Receiver {
         emit RespondedExitChallenge(slot);
     }
 
-    function checkResponse(uint64 slot, uint256 index, bytes respondingTransaction, bytes signature, uint256 challengingBlockNumber, bytes proof) private view {
-        Transaction.TX memory txData = respondingTransaction.getTx();
+    function checkResponse(
+        uint64 slot,
+        uint256 index,
+        uint256 blockNumber,
+        bytes txBytes,
+        bytes signature,
+        bytes proof
+    )
+        private
+        view
+    {
+        Transaction.TX memory txData = txBytes.getTx();
         require(txData.hash.ecverify(signature, challenges[slot][index].owner), "Invalid signature");
         require(txData.slot == slot, "Tx is referencing another slot");
-        require(challengingBlockNumber > challenges[slot][index].challengingBlockNumber);
-        checkTxIncluded(txData.slot, txData.hash, challengingBlockNumber, proof);
+        require(blockNumber > challenges[slot][index].challengingBlockNumber);
+        checkTxIncluded(txData.slot, txData.hash, blockNumber, proof);
     }
 
     function challengeBetween(
@@ -559,7 +578,7 @@ contract RootChain is ERC721Receiver {
             })
         );
 
-        emit ChallengedExit(slot);
+        emit ChallengedExit(slot, txHash);
     }
 
     /******************** BOND RELATED ********************/
