@@ -472,8 +472,8 @@ contract RootChain is ERC721Receiver {
 
         checkResponse(slot, index, respondingBlockNumber, respondingTransaction, signature, proof);
 
-        // If the exit was actually challenged and responded, penalize the challenger
-        slashBond(challenges[slot][index].challenger, coins[slot].exit.owner);
+        // If the exit was actually challenged and responded, penalize the challenger and award the responder
+        slashBond(challenges[slot][index].challenger, msg.sender);
 
         // Put coin back to the exiting state
         coins[slot].state = State.EXITING;
