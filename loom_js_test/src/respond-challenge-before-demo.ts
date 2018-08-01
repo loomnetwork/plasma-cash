@@ -1,7 +1,7 @@
 import test from 'tape'
 import BN from 'bn.js'
 import Web3 from 'web3'
-import { IPlasmaDeposit, marshalDepositEvent } from 'loom-js'
+import { IPlasmaDeposit, marshalDepositEvent, IPlasmaChallenge, marshalChallengeEvent } from 'loom-js'
 
 import { increaseTime, getEthBalanceAtAddress } from './ganache-helpers'
 import { createTestEntity, ADDRESSES, ACCOUNTS } from './config'
@@ -33,7 +33,7 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
 
   const startBlockNum = await web3.eth.getBlockNumber()
   // Trudy deposits a coin
-  await cards.depositToPlasmaAsync({ tokenId: 21, from: trudy.ethAddress })
+  await cards.depositToPlasmaAsync({ tokenId: 4, from: trudy.ethAddress })
 
   const depositEvents: any[] = await authority.plasmaCashContract.getPastEvents('Deposit', {
     fromBlock: startBlockNum
@@ -75,10 +75,21 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
     challengingBlockNum: coin.depositBlockNum
   })
 
-  // Dan responds to the invalid challenge
+  // Dan gets the transaction hash used for the above challenge
+  // and responds to it
+
+  // TODO: Get info from the event
+  const challengeEvents: any[] = await authority.plasmaCashContract.getPastEvents('ChallengedExit', {
+    fromBlock: startBlockNum
+  })
+  const challenges = challengeEvents.map<IPlasmaChallenge>(event =>
+    marshalChallengeEvent(event.returnValues)
+  )
+
   await dan.respondChallengeBeforeAsync({
     slot: deposit1Slot,
-    challengingBlockNum: trudyToDanBlock
+    challengingTxHash: challenges[0].txHash,
+    respondingBlockNum: trudyToDanBlock
   })
 
   // Jump forward in time by 8 days
