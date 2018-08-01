@@ -373,6 +373,9 @@ contract RootChain is ERC721Receiver {
             freeBond(coin.owner);
 
             emit FinalizedExit(slot, coin.owner);
+        } else {
+            // Reset coin state since it was challenged
+            coin.state = State.DEPOSITED;
         }
 
         delete coins[slot].exit;
@@ -387,6 +390,8 @@ contract RootChain is ERC721Receiver {
                 slashBond(coins[slot].exit.owner, challenges[slot][i].challenger);
                 freeBond(challenges[slot][i].challenger);
 
+                // Challenge resolved, delete it
+                delete challenges[slot][i];
                 hasChallenges = true;
             }
         }
