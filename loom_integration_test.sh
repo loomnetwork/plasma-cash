@@ -90,6 +90,11 @@ function download_dappchain {
     export LOOM_BIN=`pwd`/loom
 }
 
+if [[ "$IS_JENKINS_ENV" == true ]]; then
+    # Kill off any plugins that weren't killed off by older builds
+    pkill -f "hostileoperator.1.0.0" || true
+fi
+
 # BUILD_TAG is usually only set by Jenkins, so when running locally just hardcode some value
 if [[ -z "$BUILD_TAG" ]]; then
     BUILD_TAG=123
