@@ -72,12 +72,16 @@ func main() {
 	// TODO: Dan should start watching for challenges of depositSlot1
 
 	fmt.Println("Trudy attempts to challenge Dan's exit...")
-	_, err = trudy.ChallengeBefore(depositSlot1, 0, coin.DepositBlockNum)
+    challengeTxHash, err := trudy.ChallengeBefore(depositSlot1, 0, coin.DepositBlockNum)
 	exitIfError(err)
+
+	challengedExitEvent, err := trudy.RootChain.ChallengedExitEventData(common.BytesToHash(challengeTxHash))
+	exitIfError(err)
+    challengingTxHash := challengedExitEvent.TxHash
 
 	// TODO: Response should be automatic as long as the client is watching for challenges
 	fmt.Println("Dan responds to the invalid challenge...")
-	_, err = dan.RespondChallengeBefore(depositSlot1, trudyToDanBlockNum)
+	_, err = dan.RespondChallengeBefore(depositSlot1, trudyToDanBlockNum, challengingTxHash)
 	exitIfError(err)
 
 	// Jump forward in time by 8 days

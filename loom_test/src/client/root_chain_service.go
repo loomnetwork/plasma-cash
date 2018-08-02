@@ -79,14 +79,14 @@ func (d *RootChainService) ChallengeBefore(slot uint64, prevTx plasma_cash.Tx, e
 	return tx.Hash().Bytes(), nil
 }
 
-func (d *RootChainService) RespondChallengeBefore(slot uint64, challengingBlockNumber int64,
-	challengingTx plasma_cash.Tx, proof plasma_cash.Proof, sig []byte) ([]byte, error) {
-	challengingTxBytes, err := challengingTx.RlpEncode()
+func (d *RootChainService) RespondChallengeBefore(slot uint64, challengingTxHash [32]byte, respondingBlockNumber int64,
+	respondingTx plasma_cash.Tx, proof plasma_cash.Proof, sig []byte) ([]byte, error) {
+	respondingTxBytes, err := respondingTx.RlpEncode()
 	if err != nil {
 		return nil, err
 	}
 	tx, err := d.plasmaContract.RespondChallengeBefore(
-		d.transactOpts, slot, big.NewInt(challengingBlockNumber), challengingTxBytes, proof, sig)
+		d.transactOpts, slot, challengingTxHash, big.NewInt(respondingBlockNumber), respondingTxBytes, proof, sig)
 	if err != nil {
 		return nil, err
 	}
@@ -190,6 +190,19 @@ func (d *RootChainService) DebugCoinMetaData(slots []uint64) {
 		}
 	}
 }
+
+func (d *RootChainService) ChallengedExitEventData(txHash common.Hash) (*plasma_cash.ChallengedExitEventData, error) {
+	receipt, err := conn.TransactionReceipt(context.TODO(), txHash)
+	if err != nil {
+		return &plasma_cash.ChallengedExitEventData{}, err
+	}
+	if receipt == nil {
+		return &plasma_cash.ChallengedExitEventData{}, errors.New("failed to retrieve tx receipt")
+	}
+	de, err := d.plasmaContract.ChallengedExitEventData(receipt)
+	return &plasma_cash.ChallengedExitEventData{Slot: de.Slot, TxHash: de.TxHash}, err
+}
+
 
 func (d *RootChainService) DepositEventData(txHash common.Hash) (*plasma_cash.DepositEventData, error) {
 	receipt, err := conn.TransactionReceipt(context.TODO(), txHash)
