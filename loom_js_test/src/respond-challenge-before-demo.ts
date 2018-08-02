@@ -83,8 +83,6 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
   const challenges = challengeEvents.map<IPlasmaChallenge>(event =>
     marshalChallengeEvent(event.returnValues)
   )
-  console.log('CHALLENGES FOUND', challenges);
-
   await dan.respondChallengeBeforeAsync({
     slot: deposit1Slot,
     challengingTxHash: challenges[0].txHash,
