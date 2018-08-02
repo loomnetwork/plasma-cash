@@ -33,7 +33,7 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
 
   const startBlockNum = await web3.eth.getBlockNumber()
   // Trudy deposits a coin
-  await cards.depositToPlasmaAsync({ tokenId: 4, from: trudy.ethAddress })
+  await cards.depositToPlasmaAsync({ tokenId: 21, from: trudy.ethAddress })
 
   const depositEvents: any[] = await authority.plasmaCashContract.getPastEvents('Deposit', {
     fromBlock: startBlockNum
@@ -77,14 +77,13 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
 
   // Dan gets the transaction hash used for the above challenge
   // and responds to it
-
-  // TODO: Get info from the event
   const challengeEvents: any[] = await authority.plasmaCashContract.getPastEvents('ChallengedExit', {
     fromBlock: startBlockNum
   })
   const challenges = challengeEvents.map<IPlasmaChallenge>(event =>
     marshalChallengeEvent(event.returnValues)
   )
+  console.log('CHALLENGES FOUND', challenges);
 
   await dan.respondChallengeBeforeAsync({
     slot: deposit1Slot,
