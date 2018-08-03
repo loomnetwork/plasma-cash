@@ -36,15 +36,17 @@ class PlasmaCash(Contract):
     def respond_challenge_before(
         self,
         slot,
-        challenging_block_number,
-        challenging_transaction,
+        challenging_tx_hash,
+        responding_block_number,
+        responding_transaction,
         proof,
         sig,
     ):
         args = [
             slot,
-            challenging_block_number,
-            challenging_transaction,
+            challenging_tx_hash,
+            responding_block_number,
+            responding_transaction,
             proof,
             sig,
         ]

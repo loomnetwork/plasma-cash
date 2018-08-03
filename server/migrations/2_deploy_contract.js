@@ -3,30 +3,20 @@ const RootChain = artifacts.require("RootChain");
 const ValidatorManagerContract = artifacts.require("ValidatorManagerContract");
 
 module.exports = async function(deployer, network, accounts) {
-    // return; // for testing
-    let aCryptoCardsInstance;
-    let aRootChainInstance;
-    let aValidatorManagerContractInstance;
 
-    return deployer.deploy(ValidatorManagerContract)
-        .then(() => ValidatorManagerContract.deployed())
-        .then(instance => {
-            aValidatorManagerContractInstance = instance;
-            console.log('ValidatorManagerContract deployed at address: ' + instance.address);
-            return deployer.deploy(RootChain, instance.address);
-        })
-        .then(() => RootChain.deployed())
-        .then(instance => {
-            aRootChainInstance = instance;
-            console.log('RootChain deployed at address: ' + instance.address);
-            return deployer.deploy(CryptoCards, instance.address);
-        })
-    .then(() => CryptoCards.deployed())
-        .then((instance) => {
-            aCryptoCardsInstance = instance;
-            console.log('CryptoCards deployed at address: ' + instance.address);
+    deployer.deploy(ValidatorManagerContract).then(async () => {
+        const vmc = await ValidatorManagerContract.deployed();
+        console.log(`ValidatorManagerContract deployed at address: ${vmc.address}`);
 
-            aValidatorManagerContractInstance.toggleToken(instance.address);
-        });
+        await deployer.deploy(RootChain, vmc.address);
+        const root = await RootChain.deployed();
+        console.log(`RootChain deployed at address: ${root.address}`);
+
+        await deployer.deploy(CryptoCards, root.address);
+        const cards = await CryptoCards.deployed();
+        console.log(`CryptoCards deployed at address: ${cards.address}`);
+
+        await vmc.toggleToken(cards.address);
+    });
 };
 

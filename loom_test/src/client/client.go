@@ -188,18 +188,19 @@ func (c *Client) ChallengeBefore(slot uint64, prevTxBlkNum int64, txBlkNum int64
 
 // RespondChallengeBefore - Respond to an exit with invalid history challenge by proving that
 // you were given the coin under question
-func (c *Client) RespondChallengeBefore(slot uint64, challengingBlockNumber int64) ([]byte, error) {
-	challengingTx, proof, err := c.getTxAndProof(challengingBlockNumber,
+func (c *Client) RespondChallengeBefore(slot uint64, respondingBlockNumber int64, challengingTxHash [32]byte) ([]byte, error) {
+	respondingTx, proof, err := c.getTxAndProof(respondingBlockNumber,
 		slot)
 	if err != nil {
 		return nil, err
 	}
 
 	txHash, err := c.RootChain.RespondChallengeBefore(slot,
-		challengingBlockNumber,
-		challengingTx,
+		challengingTxHash,
+		respondingBlockNumber,
+		respondingTx,
 		proof,
-		challengingTx.Sig())
+		respondingTx.Sig())
 	return txHash, err
 }
 

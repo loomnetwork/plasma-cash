@@ -144,21 +144,24 @@ class Client(object):
             )
         return tx_hash, gas_used
 
-    def respond_challenge_before(self, slot, challenging_block_number):
+    def respond_challenge_before(
+        self, slot, responding_block_number, challenging_tx_hash
+    ):
         '''
         Respond to an exit with invalid history challenge by proving that
         you were given the coin under question
         '''
-        challenging_tx, proof = self.get_tx_and_proof(
-            challenging_block_number, slot
+        responding_tx, proof = self.get_tx_and_proof(
+            responding_block_number, slot
         )
 
         tx_hash, gas_used = self.root_chain.respond_challenge_before(
             slot,
-            challenging_block_number,
-            rlp.encode(challenging_tx, UnsignedTransaction),
+            challenging_tx_hash,
+            responding_block_number,
+            rlp.encode(responding_tx, UnsignedTransaction),
             proof,
-            challenging_tx.sig,
+            responding_tx.sig,
         )
         return tx_hash, gas_used
 
@@ -324,15 +327,16 @@ class Client(object):
 
     def _respond_to_challenge(self, event):
         slot = event['args']['slot']
+        tx_hash = event['args']['txHash']
         print(
-            "CHALLENGE DETECTED by {} -- slot: {}".format(
-                self.token_contract.account.address, slot
+            "CHALLENGE DETECTED by {} -- slot: {} -- tx_hash: {}".format(
+                self.token_contract.account.address, slot, tx_hash
             )
         )
         # fetch coin history
         incl_proofs, excl_proofs = self.get_coin_history(slot)
         received_block = max(incl_proofs.keys())
-        self.respond_challenge_before(slot, received_block)
+        self.respond_challenge_before(slot, received_block, tx_hash)
 
     def stop_watching_challenges(self, slot):
         # a user stops watching exits of a particular coin after transferring
@@ -391,8 +395,8 @@ class Client(object):
                     # Need to find a previous block
                     tx = self.get_tx(blk, slot)
                     print(
-                        'CHALLENGE BEFORE --  {} at prev block {} / block {}'
-                        .format(
+                        'CHALLENGE BEFORE --  {} at prev block {} \
+                        / block {}'.format(
                             slot, tx.prev_block, blk
                         )
                     )

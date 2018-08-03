@@ -8,6 +8,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 // Lib deps
 import "../Libraries/Transaction/Transaction.sol";
 import "../Libraries/ECVerify.sol";
+import "../Libraries/ChallengeLib.sol";
 
 import "./SparseMerkleTree.sol";
 import "./ValidatorManagerContract.sol";
@@ -49,8 +50,9 @@ contract RootChain is ERC721Receiver {
      *         types of challenges cannot be responded to and thus do not
      *         require an event.
      * @param slot The slot of the coin whose exit was challenged
+     * @param txHash The hash of the tx used for the challenge
      */
-    event ChallengedExit(uint64 indexed slot);
+    event ChallengedExit(uint64 indexed slot, bytes32 txHash);
     /**
      * Event for exit response logging
      * @notice This only logs responses to `challengeBefore`, other challenges
@@ -88,8 +90,17 @@ contract RootChain is ERC721Receiver {
     using SafeMath for uint256;
     using Transaction for bytes;
     using ECVerify for bytes32;
+    using ChallengeLib for ChallengeLib.Challenge[];
 
     uint256 constant BOND_AMOUNT = 0.1 ether;
+    // An exit can be finalized after it has matured,
+    // after T2 = T0 + MATURITY_PERIOD
+    // An exit can be challenged in the first window
+    // between T0 and T1 ( T1 = T0 + CHALLENGE_WINDOW)
+    // A challenge can be responded to in the second window
+    // between T1 and T2
+    uint256 constant MATURITY_PERIOD = 7 days;
+    uint256 constant CHALLENGE_WINDOW = 3 days + 12 hours;
 
     /*
      * Modifiers
@@ -132,7 +143,6 @@ contract RootChain is ERC721Receiver {
     // exits
     uint64[] public exitSlots;
     // Each exit can only be challenged by a single challenger at a time
-    mapping (uint64 => address) challengers;
     struct Exit {
         address prevOwner; // previous owner of coin
         address owner;
@@ -144,7 +154,6 @@ contract RootChain is ERC721Receiver {
     enum State {
         DEPOSITED,
         EXITING,
-        CHALLENGED,
         EXITED
     }
 
@@ -153,7 +162,7 @@ contract RootChain is ERC721Receiver {
         address owner;
         uint256 blockNumber;
     }
-    mapping (uint64 => Challenge) challenges;
+    mapping (uint64 => ChallengeLib.Challenge[]) challenges;
 
     // tracking of NFTs deposited in each slot
     uint64 public numCoins = 0;
@@ -343,20 +352,19 @@ contract RootChain is ERC721Receiver {
         Coin storage coin = coins[slot];
 
         // If a coin is not under exit/challenge, then ignore it
-        if (coin.state == State.DEPOSITED || coin.state == State.EXITED)
+        if (coin.state != State.EXITING)
             return;
 
         // If an exit is not matured, ignore it
-        if ((block.timestamp - coin.exit.createdAt) <= 7 days)
+        if ((block.timestamp - coin.exit.createdAt) <= MATURITY_PERIOD)
             return;
 
-        // If a coin has been challenged AND not responded, slash it
-        if (coin.state == State.CHALLENGED) {
-            // Update coin state & penalize exitor
-            coin.state = State.DEPOSITED;
-            slashBond(coin.exit.owner, challengers[slot]);
-        // otherwise, the exit has not been challenged, or it has been challenged and responded
-        } else {
+        // Check if there are any pending challenges for the coin.
+        // `checkPendingChallenges` will also penalize
+        // for each challenge that has not been responded to
+        bool hasChallenges = checkPendingChallenges(slot);
+
+        if (!hasChallenges) {
             // Update coin's owner
             coin.owner = coin.exit.owner;
             coin.state = State.EXITED;
@@ -365,9 +373,28 @@ contract RootChain is ERC721Receiver {
             freeBond(coin.owner);
 
             emit FinalizedExit(slot, coin.owner);
+        } else {
+            // Reset coin state since it was challenged
+            coin.state = State.DEPOSITED;
         }
+
         delete coins[slot].exit;
         delete exitSlots[getExitIndex(slot)];
+    }
+
+    function checkPendingChallenges(uint64 slot) private returns (bool hasChallenges) {
+        uint256 length = challenges[slot].length;
+        for (uint i = 0; i < length; i++) {
+            if (challenges[slot][i].txHash != 0x0) {
+                // Penalize the exitor. Also free the bond of the challenger.
+                slashBond(coins[slot].exit.owner, challenges[slot][i].challenger);
+                freeBond(challenges[slot][i].challenger);
+
+                // Challenge resolved, delete it
+                delete challenges[slot][i];
+                hasChallenges = true;
+            }
+        }
     }
 
     /// @dev Iterates through all of the initiated exits and finalizes those
@@ -419,34 +446,63 @@ contract RootChain is ERC721Receiver {
             signature,
             blocks
         );
-        setChallenged(slot, txBytes.getOwner(), blocks[1]);
+        setChallenged(slot, txBytes.getOwner(), blocks[1], txBytes.getHash());
     }
 
-    // If `challengeBefore` is successfully responded to, then set state to
-    // EXITING and allow the coin to be exited. No need to attach a bond
-    // when responding to a challenge.
+    /// @dev Submits proof of a later transaction that corresponds to a challenge
+    /// @notice Can only be called in the second window of the exit period.
+    /// @param slot The slot corresponding to the coin whose exit is being challenged
+    /// @param challengingTxHash The hash of the transaction
+    ///        corresponding to the challenge we're responding to
+    /// @param respondingBlockNumber The block number which included the transaction
+    ///        we are responding with
+    /// @param respondingTransaction The RLP-encoded transaction involving a particular
+    ///        coin which took place directly after challengingTransaction
+    /// @param proof An inclusion proof of respondingTransaction
+    /// @param signature The signature which proves a direct spend from the challenger
     function respondChallengeBefore(
         uint64 slot,
-        uint256 challengingBlockNumber,
-        bytes challengingTransaction,
+        bytes32 challengingTxHash,
+        uint256 respondingBlockNumber,
+        bytes respondingTransaction,
         bytes proof,
         bytes signature)
         external
-        isState(slot, State.CHALLENGED)
     {
-        Transaction.TX memory txData = challengingTransaction.getTx();
-        require(txData.hash.ecverify(signature, challenges[slot].owner), "Invalid signature");
-        require(txData.slot == slot, "Tx is referencing another slot");
-        require(challengingBlockNumber > challenges[slot].blockNumber);
-        checkTxIncluded(txData.slot, txData.hash, challengingBlockNumber, proof);
+        // Check that the transaction being challenged exists
+        require(challenges[slot].contains(challengingTxHash), "Responding to non existing challenge");
 
-        // If the exit was actually challenged and responded, penalize the challenger
-        slashBond(challengers[slot], coins[slot].exit.owner);
+        // Get index of challenge in the challenges array
+        uint256 index = uint256(challenges[slot].indexOf(challengingTxHash));
+
+        checkResponse(slot, index, respondingBlockNumber, respondingTransaction, signature, proof);
+
+        // If the exit was actually challenged and responded, penalize the challenger and award the responder
+        slashBond(challenges[slot][index].challenger, msg.sender);
 
         // Put coin back to the exiting state
         coins[slot].state = State.EXITING;
 
+        challenges[slot].remove(challengingTxHash);
         emit RespondedExitChallenge(slot);
+    }
+
+    function checkResponse(
+        uint64 slot,
+        uint256 index,
+        uint256 blockNumber,
+        bytes txBytes,
+        bytes signature,
+        bytes proof
+    )
+        private
+        view
+    {
+        Transaction.TX memory txData = txBytes.getTx();
+        require(txData.hash.ecverify(signature, challenges[slot][index].owner), "Invalid signature");
+        require(txData.slot == slot, "Tx is referencing another slot");
+        require(blockNumber > challenges[slot][index].challengingBlockNumber);
+        checkTxIncluded(txData.slot, txData.hash, blockNumber, proof);
     }
 
     function challengeBetween(
@@ -509,22 +565,25 @@ contract RootChain is ERC721Receiver {
 
     /// @param slot The slot of the coin being challenged
     /// @param owner The user claimed to be the true ower of the coin
-    function setChallenged(uint64 slot, address owner, uint256 challengingBlockNumber) private {
-        // When an exit is challenged, its state is set to challenged and the
-        // contract waits for the exitor's response. The exit is not
-        // immediately deleted.
-        coins[slot].state = State.CHALLENGED;
-        // Save the challenger's address, for applying penalties
-        challengers[slot] = msg.sender;
+    function setChallenged(uint64 slot, address owner, uint256 challengingBlockNumber, bytes32 txHash) private {
+        // Require that the challenge is in the first half of the challenge window
+        require(block.timestamp <= coins[slot].exit.createdAt + CHALLENGE_WINDOW);
+
+        require(!challenges[slot].contains(txHash),
+                "Transaction used for challenge already");
 
         // Need to save the exiting transaction's owner, to verify
         // that the response is valid
-        challenges[slot] = Challenge({
-            owner: owner, 
-            blockNumber: challengingBlockNumber
-        });
+        challenges[slot].push(
+            ChallengeLib.Challenge({
+                owner: owner,
+                challenger: msg.sender,
+                txHash: txHash,
+                challengingBlockNumber: challengingBlockNumber
+            })
+        );
 
-        emit ChallengedExit(slot);
+        emit ChallengedExit(slot, txHash);
     }
 
     /******************** BOND RELATED ********************/
@@ -635,7 +694,7 @@ contract RootChain is ERC721Receiver {
             if (exitSlots[i] == slot)
                 return i;
         }
-        // a defualt value to return larger than the possible number of coins
+        // a default value to return larger than the possible number of coins
         return 2**65;
     }
 
