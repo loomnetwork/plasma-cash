@@ -203,7 +203,6 @@ func (d *RootChainService) ChallengedExitEventData(txHash common.Hash) (*plasma_
 	return &plasma_cash.ChallengedExitEventData{Slot: de.Slot, TxHash: de.TxHash}, err
 }
 
-
 func (d *RootChainService) DepositEventData(txHash common.Hash) (*plasma_cash.DepositEventData, error) {
 	receipt, err := conn.TransactionReceipt(context.TODO(), txHash)
 	if err != nil {
