@@ -3,27 +3,27 @@ pragma solidity ^0.4.24;
 /**
 * @title Challenge
 *
-* Challenge is used to constructe challenge.
+* Challenge is used to construct challenges regarding checkpoints.
 */
 
 library CheckpointChallengeLib {
     struct CheckpointChallenge {
         bool hasValue;
-        bytes challengeTx;
-        uint challengeTxBlkNum;
+        bytes CheckpointChallengeTx;
+        uint CheckpointChallengeTxBlkNum;
     }
 
-    function contains(challenge[] storage _array, bytes _challengeTx) internal returns (bool) {
-        int index = _indexOf(_array, _challengeTx);
+    function contains(CheckpointChallenge[] storage _array, bytes _CheckpointChallengeTx) internal returns (bool) {
+        int index = _indexOf(_array, _CheckpointChallengeTx);
         return index != -1;
     }
 
-    function remove(challenge[] storage _array, bytes _challengeTx) internal returns (bool) {
-        int index = _indexOf(_array, _challengeTx);
+    function remove(CheckpointChallenge[] storage _array, bytes _CheckpointChallengeTx) internal returns (bool) {
+        int index = _indexOf(_array, _CheckpointChallengeTx);
         if (index == -1) {
             return false;
         }
-        challenge memory lastChallenge = _array[_array.length - 1];
+        CheckpointChallenge memory lastChallenge = _array[_array.length - 1];
         _array[uint(index)] = lastChallenge;
 
         delete _array[_array.length - 1].hasValue;
@@ -31,10 +31,10 @@ library CheckpointChallengeLib {
         return true;
     }
 
-    function _indexOf(challenge[] storage _array, bytes _challengeTx) private returns (int) {
+    function _indexOf(CheckpointChallenge[] storage _array, bytes _CheckpointChallengeTx) private returns (int) {
         for (uint i = 0; i < _array.length; i++) {
-            bytes memory a = _array[i].challengeTx;
-            bytes memory b = _challengeTx;
+            bytes memory a = _array[i].CheckpointChallengeTx;
+            bytes memory b = _CheckpointChallengeTx;
 
             if (compare(a, b) == 0) {
                 return int(i);

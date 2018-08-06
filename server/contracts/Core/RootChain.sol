@@ -207,6 +207,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         Exit exit;
         uint256 uid; 
         uint256 denomination;
+        uint256 depositBlock;
     }
 
     // child chain

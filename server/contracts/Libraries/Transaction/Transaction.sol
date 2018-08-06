@@ -13,7 +13,6 @@ library Transaction {
         address owner;
         uint256 denomination; 
         uint256 prevBlock;
-        uint256 denomination; 
         bytes32 hash;
     }
 
