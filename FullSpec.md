@@ -68,7 +68,7 @@ A N-depth merkle tree where all of its leaves are initialized to H(0), where H i
 
 ### Block Structure
 
-The Plasma Chain is currently being run by one operator (authority), however the governance model can be extended to support multiple validators. It keeps the full state of the chain and is responsible for providing clients with any data regarding the state of the chain they ask for (data availability).
+The Plasma Chain supports multiple validators. It keeps the full state of the chain and is responsible for providing clients with any data regarding the state of the chain they ask for (data availability).
 
 There are 2 kind of blocks:
 
