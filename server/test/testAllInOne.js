@@ -52,7 +52,7 @@ contract("Plasma Cash - All In One", async function(accounts) {
         await erc721.register({from: alice});
 
         for (let i = 0; i < denominations.length; i ++) {
-            await web3.eth.sendTransaction({from: alice, to: plasma.address, value: ethers[i], gas: 200000 });
+            await web3.eth.sendTransaction({from: alice, to: plasma.address, value: ethers[i], gas: 250000 });
             await erc20.depositToPlasma(denominations[i], {from: alice});
             await erc721.depositToPlasma(coins[i], {from: alice});
         }

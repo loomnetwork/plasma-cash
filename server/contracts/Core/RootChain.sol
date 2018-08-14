@@ -108,8 +108,11 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
               is same as `from` when withdrawing a ETH coin
      * @param uid The uid of the coin being withdrawn if ERC721, else 0
      * @param denomination The denomination of the coin which has been withdrawn (=1 for ERC721)
+     * @param toOperator The amount that got withdrawn to the operator's
+     * address
      */
-    event Withdrew(address indexed from, Mode mode, address contractAddress, uint uid, uint denomination);
+    event Withdrew(address indexed from, Mode mode, address contractAddress,
+                   uint uid, uint denomination, uint toOperator);
 
     using SafeMath for uint256;
     using Transaction for bytes;
@@ -125,6 +128,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
     // between T1 and T2
     uint256 constant MATURITY_PERIOD = 7 days;
     uint256 constant CHALLENGE_WINDOW = 3 days + 12 hours;
+    address authority;
 
     /*
      * Modifiers
@@ -204,6 +208,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         Exit exit;
         uint256 uid; 
         uint256 denomination;
+        uint256 balance;
         uint256 depositBlock;
     }
 
@@ -220,6 +225,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
     SparseMerkleTree smt;
 
     constructor (ValidatorManagerContract _vmc) public {
+        authority = msg.sender;
         vmc = _vmc;
         smt = new SparseMerkleTree();
     }
@@ -281,11 +287,20 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
             createdAt: block.timestamp
         });
 
+        if (vmc.checkValidator(from)) {
+            // the coin is an empty coin that is owned by the
+            // validators
+            coin.balance = 0;
+        } else {
+            // otherwise it's wholy owned by the user
+            coin.balance = denomination;
+        }
+
         // create a utxo at `slot`
         emit Deposit(
             slot,
             currentBlock,
-            denomination,
+            coin.balance,
             from,
             msg.sender
         );
@@ -451,15 +466,26 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
     function withdraw(uint64 slot) external isState(slot, State.EXITED) {
         require(coins[slot].owner == msg.sender, "You do not own that UTXO");
         uint256 uid = coins[slot].uid;
-        uint256 denomination = coins[slot].denomination;
+        uint256 toUser = coins[slot].balance;
+        uint256 toAuthority = coins[slot].denomination - coins[slot].balance;
 
         // Delete the coin that is being withdrawn
         Coin memory c = coins[slot];
         delete coins[slot];
         if (c.mode == Mode.ETH) {
-            msg.sender.transfer(denomination);
+            if (toUser > 0) {
+                msg.sender.transfer(toUser);
+            }
+            if (toAuthority > 0) {
+                authority.transfer(toAuthority);
+            }
         } else if (c.mode == Mode.ERC20) {
-            ERC20(c.contractAddress).transfer(msg.sender, denomination);
+            if (toUser > 0) {
+                ERC20(c.contractAddress).transfer(msg.sender, toUser);
+            }
+            if (toAuthority > 0) {
+                ERC20(c.contractAddress).transfer(authority, toAuthority);
+            }
         } else if (c.mode == Mode.ERC721) {
             ERC721(c.contractAddress).safeTransferFrom(address(this), msg.sender, uid);
         } else {
@@ -471,7 +497,8 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
             c.mode,
             c.contractAddress,
             uid,
-            denomination
+            toUser,
+            toAuthority
         );
     }
 
@@ -804,9 +831,22 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
             proof);
     }
 
-    function getPlasmaCoin(uint64 slot) external view returns(uint256, uint256, uint256, address, State, Mode, address) {
+    function getPlasmaCoin(uint64 slot)
+        external
+        view
+        returns (
+        uint256,
+        uint256,
+        uint256,
+        uint256,
+        address,
+        State,
+        Mode,
+        address
+        )
+    {
         Coin memory c = coins[slot];
-        return (c.uid, c.depositBlock, c.denomination, c.owner, c.state, c.mode, c.contractAddress);
+        return (c.uid, c.depositBlock, c.denomination, c.balance, c.owner, c.state, c.mode, c.contractAddress);
     }
 
     function getExit(uint64 slot) external view returns(address, uint256, uint256, State) {
