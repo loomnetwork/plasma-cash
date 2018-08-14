@@ -230,6 +230,38 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         smt = new SparseMerkleTree();
     }
 
+    // Used by the operator to provide liquidity on a already existing
+    // coin, like channel rebalancing. By increasing the coin's denomination
+    // and keeping the coin's balance constant, the operator is able to
+    // participate in a channel with the counterparty without having to mint a
+    // new coin.
+    function provideLiquidity (
+        uint64 slot,
+        uint256 denomination
+    )
+        external
+        payable
+    {
+        Coin storage coin = coins[slot];
+        require(coin.depositBlock > 0); // check that coin exists
+        // check that we are talking about the same coin
+        if (coin.mode == Mode.ETH) {
+            require(msg.value > 0);
+            coin.denomination += msg.value;
+        } else if (coin.mode == Mode.ERC20) {
+            require(denomination > 0);
+            ERC20(coin.contractAddress).transferFrom(
+                msg.sender,
+                address(this),
+                denomination
+            );
+            coin.denomination += denomination;
+        } else {
+            revert("Cannot provide liquidity to non fungible coins");
+        }
+    }
+
+
 
     /// @dev called by a Validator to append a Plasma block to the Plasma chain
     /// @param root The transaction root hash of the Plasma block being added
