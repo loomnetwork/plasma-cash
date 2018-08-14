@@ -28,9 +28,10 @@ function signHash(from, hash) {
     return signature;
 };
 
-function createUTXO(slot, block, from, to) {
+function createUTXO(slot, block, from, to, denomination) {
     let rlpSlot = slot instanceof web3.BigNumber ? (new BN(slot.toString())).toBuffer() : slot;
-    let data = [rlpSlot, block, 1, to];
+    let coinDenom = denomination instanceof web3.BigNumber ? denomination : 1;
+    let data = [rlpSlot, block, coinDenom, to];
     data = '0x' + RLP.encode(data).toString('hex');
 
     // If it's a deposit transaction txHash = hash of the slot
