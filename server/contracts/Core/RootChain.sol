@@ -176,6 +176,8 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         address owner;
         uint256 createdAt;
         uint256 bond;
+        uint256 balance; // balance is the balance of the coin that is being
+        // exited, must be strictly less than the coin denomination
         uint256 prevBlock;
         uint256 exitBlock;
     }
@@ -243,6 +245,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         payable
     {
         Coin storage coin = coins[slot];
+        require(msg.sender == authority);
         require(coin.depositBlock > 0); // check that coin exists
         // check that we are talking about the same coin
         if (coin.mode == Mode.ETH) {
@@ -250,6 +253,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
             coin.denomination += msg.value;
         } else if (coin.mode == Mode.ERC20) {
             require(denomination > 0);
+            // Operator should have approved the transfer
             ERC20(coin.contractAddress).transferFrom(
                 msg.sender,
                 address(this),
@@ -359,7 +363,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
             signature,
             blocks
         );
-        pushExit(slot, prevTxBytes.getOwner(), blocks);
+        pushExit(slot, prevTxBytes.getOwner(), exitingTxBytes.getBalance(), blocks);
     }
 
     /// @dev Verifies that consecutive two transaction involving the same coin
@@ -405,6 +409,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
     function pushExit(
         uint64 slot,
         address prevOwner,
+        uint256 balance,
         uint256[2] blocks)
         private
     {
@@ -417,6 +422,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
             prevOwner: prevOwner,
             owner: msg.sender,
             createdAt: block.timestamp,
+            balance: balance,
             bond: msg.value,
             prevBlock: blocks[0],
             exitBlock: blocks[1]
