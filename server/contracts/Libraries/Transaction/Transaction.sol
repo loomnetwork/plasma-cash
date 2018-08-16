@@ -13,17 +13,19 @@ library Transaction {
         address owner;
         bytes32 hash;
         uint256 prevBlock;
+        uint256 nonce;
         uint256 balance;
     }
 
     function getTx(bytes memory txBytes) internal pure returns (TX memory) {
-        RLP.RLPItem[] memory rlpTx = txBytes.toRLPItem().toList(4);
+        RLP.RLPItem[] memory rlpTx = txBytes.toRLPItem().toList(5);
         TX memory transaction;
 
         transaction.slot = uint64(rlpTx[0].toUint());
         transaction.prevBlock = rlpTx[1].toUint();
-        transaction.balance = rlpTx[2].toUint();
-        transaction.owner = rlpTx[3].toAddress();
+        transaction.nonce = rlpTx[2].toUint();
+        transaction.balance = rlpTx[3].toUint();
+        transaction.owner = rlpTx[4].toAddress();
         if (transaction.prevBlock == 0) { // deposit transaction
             transaction.hash = keccak256(abi.encodePacked(transaction.slot));
         } else {
@@ -33,7 +35,7 @@ library Transaction {
     }
 
     function getHash(bytes memory txBytes) internal pure returns (bytes32 hash) {
-        RLP.RLPItem[] memory rlpTx = txBytes.toRLPItem().toList(4);
+        RLP.RLPItem[] memory rlpTx = txBytes.toRLPItem().toList(5);
         uint64 slot = uint64(rlpTx[0].toUint());
         uint256 prevBlock = uint256(rlpTx[1].toUint());
 
@@ -44,13 +46,18 @@ library Transaction {
         }
     }
 
+    function getNonce(bytes memory txBytes) internal pure returns (uint256 nonce) {
+        RLP.RLPItem[] memory rlpTx = txBytes.toRLPItem().toList(5);
+        nonce = rlpTx[2].toUint();
+    }
+
     function getBalance(bytes memory txBytes) internal pure returns (uint256 balance) {
-        RLP.RLPItem[] memory rlpTx = txBytes.toRLPItem().toList(4);
-        balance = rlpTx[2].toUint();
+        RLP.RLPItem[] memory rlpTx = txBytes.toRLPItem().toList(5);
+        balance = rlpTx[3].toUint();
     }
 
     function getOwner(bytes memory txBytes) internal pure returns (address owner) {
-        RLP.RLPItem[] memory rlpTx = txBytes.toRLPItem().toList(4);
-        owner = rlpTx[3].toAddress();
+        RLP.RLPItem[] memory rlpTx = txBytes.toRLPItem().toList(5);
+        owner = rlpTx[4].toAddress();
     }
 }

@@ -28,6 +28,27 @@ function signHash(from, hash) {
     return signature;
 };
 
+function createDebitUTXO(slot, block, from, to, denomination, nonce) {
+    let rlpSlot = slot instanceof web3.BigNumber ? (new BN(slot.toString())).toBuffer() : slot;
+
+    // Client should hold the coin's nonce in the state and set this
+    // automatically to the latest state
+    let data = [rlpSlot, block, nonce, denomination, to];
+    data = '0x' + RLP.encode(data).toString('hex');
+
+    // If it's a deposit transaction txHash = hash of the slot
+    let txHash = block == 0 ?
+        utils.soliditySha3({type: 'uint64', value: slot}) :
+        utils.soliditySha3({type: 'bytes', value: data});
+    let sig = signHash(from, txHash);
+
+    let leaf = {};
+    leaf.slot = web3.toBigNumber(slot).toString();
+    leaf.hash = txHash;
+
+    return {'tx': data, 'sig': sig, 'leaf': leaf, 'hash': txHash};
+};
+
 function createUTXO(slot, block, from, to, denomination) {
     let rlpSlot = slot instanceof web3.BigNumber ? (new BN(slot.toString())).toBuffer() : slot;
     let coinDenom = denomination instanceof web3.BigNumber ? denomination : 1;
@@ -71,6 +92,7 @@ async function withdrawBonds(plasma, withdrawer, amount) {
 module.exports = {
     signHash : signHash,
     createUTXO : createUTXO,
+    createDebitUTXO : createDebitUTXO,
     submitTransactions: submitTransactions,
     withdrawBonds: withdrawBonds,
     Promisify: Promisify

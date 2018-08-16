@@ -453,8 +453,9 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         bool hasChallenges = checkPendingChallenges(slot);
 
         if (!hasChallenges) {
-            // Update coin's owner
+            // Update coin's owner and balance
             coin.owner = coin.exit.owner;
+            coin.balance = coin.exit.balance;
             coin.state = State.EXITED;
 
             // Allow the exitor to withdraw their bond
