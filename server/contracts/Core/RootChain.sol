@@ -33,7 +33,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
      * @param from The address of the depositor
      * @param contractAddress The address of the contract making the deposit
      */
-    event Deposit(uint64 indexed slot, uint256 blockNumber, uint256 denomination, 
+    event Deposit(uint64 indexed slot, uint256 blockNumber, uint256 denomination,
                   address indexed from, address indexed contractAddress);
 
     /**
@@ -113,6 +113,22 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
      */
     event Withdrew(address indexed from, Mode mode, address contractAddress,
                    uint uid, uint denomination, uint toOperator);
+
+    /**
+     * Event to log the challenge for an invalid submission of a coin
+     * @param slot The slot of the coin under challenge
+     * @param owner The owner of the coin according to the transaction
+     * @param nonce the nonce which should represent the latest state
+     */
+    event ChallengedChannel(uint64 slot, address owner, uint256 nonce);
+
+    /**
+     * Event to log the finalization of the challenge and start of
+     * @param slot The slot of the coin under challenge
+     * @param owner The owner of the channel that got finalized
+     * @param denomination The amount that was settled
+     */
+    event FinalizedChannel(uint64 slot, address owner, uint256 denomination);
 
     using SafeMath for uint256;
     using Transaction for bytes;
@@ -208,7 +224,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         address owner; // who owns that nft
         address contractAddress; // which contract does the coin belong to
         Exit exit;
-        uint256 uid; 
+        uint256 uid;
         uint256 denomination;
         uint256 balance;
         uint256 depositBlock;
@@ -296,9 +312,9 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
     /// @param denomination The quantity of a particular coin being deposited
     /// @param mode The type of coin that is being deposited (ETH/ERC721/ERC20)
     function deposit(
-        address from, 
-        uint256 uid, 
-        uint256 denomination, 
+        address from,
+        uint256 uid,
+        uint256 denomination,
         Mode mode
     )
         private
@@ -363,7 +379,13 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
             signature,
             blocks
         );
-        pushExit(slot, prevTxBytes.getOwner(), exitingTxBytes.getBalance(), blocks);
+        pushExit(
+            slot,
+            prevTxBytes.getOwner(),
+            msg.sender,
+            exitingTxBytes.getBalance(),
+            blocks
+        );
     }
 
     /// @dev Verifies that consecutive two transaction involving the same coin
@@ -409,6 +431,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
     function pushExit(
         uint64 slot,
         address prevOwner,
+        address exitOwner,
         uint256 balance,
         uint256[2] blocks)
         private
@@ -420,7 +443,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         Coin storage c = coins[slot];
         c.exit = Exit({
             prevOwner: prevOwner,
-            owner: msg.sender,
+            owner: exitOwner,
             createdAt: block.timestamp,
             balance: balance,
             bond: msg.value,
@@ -476,7 +499,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         bool slashed;
         for (uint i = 0; i < length; i++) {
             if (challenges[slot][i].txHash != 0x0) {
-                // Penalize the exitor and reward the first valid challenger. 
+                // Penalize the exitor and reward the first valid challenger.
                 if (!slashed) {
                     slashBond(coins[slot].exit.owner, challenges[slot][i].challenger);
                     slashed = true;
@@ -667,12 +690,12 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
     function checkBetween(
         uint64 slot,
         bytes txBytes,
-        uint blockNumber, 
-        bytes signature, 
+        uint blockNumber,
+        bytes signature,
         bytes proof
-    ) 
-        private 
-        view 
+    )
+        private
+        view
     {
         require(
             coins[slot].exit.exitBlock > blockNumber &&
@@ -692,6 +715,77 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         require(txData.slot == slot, "Tx is referencing another slot");
         require(txData.prevBlock == coins[slot].exit.exitBlock, "Not a direct spend");
         checkTxIncluded(slot, txData.hash, blockNumber, proof);
+    }
+
+    struct Channel {
+        address challenger;
+        address owner;
+        uint256 createdAt;
+        uint256 nonce;
+        uint256[2] blocks;
+    }
+    mapping (uint64 => Channel) channels;
+    function challengeChannel(
+        uint64 slot,
+        uint256 blockNumber,
+        bytes txBytes,
+        bytes sig,
+        bytes operatorSig
+    )
+        external
+        payable
+        isBonded
+    {
+        Transaction.TX memory txData = txBytes.getTx();
+        require(txData.hash.ecverify(sig, txData.owner),
+                "Invalid signature from user");
+        require(txData.hash.ecverify(operatorSig, authority),
+                "Invalid signature from operator");
+        require(txData.slot == slot, "Tx is referencing another slot");
+
+        uint[2] memory blocks;
+        blocks[0] = txData.prevBlock;
+        blocks[1] = blockNumber;
+
+        // Save the nonce
+        channels[slot] = Channel({
+            challenger: msg.sender,
+            createdAt: block.timestamp,
+            owner: txData.owner,
+            nonce: txData.nonce,
+            // need to save the blocks in order to initiate an exit during
+            // dispute finalization
+            blocks: blocks
+        });
+        emit ChallengedChannel(slot, txData.owner, txData.nonce);
+    }
+
+    function respondChallengeChannelWithSignature(
+        uint64 slot,
+        bytes txBytes,
+        bytes sig
+    ) external {
+        // todo implement validation
+        revert();
+        txBytes; sig;
+        slashBond(channels[slot].challenger, msg.sender);
+        delete channels[slot];
+    }
+
+    function finalizeChannel(uint64 slot) external {
+        // If the challenge has not been responded to, push an exit for the
+        // whole coin and essentially punish the operator
+        // In order to finalize the challenge that has not been responded to,
+        // user has to also provide a valid previous TXO in order to
+        if (block.timestamp < channels[slot].createdAt + 7 days) return;
+        pushExit(
+            slot,
+            // coin doesnt change ownership in channel cases
+            channels[slot].owner,
+            channels[slot].owner,
+            coins[slot].denomination,
+            channels[slot].blocks
+        );
     }
 
     function applyPenalties(uint64 slot) private {
@@ -789,13 +883,13 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
     }
 
     function checkTxIncluded(
-        uint64 slot, 
-        bytes32 txHash, 
+        uint64 slot,
+        bytes32 txHash,
         uint256 blockNumber,
         bytes proof
-    ) 
-        private 
-        view 
+    )
+        private
+        view
     {
         bytes32 root = childChain[blockNumber].root;
 

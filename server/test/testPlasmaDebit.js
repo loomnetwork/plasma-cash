@@ -2,6 +2,7 @@ const ValidatorManagerContract = artifacts.require("ValidatorManagerContract");
 const LoomToken = artifacts.require("LoomToken");
 const CryptoCards = artifacts.require("CryptoCards");
 const RootChain = artifacts.require("RootChain");
+const SparseMerkleTree = require('./SparseMerkleTree.js');
 import {increaseTimeTo, duration} from './helpers/increaseTime'
 import assertRevert from './helpers/assertRevert.js';
 
@@ -29,8 +30,8 @@ contract("Plasma Debit - All In One", async function(accounts) {
 
     const DECIMALS = 10 ** 18;
     const denominations = [
-        3000 * DECIMALS, 
-        2000 * DECIMALS, 
+        3000 * DECIMALS,
+        2000 * DECIMALS,
         4000 * DECIMALS
     ];
 
@@ -70,6 +71,7 @@ contract("Plasma Debit - All In One", async function(accounts) {
     });
 
     describe('Plasma Debit', function() {
+
 		it('Operator provides liquidity!', async function() {
 			let UTXO = [
                 {'slot': events[0]['args'].slot, 'block': events[0]['args'].blockNumber.toNumber()},
@@ -124,7 +126,7 @@ contract("Plasma Debit - All In One", async function(accounts) {
             await txlib.withdrawBonds(plasma, alice, 0.2);
         });
 
-		it('User exits a partial coin', async function() {
+		it('User exits a partial coin, cooperative case', async function() {
 			let UTXO =
                 {'slot': events[0]['args'].slot, 'block': events[0]['args'].blockNumber.toNumber()};
             let prevBlock = 0;
@@ -197,6 +199,130 @@ contract("Plasma Debit - All In One", async function(accounts) {
             // The authority should have got the liquidity provided back.
             assert.equal(withdrew[0]['args'].denomination, web3.toWei(0.6, 'ether'));
             assert.equal(withdrew[0]['args'].toOperator, web3.toWei(0.4, 'ether'));
+            await txlib.withdrawBonds(plasma, alice, 0.1);
+        });
+
+		it('No withholding - Operator tries to exit with an earlier nonce', async function() {
+			let UTXO =
+                {'slot': events[0]['args'].slot, 'block': events[0]['args'].blockNumber.toNumber()};
+            let prevBlock = 0;
+
+            // Auth and Alice sign nonce 0
+            let changeBalance_0 = txlib.createDebitUTXO(
+                UTXO.slot,
+                UTXO.block,
+                alice,
+                alice,
+                0.5 * ETHER,
+                0
+            );
+
+            // Operator signs nonce 0
+            let auth_sig_0 = txlib.signHash(authority, changeBalance_0.hash);
+
+            // Auth and alice now sign nonce 1
+            let changeBalance_1 = txlib.createDebitUTXO(
+                UTXO.slot,
+                UTXO.block,
+                alice,
+                alice,
+                0.75 * ETHER,
+                1
+            );
+
+            // Operator has now signed a later state, contract will accept an
+            // exit involving nonce 0, but a rational user will not submit that
+            // exit. They will always submit 0.
+            let auth_sig_1 = txlib.signHash(authority, changeBalance_1.hash);
+
+            let utxo_0 = changeBalance_0.tx;
+            let sig_0 = changeBalance_0.sig;
+            let txs_0 = [changeBalance_0.leaf]
+
+            // The operator maliciously submits the transaction at an earlier
+            // nonce, the user should be able to prove that the operator messed
+            // up.
+            let tree_0 = await txlib.submitTransactions(authority, plasma, txs_0);
+            let submittedBlock = 1000;
+
+            // Previous tx that is used for the exit
+            let prev_tx = txlib.createDebitUTXO(
+                UTXO.slot,
+                0,
+                alice,
+                alice,
+                1 * ETHER,
+                0
+            ).tx;
+
+            let txs_1 = [changeBalance_1.leaf];
+            let leaves = {};
+            for (let l in txs_0) {
+                leaves[txs_0[l].slot] = txs_0[l].hash;
+            }
+            let tree_1 = new SparseMerkleTree(64, leaves);
+            let honest_proof = tree_1.createMerkleProof(UTXO.slot);
+            let utxo_1 = changeBalance_1.tx;
+            let sig_1 = changeBalance_1.sig;
+
+            // The exit by the user should fail, because the transaction that
+            // they are expecting to see included was not actually included by
+            // the operator
+            assertRevert(plasma.startExit(
+                UTXO.slot,
+                prev_tx, utxo_1,
+                '0x0', honest_proof,
+                sig_1,
+                [UTXO.block, submittedBlock],
+                {'from': alice, 'value': web3.toWei(0.1, 'ether')}
+            ));
+
+            // Since user is unable to exit, they will try to challenge and
+            // claim that the operator has included a transaction which is not
+            // valid, according to the user.
+            await plasma.challengeChannel(
+                UTXO.slot,
+                submittedBlock, // the block used
+                utxo_1, // the later transaction
+                sig_1, // the user's sig
+                auth_sig_1, // the operator's sig
+                {'from': alice, 'value': web3.toWei(0.1, 'ether')}
+            );
+            t0 = (await web3.eth.getBlock('latest')).timestamp;
+
+            // The operator must respond by revealign that the transaction they
+            // included had a bigger OR equal nonce. In this case they cannot
+            // reveal within the set challenge period (1 week again?!) and so
+            // they lose the whole coin and the user gets it.
+            // In this case, they cannot
+            // let included_proof = tree_0.createMerkleProof(UTXO.slot);
+            assertRevert(plasma.respondChallengeChannelWithSignature(
+                UTXO.slot,
+            //     submittedBlock, // the block used
+                utxo_0, // the responding transaction
+
+                sig_1, // the user's sig
+            ));
+
+            // Challenge period passes, all outstanding challenges on channels
+            // will be finalized now, and an exit will be initiated (?) for
+            // each of these coins?
+            await increaseTimeTo(t0 + t1 + t2);
+            await plasma.finalizeChannel(UTXO.slot, {from: random_guy2 });
+
+            // Let the exit mature
+            t0 = (await web3.eth.getBlock('latest')).timestamp;
+            await increaseTimeTo(t0 + t1 + t2);
+
+            await plasma.finalizeExits({from: random_guy2});
+            await plasma.withdraw(UTXO.slot, {from : alice });
+
+            const withdrewEvent = plasma.Withdrew({}, {fromBlock: 0, toBlock: 'latest'});
+            const withdrew = await txlib.Promisify(cb => withdrewEvent.get(cb));
+
+            // // The authority should have got nothing since they cheated
+            assert.equal(withdrew[0]['args'].denomination, web3.toWei(1, 'ether'));
+            assert.equal(withdrew[0]['args'].toOperator, web3.toWei(0, 'ether'));
             await txlib.withdrawBonds(plasma, alice, 0.1);
         });
 
