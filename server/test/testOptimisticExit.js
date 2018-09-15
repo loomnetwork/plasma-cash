@@ -73,9 +73,6 @@ contract.only("Plasma Cash - Optimistic Exits", async function(accounts) {
 
             await plasma.startExit(
                 UTXO.slot,
-                bob_to_charlie.tx,
-                exiting_tx_proof,
-                bob_to_charlie.sig,
                 bob,
                 [1000, 2000],
                 {'from': charlie, 'value': web3.toWei(0.1, 'ether')}
@@ -116,9 +113,6 @@ contract.only("Plasma Cash - Optimistic Exits", async function(accounts) {
 
             await plasma.startExit(
                 UTXO.slot,
-                bob_to_charlie.tx,
-                exiting_tx_proof,
-                bob_to_charlie.sig,
                 bob,
                 [1000, 2000],
                 {'from': charlie, 'value': web3.toWei(0.1, 'ether')}

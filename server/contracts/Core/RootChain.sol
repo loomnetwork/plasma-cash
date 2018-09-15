@@ -295,27 +295,6 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
 
     /******************** EXIT RELATED ********************/
 
-    function startExit(
-        uint64 slot,
-        bytes exitingTxBytes,
-        bytes exitingTxInclusionProof,
-        bytes signature,
-        address prevOwner, // need to provide the previous owner so that they can challenge double spends. This requires `challengeInvalidOwner` (probably?)
-        uint256[2] blocks)
-        external
-        payable isBonded
-        isState(slot, State.DEPOSITED)
-    {
-        require(msg.sender == exitingTxBytes.getOwner());
-        // Check that the exiting tx was included
-        Transaction.TX memory txData = exitingTxBytes.getTx();
-
-        // Exiting tx must be signed by the previous owner
-        require(txData.hash.ecverify(signature, prevOwner), "Invalid signature");
-        checkTxIncluded(txData.slot, txData.hash, blocks[1], exitingTxInclusionProof);
-        pushExit(slot, prevOwner, blocks);
-    }
-
     /// @dev Verifies that consecutive two transaction involving the same coin
     ///      are valid
     /// @notice If exitingTxBytes corresponds to a deposit transaction,
@@ -355,37 +334,13 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         }
     }
 
-    // Reveal the witness data for 
-    function challengeWrongParent(uint64 slot, uint256 blockNumber, bytes txBytes, bytes proof) public
-        isState(slot, State.EXITING)
-        cleanupExit(slot)
-    {
-        Transaction.TX memory txData = txBytes.getTx();
-        require(txData.slot == slot, "Tx is referencing another slot");
-
-        // The parent tx owner must be different than the one specified during the exit
-        require(txData.owner != coins[slot].exit.prevOwner);
-
-        // Check the inclusion
-        bytes32 root = childChain[blockNumber].root;
-        require(
-            checkMembership(
-                txData.hash,
-                root,
-                slot,
-                proof
-            ),
-            "Tx not included in claimed block"
-        );
-        applyPenalties(slot);
-    }
-
-    // Needed to bypass stack limit errors
-    function pushExit(
+    function startExit(
         uint64 slot,
-        address prevOwner,
+        address prevOwner, // need to provide the previous owner so that they can challenge double spends. This requires `challengeInvalidOwner` (probably?)
         uint256[2] blocks)
-        private
+        external
+        payable isBonded
+        isState(slot, State.DEPOSITED)
     {
         // Push exit to list
         exitSlots.push(slot);
@@ -404,6 +359,41 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         // Update coin state
         c.state = State.EXITING;
         emit StartedExit(slot, msg.sender);
+    }
+
+    function challengeOptimisticExit(uint64 slot, uint256 blockNumber, bytes txBytes, bytes proof, bytes signature, bool parent) public
+        isState(slot, State.EXITING)
+        cleanupExit(slot)
+    {
+        Transaction.TX memory txData = txBytes.getTx();
+        require(txData.slot == slot, "Tx is referencing another slot");
+
+        // Prove that the transaction was not signed by the prevOwner of the coin
+        address signer = txData.hash.recover(signature)
+        require(signer != coins[slot].exit.prevOwner);
+
+        if (parent) { // check parent tx
+            require(blockNumber == coins[slot].exit.prevBlock, "Not challenging the parent block");
+            require(txData.owner != coins[slot].exit.prevOwner);
+        } else {
+            require(blockNumber == coins[slot].exit.exitBlock, "Not challenging the exiting block");
+            require(txData.owner != coins[slot].exit.owner ||  // different owner
+                    txData.prevBlock != coins[slot].exit.prevBlock); // or different prevblock
+        }
+
+        // Check the inclusion
+        bytes32 root = childChain[blockNumber].root;
+        require(
+            checkMembership(
+                txData.hash,
+                root,
+                slot,
+                proof
+            ),
+            "Tx not included in claimed block"
+        );
+
+        applyPenalties(slot);
     }
 
     /// @dev Finalizes an exit, i.e. puts the exiting coin into the EXITED
