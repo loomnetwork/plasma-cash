@@ -334,6 +334,35 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         }
     }
 
+    // Exits a coin directly after depositing it
+    // The only challenge that applies here is challengeAfter
+    // No need for challenges for this optimistic exit
+    function startDepositExit(uint64 slot) 
+        external
+        payable isBonded
+        isState(slot, State.DEPOSITED)
+    {
+        require(coins[slot].owner == msg.sender, "Invalid sender");
+
+        // Push exit to list
+        exitSlots.push(slot);
+
+        // Create exit
+        Coin storage c = coins[slot];
+        c.exit = Exit({
+            prevOwner: msg.sender,
+            owner: msg.sender,
+            createdAt: block.timestamp,
+            bond: msg.value,
+            prevBlock: 0,
+            exitBlock: coins[slot].depositBlock
+        });
+
+        // Update coin state
+        c.state = State.EXITING;
+        emit StartedExit(slot, msg.sender);
+    }
+
     function startExit(
         uint64 slot,
         address prevOwner, // need to provide the previous owner so that they can challenge double spends. This requires `challengeInvalidOwner` (probably?)

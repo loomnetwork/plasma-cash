@@ -55,6 +55,28 @@ contract.only("Plasma Cash - Optimistic Exits", async function(accounts) {
 
     });
 
+        it("Optimistic exit of deposit tx", async function() {
+            let UTXO = {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()};
+
+            await plasma.startDepositExit(
+                UTXO.slot,
+                {'from': alice, 'value': web3.toWei(0.1, 'ether')}
+            );
+            t0 = (await web3.eth.getBlock('latest')).timestamp;
+            await increaseTimeTo(t0 + t1 + t2);
+            await plasma.finalizeExits({from: random_guy2});
+
+            await plasma.withdraw(UTXO.slot, {from : alice});
+
+            assert.equal(await cards.balanceOf.call(alice), 3);
+            assert.equal(await cards.balanceOf.call(bob), 0);
+            assert.equal(await cards.balanceOf.call(charlie), 0);
+            assert.equal(await cards.balanceOf.call(dylan), 0);
+            assert.equal(await cards.balanceOf.call(plasma.address), 2);
+
+            await txlib.withdrawBonds(plasma, alice, 0.1);
+        });
+
 
         it("Challenge wrong parent optimistic exit", async function() {
             let UTXO = {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()};
