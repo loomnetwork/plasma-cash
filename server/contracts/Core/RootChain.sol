@@ -390,16 +390,13 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         emit StartedExit(slot, msg.sender);
     }
 
-    function challengeOptimisticExit(uint64 slot, uint256 blockNumber, bytes txBytes, bytes proof, bytes signature, bool parent) public
+    function challengeOptimisticExit(uint64 slot, uint256 blockNumber, bytes txBytes, bytes proof, bool parent) public
         isState(slot, State.EXITING)
         cleanupExit(slot)
     {
         Transaction.TX memory txData = txBytes.getTx();
         require(txData.slot == slot, "Tx is referencing another slot");
 
-        // Prove that the transaction was not signed by the prevOwner of the coin
-        address signer = txData.hash.recover(signature)
-        require(signer != coins[slot].exit.prevOwner);
 
         if (parent) { // check parent tx
             require(blockNumber == coins[slot].exit.prevBlock, "Not challenging the parent block");
