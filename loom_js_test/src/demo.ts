@@ -20,7 +20,7 @@ function setupContracts(web3: Web3): { cards: EthCardsContract } {
 }
 
 export async function runDemo(t: test.Test) {
-  const web3 = new Web3('http://localhost:8545')
+  const web3 = new Web3(new Web3.providers.WebsocketProvider('ws://127.0.0.1:8545'))
   const { cards } = setupContracts(web3)
   const authority = createTestEntity(web3, ACCOUNTS.authority)
   const alice = createTestEntity(web3, ACCOUNTS.alice)
@@ -102,9 +102,10 @@ export async function runDemo(t: test.Test) {
   // TODO: get coin history of deposit3.slot from bob
   // TODO: charlie should verify coin history of deposit3.slot
 
-  const plasmaBlockNum2 = await authority.submitPlasmaBlockAsync()
+  const coin = await charlie.getPlasmaCoinAsync(deposit3.slot)
+  let charlieCoin = charlie.watchExit(deposit3.slot, coin.depositBlockNum)
 
-  // TODO: charlie should watch exits of deposit3.slot
+  const plasmaBlockNum2 = await authority.submitPlasmaBlockAsync()
 
   await charlie.startExitAsync({
     slot: deposit3.slot,
@@ -112,7 +113,7 @@ export async function runDemo(t: test.Test) {
     exitBlockNum: plasmaBlockNum2
   })
 
-  // TODO: charlie should stop watching exits of deposit3.slot
+  charlie.stopWatching(charlieCoin, console.log(`Stopped watching ${deposit3.slot}`))
 
   // Jump forward in time by 8 days
   await increaseTime(web3, 8 * 24 * 3600)
@@ -130,4 +131,7 @@ export async function runDemo(t: test.Test) {
   t.equal(balance.toNumber(), 1, 'charlie should have 1 token in cards contract')
 
   t.end()
+  // Close the websocket, hacky :/
+  // @ts-ignore
+  web3.currentProvider.connection.close()
 }

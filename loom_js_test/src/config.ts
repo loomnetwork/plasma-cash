@@ -34,6 +34,10 @@ export const ACCOUNTS = {
   trudy: '0xe8445efa4e3349c3c74fd6689553f93b55aca723115fb777e1e6f4db2a0a82ca'
 }
 
+export function sleep(ms: any) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
 export function getTestUrls() {
   return {
     wsWriteUrl: process.env.TEST_LOOM_DAPP_WS_WRITE_URL || 'ws://127.0.0.1:46658/websocket',

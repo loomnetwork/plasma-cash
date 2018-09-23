@@ -3,7 +3,7 @@ import Web3 from 'web3'
 import { IPlasmaDeposit, marshalDepositEvent } from 'loom-js'
 
 import { increaseTime, getEthBalanceAtAddress } from './ganache-helpers'
-import { ADDRESSES, ACCOUNTS, createTestEntity } from './config'
+import { sleep, ADDRESSES, ACCOUNTS, createTestEntity } from './config'
 import { EthCardsContract } from './cards-contract'
 
 // All the contracts are expected to have been deployed to Ganache when this function is called.
@@ -14,7 +14,7 @@ function setupContracts(web3: Web3): { cards: EthCardsContract } {
 }
 
 export async function runChallengeBetweenDemo(t: test.Test) {
-  const web3 = new Web3('http://localhost:8545')
+  const web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8545'))
   const { cards } = setupContracts(web3)
   const authority = createTestEntity(web3, ACCOUNTS.authority)
   const alice = createTestEntity(web3, ACCOUNTS.alice)
@@ -58,8 +58,8 @@ export async function runChallengeBetweenDemo(t: test.Test) {
     newOwner: bob
   })
 
+  const bobCoin = bob.watchExit(deposit1Slot, coin.depositBlockNum)
   const eveToBobBlockNum = await authority.submitPlasmaBlockAsync()
-  // bob.watch_exits(deposit1_utxo)
 
   // Eve sends this same plasma coin to Alice
   await eve.transferTokenAsync({
@@ -77,17 +77,19 @@ export async function runChallengeBetweenDemo(t: test.Test) {
     prevBlockNum: coin.depositBlockNum,
     exitBlockNum: eveToAliceBlockNum
   })
-
   // Alice's exit should be auto-challenged by Bob's client, but watching/auto-challenge hasn't
   // been implemented yet, so challenge the exit manually for now...
-  await bob.challengeBetweenAsync({ slot: deposit1Slot, challengingBlockNum: eveToBobBlockNum })
+  // console.log('BOB WOULD CHALLENGE WITH', eveToBobBlockNum)
+  // await bob.challengeBetweenAsync({ slot: deposit1Slot, challengingBlockNum: eveToBobBlockNum })
+
+  await sleep(2000)
 
   await bob.startExitAsync({
     slot: deposit1Slot,
     prevBlockNum: coin.depositBlockNum,
     exitBlockNum: eveToBobBlockNum
   })
-
+  bob.stopWatching(bobCoin, console.log(`Stopped watching ${deposit1Slot}`))
   // bob.stop_watching_exits(deposit1_utxo)
 
   // Jump forward in time by 8 days
@@ -113,5 +115,8 @@ export async function runChallengeBetweenDemo(t: test.Test) {
     'END: Bob has correct number of tokens'
   )
 
+  // Close the websocket, hacky :/
+  // @ts-ignore
+  web3.currentProvider.connection.close()
   t.end()
 }

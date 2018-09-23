@@ -4,7 +4,7 @@ import Web3 from 'web3'
 import { IPlasmaDeposit, marshalDepositEvent } from 'loom-js'
 
 import { increaseTime, getEthBalanceAtAddress } from './ganache-helpers'
-import { createTestEntity, ADDRESSES, ACCOUNTS } from './config'
+import { sleep, createTestEntity, ADDRESSES, ACCOUNTS } from './config'
 import { EthCardsContract } from './cards-contract'
 
 // Alice registers and has 5 coins, and she deposits 3 of them.
@@ -20,7 +20,7 @@ function setupContracts(web3: Web3): { cards: EthCardsContract } {
 }
 
 export async function runChallengeBeforeDemo(t: test.Test) {
-  const web3 = new Web3('http://localhost:8545')
+  const web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8545'))
   const { cards } = setupContracts(web3)
   const authority = createTestEntity(web3, ACCOUNTS.authority)
   const dan = createTestEntity(web3, ACCOUNTS.dan)
@@ -51,8 +51,11 @@ export async function runChallengeBeforeDemo(t: test.Test) {
   const plasmaBlock2 = await authority.submitPlasmaBlockAsync()
   const deposit1Slot = deposits[0].slot
 
+  // Dan starts watching
+  const coin = await dan.getPlasmaCoinAsync(deposit1Slot)
+  dan.watchExit(deposit1Slot, coin.depositBlockNum)
+
   // Trudy creates an invalid spend of the coin to Mallory
-  const coin = await trudy.getPlasmaCoinAsync(deposit1Slot)
   await trudy.transferTokenAsync({
     slot: deposit1Slot,
     prevBlockNum: coin.depositBlockNum,
@@ -82,11 +85,13 @@ export async function runChallengeBeforeDemo(t: test.Test) {
   })
 
   // Dan challenges with his coin that hasn't moved
-  await dan.challengeBeforeAsync({
-    slot: deposit1Slot,
-    prevBlockNum: new BN(0),
-    challengingBlockNum: coin.depositBlockNum
-  })
+  await sleep(2000)
+  // console.log('DAN WOULD CHALLENGE WITH', 0, coin.depositBlockNum)
+  // await dan.challengeBeforeAsync({
+  //   slot: deposit1Slot,
+  //   prevBlockNum: new BN(0),
+  //   challengingBlockNum: coin.depositBlockNum
+  // })
 
   // 8 days pass without any response to the challenge
   await increaseTime(web3, 8 * 24 * 3600)
@@ -114,5 +119,8 @@ export async function runChallengeBeforeDemo(t: test.Test) {
   const danTokensEnd = await cards.balanceOfAsync(dan.ethAddress)
   t.equal(danTokensEnd.toNumber(), 6, 'END: Dan has correct number of tokens')
 
+  // Close the websocket, hacky :/
+  // @ts-ignore
+  web3.currentProvider.connection.close()
   t.end()
 }
