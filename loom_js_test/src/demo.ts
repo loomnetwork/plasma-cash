@@ -112,8 +112,7 @@ export async function runDemo(t: test.Test) {
     prevBlockNum: plasmaBlockNum1,
     exitBlockNum: plasmaBlockNum2
   })
-
-  await charlie.stopWatchingAsync(charlieCoin)
+  charlie.stopWatching(charlieCoin)
 
   // Jump forward in time by 8 days
   await increaseTime(web3, 8 * 24 * 3600)

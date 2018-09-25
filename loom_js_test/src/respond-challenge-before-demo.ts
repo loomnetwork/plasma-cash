@@ -86,7 +86,8 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
   await increaseTime(web3, 8 * 24 * 3600)
 
   await authority.finalizeExitsAsync()
-  dan.stopWatchingAsync(danExit)
+  // Now that the exit has been finalized, stop watching challenges
+  dan.stopWatching(danExit)
 
   await dan.withdrawAsync(deposit1Slot)
 

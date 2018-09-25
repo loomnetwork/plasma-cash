@@ -70,13 +70,12 @@ export async function runChallengeAfterDemo(t: test.Test) {
     denomination: 1,
     newOwner: dan
   })
-  const deposit1Exit = dan.watchExit(deposit1Slot, coin.depositBlockNum)
+  const danCoin = dan.watchExit(deposit1Slot, coin.depositBlockNum)
 
   //incl_proofs, excl_proofs = mallory.get_coin_history(deposit1_utxo)
   //assert dan.verify_coin_history(deposit1_utxo, incl_proofs, excl_proofs)
 
   const plasmaBlock3 = await authority.submitPlasmaBlockAsync()
-  //dan.watch_exits(deposit1_utxo)
 
   // Mallory attempts to exit spent coin (the one sent to Dan)
   await mallory.startExitAsync({
@@ -85,11 +84,6 @@ export async function runChallengeAfterDemo(t: test.Test) {
     exitBlockNum: coin.depositBlockNum
   })
 
-  // Mallory's exit should be auto-challenged by Dan's client, but watching/auto-challenge hasn't
-  // been implemented yet, so challenge the exit manually for now...
-  // console.log('DAN WOULD CHALLENGE WITH', plasmaBlock3)
-  // await dan.challengeAfterAsync({ slot: deposit1Slot, challengingBlockNum: plasmaBlock3 })
-
   // Having successufly challenged Mallory's exit Dan should be able to exit the coin
   await sleep(2000)
   await dan.startExitAsync({
@@ -97,8 +91,7 @@ export async function runChallengeAfterDemo(t: test.Test) {
     prevBlockNum: coin.depositBlockNum,
     exitBlockNum: plasmaBlock3
   })
-
-  await dan.stopWatchingAsync(deposit1Exit)
+  dan.stopWatching(danCoin)
 
   // Jump forward in time by 8 days
   await increaseTime(web3, 8 * 24 * 3600)

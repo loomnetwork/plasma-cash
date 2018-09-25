@@ -53,7 +53,7 @@ export async function runChallengeBeforeDemo(t: test.Test) {
 
   // Dan starts watching
   const coin = await dan.getPlasmaCoinAsync(deposit1Slot)
-  dan.watchExit(deposit1Slot, coin.depositBlockNum)
+  const danCoin = dan.watchExit(deposit1Slot, coin.depositBlockNum)
 
   // Trudy creates an invalid spend of the coin to Mallory
   await trudy.transferTokenAsync({
@@ -77,32 +77,26 @@ export async function runChallengeBeforeDemo(t: test.Test) {
   // Operator includes it
   const malloryToTrudyBlock = await authority.submitPlasmaBlockAsync()
 
-  // Having successufly challenged Mallory's exit Dan should be able to exit the coin
   await trudy.startExitAsync({
     slot: deposit1Slot,
     prevBlockNum: trudyToMalloryBlock,
     exitBlockNum: malloryToTrudyBlock
   })
-
   // Dan challenges with his coin that hasn't moved
+
   await sleep(2000)
-  // console.log('DAN WOULD CHALLENGE WITH', 0, coin.depositBlockNum)
-  // await dan.challengeBeforeAsync({
-  //   slot: deposit1Slot,
-  //   prevBlockNum: new BN(0),
-  //   challengingBlockNum: coin.depositBlockNum
-  // })
 
   // 8 days pass without any response to the challenge
   await increaseTime(web3, 8 * 24 * 3600)
   await authority.finalizeExitsAsync()
 
-  // Having successfully challenged Trudy-Mallory's exit Dan should be able to exit the coin
+  // Having successufly challenged Mallory's exit Dan should be able to exit the coin
   await dan.startExitAsync({
     slot: deposit1Slot,
     prevBlockNum: new BN(0),
     exitBlockNum: coin.depositBlockNum
   })
+  dan.stopWatching(danCoin)
 
   // Jump forward in time by 8 days
   await increaseTime(web3, 8 * 24 * 3600)

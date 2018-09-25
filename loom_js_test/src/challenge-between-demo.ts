@@ -46,9 +46,6 @@ export async function runChallengeBetweenDemo(t: test.Test) {
 
   const deposit1Slot = deposits[0].slot
 
-  // wait to make sure that events get fired correctly
-  //time.sleep(2)
-
   // Eve sends her plasma coin to Bob
   const coin = await eve.getPlasmaCoinAsync(deposit1Slot)
   await eve.transferTokenAsync({
@@ -57,8 +54,8 @@ export async function runChallengeBetweenDemo(t: test.Test) {
     denomination: 1,
     newOwner: bob
   })
-
   const bobCoin = bob.watchExit(deposit1Slot, coin.depositBlockNum)
+
   const eveToBobBlockNum = await authority.submitPlasmaBlockAsync()
 
   // Eve sends this same plasma coin to Alice
@@ -77,10 +74,7 @@ export async function runChallengeBetweenDemo(t: test.Test) {
     prevBlockNum: coin.depositBlockNum,
     exitBlockNum: eveToAliceBlockNum
   })
-  // Alice's exit should be auto-challenged by Bob's client, but watching/auto-challenge hasn't
-  // been implemented yet, so challenge the exit manually for now...
-  // console.log('BOB WOULD CHALLENGE WITH', eveToBobBlockNum)
-  // await bob.challengeBetweenAsync({ slot: deposit1Slot, challengingBlockNum: eveToBobBlockNum })
+  // Dan challenges here
 
   await sleep(2000)
 
@@ -89,8 +83,7 @@ export async function runChallengeBetweenDemo(t: test.Test) {
     prevBlockNum: coin.depositBlockNum,
     exitBlockNum: eveToBobBlockNum
   })
-  await bob.stopWatchingAsync(bobCoin)
-  // bob.stop_watching_exits(deposit1_utxo)
+  bob.stopWatching(bobCoin)
 
   // Jump forward in time by 8 days
   await increaseTime(web3, 8 * 24 * 3600)
