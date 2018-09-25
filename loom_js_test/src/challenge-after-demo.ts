@@ -98,7 +98,7 @@ export async function runChallengeAfterDemo(t: test.Test) {
     exitBlockNum: plasmaBlock3
   })
 
-  dan.stopWatching(deposit1Exit, console.log(`Stopped watching ${deposit1Slot}`))
+  await dan.stopWatchingAsync(deposit1Exit)
 
   // Jump forward in time by 8 days
   await increaseTime(web3, 8 * 24 * 3600)

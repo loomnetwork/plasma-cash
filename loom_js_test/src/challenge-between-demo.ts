@@ -89,7 +89,7 @@ export async function runChallengeBetweenDemo(t: test.Test) {
     prevBlockNum: coin.depositBlockNum,
     exitBlockNum: eveToBobBlockNum
   })
-  bob.stopWatching(bobCoin, console.log(`Stopped watching ${deposit1Slot}`))
+  await bob.stopWatchingAsync(bobCoin)
   // bob.stop_watching_exits(deposit1_utxo)
 
   // Jump forward in time by 8 days

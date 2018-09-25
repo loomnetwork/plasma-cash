@@ -113,7 +113,7 @@ export async function runDemo(t: test.Test) {
     exitBlockNum: plasmaBlockNum2
   })
 
-  charlie.stopWatching(charlieCoin, console.log(`Stopped watching ${deposit3.slot}`))
+  await charlie.stopWatchingAsync(charlieCoin)
 
   // Jump forward in time by 8 days
   await increaseTime(web3, 8 * 24 * 3600)
@@ -130,8 +130,9 @@ export async function runDemo(t: test.Test) {
   balance = await cards.balanceOfAsync(charlie.ethAddress)
   t.equal(balance.toNumber(), 1, 'charlie should have 1 token in cards contract')
 
-  t.end()
   // Close the websocket, hacky :/
   // @ts-ignore
   web3.currentProvider.connection.close()
+
+  t.end()
 }
