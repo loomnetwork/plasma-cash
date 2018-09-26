@@ -201,7 +201,7 @@ func (d *RootChainService) ChallengedExitEventData(txHash common.Hash) (*plasma_
 		return &plasma_cash.ChallengedExitEventData{}, errors.New("failed to retrieve tx receipt")
 	}
 	de, err := d.plasmaContract.ChallengedExitEventData(receipt)
-	return &plasma_cash.ChallengedExitEventData{Slot: de.Slot, TxHash: de.TxHash}, err
+    return &plasma_cash.ChallengedExitEventData{Slot: de.Slot, TxHash: de.TxHash, ChallengingBlockNumber: de.ChallengingBlockNumber}, err
 }
 
 func (d *RootChainService) DepositEventData(txHash common.Hash) (*plasma_cash.DepositEventData, error) {
