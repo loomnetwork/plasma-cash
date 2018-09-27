@@ -99,10 +99,10 @@ export async function runDemo(t: test.Test) {
     newOwner: charlie
   })
 
-  // TODO: get coin history of deposit3.slot from bob
-  // TODO: charlie should verify coin history of deposit3.slot
-
   const coin = await charlie.getPlasmaCoinAsync(deposit3.slot)
+  const blocks = await bob.getBlockNumbersAsync(coin.depositBlockNum)
+  const proofs = await bob.getCoinHistoryAsync(deposit3.slot, blocks)
+  t.equal(await charlie.verifyCoinHistoryAsync(deposit3.slot, proofs), true)
   let charlieCoin = charlie.watchExit(deposit3.slot, coin.depositBlockNum)
 
   const plasmaBlockNum2 = await authority.submitPlasmaBlockAsync()

@@ -54,6 +54,10 @@ export async function runChallengeBetweenDemo(t: test.Test) {
     denomination: 1,
     newOwner: bob
   })
+
+  const blocks = await eve.getBlockNumbersAsync(coin.depositBlockNum)
+  const proofs = await eve.getCoinHistoryAsync(deposit1Slot, blocks)
+  t.equal(await bob.verifyCoinHistoryAsync(deposit1Slot, proofs), true)
   const bobCoin = bob.watchExit(deposit1Slot, coin.depositBlockNum)
 
   const eveToBobBlockNum = await authority.submitPlasmaBlockAsync()

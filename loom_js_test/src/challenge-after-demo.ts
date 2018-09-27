@@ -70,10 +70,12 @@ export async function runChallengeAfterDemo(t: test.Test) {
     denomination: 1,
     newOwner: dan
   })
+  const blocks = await mallory.getBlockNumbersAsync(coin.depositBlockNum)
+  const proofs = await mallory.getCoinHistoryAsync(deposit1Slot, blocks)
+  t.equal(await dan.verifyCoinHistoryAsync(deposit1Slot, proofs), true)
+
   const danCoin = dan.watchExit(deposit1Slot, coin.depositBlockNum)
 
-  //incl_proofs, excl_proofs = mallory.get_coin_history(deposit1_utxo)
-  //assert dan.verify_coin_history(deposit1_utxo, incl_proofs, excl_proofs)
 
   const plasmaBlock3 = await authority.submitPlasmaBlockAsync()
 
