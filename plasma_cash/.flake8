@@ -1,2 +1,0 @@
-[flake8]
-exclude = unit_test.py, config.py
