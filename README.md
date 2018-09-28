@@ -5,7 +5,6 @@
 To see the integrations run against the Loom SDK you must download the loom SDK, refer to https://loomx.io/developers/docs/en/basic-install-osx.html. 
 
 Under the `loom_test` directory there are all the samples in Go, that directly interact with Loom SDK. If you have cloned the repo and go dependencies are not found, in `loom_test` try:
->>>>>>> Stashed changes
 
 ```
 export GOPATH=$GOPATH:`pwd`
