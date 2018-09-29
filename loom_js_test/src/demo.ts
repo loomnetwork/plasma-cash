@@ -4,7 +4,7 @@ import Web3 from 'web3'
 import { IPlasmaDeposit, marshalDepositEvent } from 'loom-js'
 
 import { increaseTime } from './ganache-helpers'
-import { createTestEntity, ADDRESSES, ACCOUNTS } from './config'
+import { sleep, createTestEntity, ADDRESSES, ACCOUNTS } from './config'
 import { EthCardsContract } from './cards-contract'
 
 // Alice registers and has 5 coins, and she deposits 3 of them.
@@ -69,6 +69,13 @@ export async function runDemo(t: test.Test) {
   for (let i = 0; i < deposits.length; i++) {
     await authority.submitPlasmaDepositAsync(deposits[i])
   }
+  await sleep(2000)
+
+
+  const coins = await alice.getUserCoinsAsync()
+  t.ok(coins[0].slot.eq(deposits[0].slot), 'got correct deposit coins 1')
+  t.ok(coins[1].slot.eq(deposits[1].slot), 'got correct deposit coins 2')
+  t.ok(coins[2].slot.eq(deposits[2].slot), 'got correct deposit coins 3')
 
   // Alice to Bob, and Alice to Charlie. We care about the Alice to Bob
   // transaction
@@ -89,8 +96,10 @@ export async function runDemo(t: test.Test) {
     newOwner: charlie
   })
   const plasmaBlockNum1 = await authority.submitPlasmaBlockAsync()
+
   // Add an empty block in between (for proof of exclusion)
   await authority.submitPlasmaBlockAsync()
+
   // Bob -> Charlie
   await bob.transferTokenAsync({
     slot: deposit3.slot,
@@ -98,14 +107,14 @@ export async function runDemo(t: test.Test) {
     denomination: 1,
     newOwner: charlie
   })
+  const plasmaBlockNum2 = await authority.submitPlasmaBlockAsync()
 
   const coin = await charlie.getPlasmaCoinAsync(deposit3.slot)
   const blocks = await bob.getBlockNumbersAsync(coin.depositBlockNum)
+
   const proofs = await bob.getCoinHistoryAsync(deposit3.slot, blocks)
   t.equal(await charlie.verifyCoinHistoryAsync(deposit3.slot, proofs), true)
   let charlieCoin = charlie.watchExit(deposit3.slot, coin.depositBlockNum)
-
-  const plasmaBlockNum2 = await authority.submitPlasmaBlockAsync()
 
   await charlie.startExitAsync({
     slot: deposit3.slot,
