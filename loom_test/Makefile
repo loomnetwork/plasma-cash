@@ -1,4 +1,5 @@
 CURRENT_DIRECTORY = $(shell pwd)
+GO_ETHEREUM_DEP = $(GOPATH)/src/github.com/ethereum/go-ethereum
 
 
 
@@ -48,6 +49,7 @@ deps:
 		github.com/prometheus/client_golang/prometheus \
 		github.com/loomnetwork/mamamerkle \
 		github.com/miguelmota/go-solidity-sha3
+	cd $(GO_ETHEREUM_DEP) && git checkout a4a2343cdc1946e38da1aea1476642d1744c1354
 
 clean:
 	go clean
