@@ -37,13 +37,10 @@ export async function runDemo(t: test.Test) {
     await cards.depositToPlasmaAsync({ tokenId: COINS[i], from: alice.ethAddress })
   }
 
-  const depositEvents: any[] = await authority.plasmaCashContract.getPastEvents('Deposit', {
-    fromBlock: startBlockNum
-  })
-  const deposits = depositEvents.map<IPlasmaDeposit>(event =>
-    marshalDepositEvent(event.returnValues)
-  )
+  // Get deposit events for all
+  const deposits: IPlasmaDeposit[] = await authority.getDepositEvents(true)
   t.equal(deposits.length, ALICE_DEPOSITED_COINS, 'All deposit events accounted for')
+
   for (let i = 0; i < deposits.length; i++) {
     const deposit = deposits[i]
     t.equal(deposit.blockNumber.toNumber(), i + 1, `Deposit ${i + 1} block number is correct`)
