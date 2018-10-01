@@ -76,7 +76,6 @@ export async function runChallengeAfterDemo(t: test.Test) {
 
   const danCoin = dan.watchExit(deposit1Slot, coin.depositBlockNum)
 
-
   const plasmaBlock3 = await authority.submitPlasmaBlockAsync()
 
   // Mallory attempts to exit spent coin (the one sent to Dan)

@@ -1,7 +1,7 @@
 import test from 'tape'
 import BN from 'bn.js'
 import Web3 from 'web3'
-import { IPlasmaDeposit, marshalDepositEvent } from 'loom-js'
+import { PlasmaDB, SignedContract, IPlasmaDeposit, marshalDepositEvent } from 'loom-js'
 
 import { increaseTime } from './ganache-helpers'
 import { sleep, createTestEntity, ADDRESSES, ACCOUNTS } from './config'
@@ -20,12 +20,15 @@ function setupContracts(web3: Web3): { cards: EthCardsContract } {
 }
 
 export async function runDemo(t: test.Test) {
-  const web3 = new Web3(new Web3.providers.WebsocketProvider('ws://127.0.0.1:8545'))
+  const endpoint = 'ws://127.0.0.1:8545'
+  const web3 = new Web3(new Web3.providers.WebsocketProvider(endpoint))
   const { cards } = setupContracts(web3)
+  const database = new PlasmaDB(endpoint, 'localhost:45578', '0x', ACCOUNTS.charlie) // Demo values to store in the db
+
   const authority = createTestEntity(web3, ACCOUNTS.authority)
   const alice = createTestEntity(web3, ACCOUNTS.alice)
   const bob = createTestEntity(web3, ACCOUNTS.bob)
-  const charlie = createTestEntity(web3, ACCOUNTS.charlie)
+  const charlie = createTestEntity(web3, ACCOUNTS.charlie, database)
 
   await cards.registerAsync(alice.ethAddress)
   let balance = await cards.balanceOfAsync(alice.ethAddress)
@@ -38,7 +41,7 @@ export async function runDemo(t: test.Test) {
   }
 
   // Get deposit events for all
-  const deposits: IPlasmaDeposit[] = await authority.getDepositEvents(true)
+  const deposits: IPlasmaDeposit[] = await authority.getDepositEvents(new BN(0), true)
   t.equal(deposits.length, ALICE_DEPOSITED_COINS, 'All deposit events accounted for')
 
   for (let i = 0; i < deposits.length; i++) {
@@ -112,6 +115,7 @@ export async function runDemo(t: test.Test) {
   const proofs = await bob.getCoinHistoryAsync(deposit3.slot, blocks)
   t.equal(await charlie.verifyCoinHistoryAsync(deposit3.slot, proofs), true)
   let charlieCoin = charlie.watchExit(deposit3.slot, coin.depositBlockNum)
+
 
   await charlie.startExitAsync({
     slot: deposit3.slot,
