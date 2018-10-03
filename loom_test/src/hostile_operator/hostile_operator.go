@@ -1,6 +1,8 @@
 package hostile_operator
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"strconv"
 
@@ -15,12 +17,15 @@ import (
 	"github.com/loomnetwork/go-loom/types"
 	"github.com/loomnetwork/go-loom/util"
 	"github.com/loomnetwork/mamamerkle"
+	"github.com/pkg/errors"
 )
 
 type (
 	InitRequest                  = pctypes.PlasmaCashInitRequest
 	SubmitBlockToMainnetRequest  = pctypes.SubmitBlockToMainnetRequest
 	SubmitBlockToMainnetResponse = pctypes.SubmitBlockToMainnetResponse
+	Coin                         = pctypes.PlasmaCashCoin
+	CoinState                    = pctypes.PlasmaCashCoinState
 	GetBlockRequest              = pctypes.GetBlockRequest
 	GetBlockResponse             = pctypes.GetBlockResponse
 	PlasmaTxRequest              = pctypes.PlasmaTxRequest
@@ -32,6 +37,11 @@ type (
 	PlasmaBookKeeping            = pctypes.PlasmaBookKeeping
 	PlasmaBlock                  = pctypes.PlasmaBlock
 	Pending                      = pctypes.Pending
+	Account                      = pctypes.PlasmaCashAccount
+	GetPlasmaTxRequest           = pctypes.GetPlasmaTxRequest
+	GetPlasmaTxResponse          = pctypes.GetPlasmaTxResponse
+	GetUserSlotsRequest          = pctypes.GetUserSlotsRequest
+	GetUserSlotsResponse         = pctypes.GetUserSlotsResponse
 )
 
 // HostileOperator is a DAppChain Go Contract that handles Plasma Cash txs in a way that allows
@@ -41,11 +51,29 @@ type (
 type HostileOperator struct {
 }
 
+const (
+	CoinState_DEPOSITED  = pctypes.PlasmaCashCoinState_DEPOSITED
+	CoinState_EXITING    = pctypes.PlasmaCashCoinState_EXITING
+	CoinState_CHALLENGED = pctypes.PlasmaCashCoinState_CHALLENGED
+	CoinState_EXITED     = pctypes.PlasmaCashCoinState_EXITED
+)
+
 var (
 	blockHeightKey    = []byte("pcash_height")
 	pendingTXsKey     = []byte("pcash_pending")
+	accountKeyPrefix  = []byte("account")
 	plasmaMerkleTopic = "pcash_mainnet_merkle"
 )
+
+func coinKey(slot uint64) []byte {
+	var buf bytes.Buffer
+	binary.Write(&buf, binary.BigEndian, slot)
+	return util.PrefixKey([]byte("coin"), buf.Bytes())
+}
+
+func accountKey(addr loom.Address) []byte {
+	return util.PrefixKey(accountKeyPrefix, addr.Bytes())
+}
 
 func blockKey(height common.BigUInt) []byte {
 	return util.PrefixKey([]byte("pcash_block_"), []byte(height.String()))
@@ -180,11 +208,45 @@ func (c *HostileOperator) DepositRequest(ctx contract.Context, req *DepositReque
 		return err
 	}
 
+	defaultErrMsg := "[PlasmaCash] failed to process deposit"
+	// Update the sender's local Plasma account to reflect the deposit
+	ownerAddr := loom.UnmarshalAddressPB(req.From)
+	ctx.Logger().Debug(fmt.Sprintf("Deposit %v from %v", req.Slot, ownerAddr))
+	account, err := loadAccount(ctx, ownerAddr)
+	if err != nil {
+		return errors.Wrap(err, defaultErrMsg)
+	}
+	err = saveCoin(ctx, &Coin{
+		Slot:     req.Slot,
+		State:    CoinState_DEPOSITED,
+		Token:    req.Denomination,
+		Contract: req.Contract,
+	})
+	if err != nil {
+		return errors.Wrap(err, defaultErrMsg)
+	}
+	account.Slots = append(account.Slots, req.Slot)
+	if err = saveAccount(ctx, account); err != nil {
+		return errors.Wrap(err, defaultErrMsg)
+	}
+
 	if req.DepositBlock.Value.Cmp(&pbk.CurrentHeight.Value) > 0 {
 		pbk.CurrentHeight.Value = req.DepositBlock.Value
 		return ctx.Set(blockHeightKey, pbk)
 	}
 	return nil
+}
+
+func saveCoin(ctx contract.Context, coin *Coin) error {
+	if err := ctx.Set(coinKey(coin.Slot), coin); err != nil {
+		return errors.Wrapf(err, "failed to save coin %v", coin.Slot)
+	}
+	return nil
+}
+
+func saveAccount(ctx contract.Context, acct *Account) error {
+	owner := loom.UnmarshalAddressPB(acct.Owner)
+	return ctx.Set(accountKey(owner), acct)
 }
 
 func (c *HostileOperator) GetCurrentBlockRequest(ctx contract.StaticContext, req *GetCurrentBlockRequest) (*GetCurrentBlockResponse, error) {
@@ -202,6 +264,70 @@ func (c *HostileOperator) GetBlockRequest(ctx contract.StaticContext, req *GetBl
 	}
 
 	return &GetBlockResponse{Block: pb}, nil
+}
+
+func (c *HostileOperator) GetUserSlotsRequest(ctx contract.StaticContext, req *GetUserSlotsRequest) (*GetUserSlotsResponse, error) {
+	if req.From == nil {
+		return nil, fmt.Errorf("invalid account parameter")
+	}
+	reqAcct, err := loadAccount(ctx, loom.UnmarshalAddressPB(req.From))
+	if err != nil {
+		return nil, err
+	}
+	res := &GetUserSlotsResponse{}
+	res.Slots = reqAcct.Slots
+
+	return res, nil
+}
+
+func (c *HostileOperator) GetPlasmaTxRequest(ctx contract.StaticContext, req *GetPlasmaTxRequest) (*GetPlasmaTxResponse, error) {
+	pb := &PlasmaBlock{}
+
+	if req.BlockHeight == nil {
+		return nil, fmt.Errorf("invalid BlockHeight")
+	}
+
+	err := ctx.Get(blockKey(req.BlockHeight.Value), pb)
+	if err != nil {
+		return nil, err
+	}
+
+	leaves := make(map[uint64][]byte)
+	tx := &PlasmaTx{}
+	for _, v := range pb.Transactions {
+		// Merklize tx set
+		leaves[v.Slot] = v.MerkleHash
+		// Save the tx matched
+		if v.Slot == req.Slot {
+			tx = v
+		}
+	}
+
+	// Create SMT
+	smt, err := mamamerkle.NewSparseMerkleTree(64, leaves)
+	if err != nil {
+		return nil, err
+	}
+
+	tx.Proof = smt.CreateMerkleProof(tx.Slot)
+
+	res := &GetPlasmaTxResponse{
+		Plasmatx: tx,
+	}
+
+	return res, nil
+}
+
+func loadAccount(ctx contract.StaticContext, owner loom.Address) (*Account, error) {
+	acct := &Account{
+		Owner: owner.MarshalPB(),
+	}
+	err := ctx.Get(accountKey(owner), acct)
+	if err != nil && err != contract.ErrNotFound {
+		return nil, err
+	}
+
+	return acct, nil
 }
 
 func soliditySha3(data uint64) ([]byte, error) {

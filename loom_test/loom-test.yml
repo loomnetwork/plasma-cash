@@ -1,1 +1,3 @@
-PlasmaCashEnabled: true
+PlasmaCash:
+  ContractEnabled: True
+  OracleEnabled: False

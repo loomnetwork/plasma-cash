@@ -61,7 +61,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
      * @param slot The slot of the coin whose exit was challenged
      * @param txHash The hash of the tx used for the challenge
      */
-    event ChallengedExit(uint64 indexed slot, bytes32 txHash);
+    event ChallengedExit(uint64 indexed slot, bytes32 txHash, uint256 challengingBlockNumber);
 
     /**
      * Event for exit response logging
@@ -654,7 +654,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
             })
         );
 
-        emit ChallengedExit(slot, txHash);
+        emit ChallengedExit(slot, txHash, challengingBlockNumber);
     }
 
     /******************** BOND RELATED ********************/
@@ -807,6 +807,16 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
     function getPlasmaCoin(uint64 slot) external view returns(uint256, uint256, uint256, address, State, Mode, address) {
         Coin memory c = coins[slot];
         return (c.uid, c.depositBlock, c.denomination, c.owner, c.state, c.mode, c.contractAddress);
+    }
+
+    function getChallenge(uint64 slot, bytes32 txHash) 
+        external 
+        view 
+        returns(address, address, bytes32, uint256)
+    {
+        uint256 index = uint256(challenges[slot].indexOf(txHash));
+        ChallengeLib.Challenge memory c = challenges[slot][index];
+        return (c.owner, c.challenger, c.txHash, c.challengingBlockNumber);
     }
 
     function getExit(uint64 slot) external view returns(address, uint256, uint256, State) {

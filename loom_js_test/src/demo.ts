@@ -4,7 +4,7 @@ import Web3 from 'web3'
 import { IPlasmaDeposit, marshalDepositEvent } from 'loom-js'
 
 import { increaseTime } from './ganache-helpers'
-import { createTestEntity, ADDRESSES, ACCOUNTS } from './config'
+import { sleep, createTestEntity, ADDRESSES, ACCOUNTS } from './config'
 import { EthCardsContract } from './cards-contract'
 
 // Alice registers and has 5 coins, and she deposits 3 of them.
@@ -20,7 +20,7 @@ function setupContracts(web3: Web3): { cards: EthCardsContract } {
 }
 
 export async function runDemo(t: test.Test) {
-  const web3 = new Web3('http://localhost:8545')
+  const web3 = new Web3(new Web3.providers.WebsocketProvider('ws://127.0.0.1:8545'))
   const { cards } = setupContracts(web3)
   const authority = createTestEntity(web3, ACCOUNTS.authority)
   const alice = createTestEntity(web3, ACCOUNTS.alice)
@@ -37,13 +37,10 @@ export async function runDemo(t: test.Test) {
     await cards.depositToPlasmaAsync({ tokenId: COINS[i], from: alice.ethAddress })
   }
 
-  const depositEvents: any[] = await authority.plasmaCashContract.getPastEvents('Deposit', {
-    fromBlock: startBlockNum
-  })
-  const deposits = depositEvents.map<IPlasmaDeposit>(event =>
-    marshalDepositEvent(event.returnValues)
-  )
+  // Get deposit events for all
+  const deposits: IPlasmaDeposit[] = await authority.getDepositEvents(true)
   t.equal(deposits.length, ALICE_DEPOSITED_COINS, 'All deposit events accounted for')
+
   for (let i = 0; i < deposits.length; i++) {
     const deposit = deposits[i]
     t.equal(deposit.blockNumber.toNumber(), i + 1, `Deposit ${i + 1} block number is correct`)
@@ -69,6 +66,13 @@ export async function runDemo(t: test.Test) {
   for (let i = 0; i < deposits.length; i++) {
     await authority.submitPlasmaDepositAsync(deposits[i])
   }
+  await sleep(2000)
+
+
+  const coins = await alice.getUserCoinsAsync()
+  t.ok(coins[0].slot.eq(deposits[0].slot), 'got correct deposit coins 1')
+  t.ok(coins[1].slot.eq(deposits[1].slot), 'got correct deposit coins 2')
+  t.ok(coins[2].slot.eq(deposits[2].slot), 'got correct deposit coins 3')
 
   // Alice to Bob, and Alice to Charlie. We care about the Alice to Bob
   // transaction
@@ -89,8 +93,10 @@ export async function runDemo(t: test.Test) {
     newOwner: charlie
   })
   const plasmaBlockNum1 = await authority.submitPlasmaBlockAsync()
+
   // Add an empty block in between (for proof of exclusion)
   await authority.submitPlasmaBlockAsync()
+
   // Bob -> Charlie
   await bob.transferTokenAsync({
     slot: deposit3.slot,
@@ -98,21 +104,21 @@ export async function runDemo(t: test.Test) {
     denomination: 1,
     newOwner: charlie
   })
-
-  // TODO: get coin history of deposit3.slot from bob
-  // TODO: charlie should verify coin history of deposit3.slot
-
   const plasmaBlockNum2 = await authority.submitPlasmaBlockAsync()
 
-  // TODO: charlie should watch exits of deposit3.slot
+  const coin = await charlie.getPlasmaCoinAsync(deposit3.slot)
+  const blocks = await bob.getBlockNumbersAsync(coin.depositBlockNum)
+
+  const proofs = await bob.getCoinHistoryAsync(deposit3.slot, blocks)
+  t.equal(await charlie.verifyCoinHistoryAsync(deposit3.slot, proofs), true)
+  let charlieCoin = charlie.watchExit(deposit3.slot, coin.depositBlockNum)
 
   await charlie.startExitAsync({
     slot: deposit3.slot,
     prevBlockNum: plasmaBlockNum1,
     exitBlockNum: plasmaBlockNum2
   })
-
-  // TODO: charlie should stop watching exits of deposit3.slot
+  charlie.stopWatching(charlieCoin)
 
   // Jump forward in time by 8 days
   await increaseTime(web3, 8 * 24 * 3600)
@@ -128,6 +134,10 @@ export async function runDemo(t: test.Test) {
   t.equal(balance.toNumber(), 0, 'bob should have no tokens in cards contract')
   balance = await cards.balanceOfAsync(charlie.ethAddress)
   t.equal(balance.toNumber(), 1, 'charlie should have 1 token in cards contract')
+
+  // Close the websocket, hacky :/
+  // @ts-ignore
+  web3.currentProvider.connection.close()
 
   t.end()
 }

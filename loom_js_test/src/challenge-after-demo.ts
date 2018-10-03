@@ -4,7 +4,7 @@ import BN from 'bn.js'
 import { IPlasmaDeposit, marshalDepositEvent } from 'loom-js'
 
 import { increaseTime, getEthBalanceAtAddress } from './ganache-helpers'
-import { createTestEntity, ADDRESSES, ACCOUNTS } from './config'
+import { sleep, createTestEntity, ADDRESSES, ACCOUNTS } from './config'
 import { EthCardsContract } from './cards-contract'
 
 // All the contracts are expected to have been deployed to Ganache when this function is called.
@@ -15,7 +15,7 @@ function setupContracts(web3: Web3): { cards: EthCardsContract } {
 }
 
 export async function runChallengeAfterDemo(t: test.Test) {
-  const web3 = new Web3('http://localhost:8545')
+  const web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8545'))
   const { cards } = setupContracts(web3)
   const authority = createTestEntity(web3, ACCOUNTS.authority)
   const mallory = createTestEntity(web3, ACCOUNTS.mallory)
@@ -70,12 +70,14 @@ export async function runChallengeAfterDemo(t: test.Test) {
     denomination: 1,
     newOwner: dan
   })
+  const blocks = await mallory.getBlockNumbersAsync(coin.depositBlockNum)
+  const proofs = await mallory.getCoinHistoryAsync(deposit1Slot, blocks)
+  t.equal(await dan.verifyCoinHistoryAsync(deposit1Slot, proofs), true)
 
-  //incl_proofs, excl_proofs = mallory.get_coin_history(deposit1_utxo)
-  //assert dan.verify_coin_history(deposit1_utxo, incl_proofs, excl_proofs)
+  const danCoin = dan.watchExit(deposit1Slot, coin.depositBlockNum)
+
 
   const plasmaBlock3 = await authority.submitPlasmaBlockAsync()
-  //dan.watch_exits(deposit1_utxo)
 
   // Mallory attempts to exit spent coin (the one sent to Dan)
   await mallory.startExitAsync({
@@ -84,17 +86,14 @@ export async function runChallengeAfterDemo(t: test.Test) {
     exitBlockNum: coin.depositBlockNum
   })
 
-  // Mallory's exit should be auto-challenged by Dan's client, but watching/auto-challenge hasn't
-  // been implemented yet, so challenge the exit manually for now...
-  await dan.challengeAfterAsync({ slot: deposit1Slot, challengingBlockNum: plasmaBlock3 })
-
   // Having successufly challenged Mallory's exit Dan should be able to exit the coin
+  await sleep(2000)
   await dan.startExitAsync({
     slot: deposit1Slot,
     prevBlockNum: coin.depositBlockNum,
     exitBlockNum: plasmaBlock3
   })
-  //dan.stop_watching_exits(deposit1_utxo)
+  dan.stopWatching(danCoin)
 
   // Jump forward in time by 8 days
   await increaseTime(web3, 8 * 24 * 3600)
@@ -113,5 +112,8 @@ export async function runChallengeAfterDemo(t: test.Test) {
   const danTokensEnd = await cards.balanceOfAsync(dan.ethAddress)
   t.equal(danTokensEnd.toNumber(), 1, 'END: Dan has correct number of tokens')
 
+  // Close the websocket, hacky :/
+  // @ts-ignore
+  web3.currentProvider.connection.close()
   t.end()
 }

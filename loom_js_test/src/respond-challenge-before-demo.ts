@@ -1,10 +1,15 @@
 import test from 'tape'
 import BN from 'bn.js'
 import Web3 from 'web3'
-import { IPlasmaDeposit, marshalDepositEvent, IPlasmaChallenge, marshalChallengeEvent } from 'loom-js'
+import {
+  IPlasmaDeposit,
+  marshalDepositEvent,
+  IPlasmaChallenge,
+  marshalChallengeEvent
+} from 'loom-js'
 
 import { increaseTime, getEthBalanceAtAddress } from './ganache-helpers'
-import { createTestEntity, ADDRESSES, ACCOUNTS } from './config'
+import { sleep, createTestEntity, ADDRESSES, ACCOUNTS } from './config'
 import { EthCardsContract } from './cards-contract'
 
 // Alice registers and has 5 coins, and she deposits 3 of them.
@@ -20,7 +25,7 @@ function setupContracts(web3: Web3): { cards: EthCardsContract } {
 }
 
 export async function runRespondChallengeBeforeDemo(t: test.Test) {
-  const web3 = new Web3('http://localhost:8545')
+  const web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8545'))
   const { cards } = setupContracts(web3)
   const authority = createTestEntity(web3, ACCOUNTS.authority)
   const dan = createTestEntity(web3, ACCOUNTS.dan)
@@ -67,6 +72,7 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
     prevBlockNum: coin.depositBlockNum,
     exitBlockNum: trudyToDanBlock
   })
+  const danExit = dan.watchChallenge(deposit1Slot, coin.depositBlockNum)
 
   // Trudy tries to challengeBefore Dan's exit
   await trudy.challengeBeforeAsync({
@@ -74,25 +80,14 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
     prevBlockNum: new BN(0),
     challengingBlockNum: coin.depositBlockNum
   })
-
-  // Dan gets the transaction hash used for the above challenge
-  // and responds to it
-  const challengeEvents: any[] = await authority.plasmaCashContract.getPastEvents('ChallengedExit', {
-    fromBlock: startBlockNum
-  })
-  const challenges = challengeEvents.map<IPlasmaChallenge>(event =>
-    marshalChallengeEvent(event.returnValues)
-  )
-  await dan.respondChallengeBeforeAsync({
-    slot: deposit1Slot,
-    challengingTxHash: challenges[0].txHash,
-    respondingBlockNum: trudyToDanBlock
-  })
+  await sleep(2000)
 
   // Jump forward in time by 8 days
   await increaseTime(web3, 8 * 24 * 3600)
 
   await authority.finalizeExitsAsync()
+  // Now that the exit has been finalized, stop watching challenges
+  dan.stopWatching(danExit)
 
   await dan.withdrawAsync(deposit1Slot)
 
@@ -106,5 +101,8 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
   // 1 in this demo and 1 in a previous one.
   t.equal(danTokensEnd.toNumber(), 7, 'END: Dan has correct number of tokens')
 
+  // Close the websocket, hacky :/
+  // @ts-ignore
+  web3.currentProvider.connection.close()
   t.end()
 }
