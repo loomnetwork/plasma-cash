@@ -36,6 +36,7 @@ export async function runDemo(t: test.Test) {
 
   const startBlockNum = await web3.eth.getBlockNumber()
 
+  const blk = await authority.getCurrentBlockAsync()
   for (let i = 0; i < ALICE_DEPOSITED_COINS; i++) {
     await cards.depositToPlasmaAsync({ tokenId: COINS[i], from: alice.ethAddress })
   }
@@ -46,7 +47,7 @@ export async function runDemo(t: test.Test) {
 
   for (let i = 0; i < deposits.length; i++) {
     const deposit = deposits[i]
-    t.equal(deposit.blockNumber.toNumber(), i + 1, `Deposit ${i + 1} block number is correct`)
+    t.equal(deposit.blockNumber.toNumber(), blk.toNumber() + i + 1, `Deposit ${i + 1} block number is correct`)
     t.equal(deposit.denomination.toNumber(), 1, `Deposit ${i + 1} denomination is correct`)
     t.equal(deposit.from, alice.ethAddress, `Deposit ${i + 1} sender is correct`)
   }
@@ -64,13 +65,7 @@ export async function runDemo(t: test.Test) {
     'plasma contract should have 3 tokens in cards contract'
   )
 
-  // NOTE: In practice the Plasma Cash Oracle will submit the deposits to the DAppChain,
-  // we're doing it here manually to simplify the test setup.
-  for (let i = 0; i < deposits.length; i++) {
-    await authority.submitPlasmaDepositAsync(deposits[i])
-  }
-  await sleep(2000)
-
+  await sleep(8000)
 
   const coins = await alice.getUserCoinsAsync()
   t.ok(coins[0].slot.eq(deposits[0].slot), 'got correct deposit coins 1')

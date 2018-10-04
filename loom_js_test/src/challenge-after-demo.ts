@@ -50,11 +50,7 @@ export async function runChallengeAfterDemo(t: test.Test) {
     'POST-DEPOSIT: Mallory has correct number of tokens'
   )
 
-  // NOTE: In practice the Plasma Cash Oracle will submit the deposits to the DAppChain,
-  // we're doing it here manually to simplify the test setup.
-  for (let i = 0; i < deposits.length; i++) {
-    await authority.submitPlasmaDepositAsync(deposits[i])
-  }
+  await sleep(8000)
 
   const plasmaBlock1 = await authority.submitPlasmaBlockAsync()
   const plasmaBlock2 = await authority.submitPlasmaBlockAsync()
