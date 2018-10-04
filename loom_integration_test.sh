@@ -177,6 +177,6 @@ yarn jenkins:test:hostile
 
 # If the script gets this far then nothing failed and we can wipe out the working dir since we
 # probably wont't need the logs.
-if [[ $LOOM_DIR ]]; then 
-    rm -rf $LOOM_DIR
-fi
+//if [[ $LOOM_DIR ]]; then 
+//    rm -rf $LOOM_DIR
+//fi

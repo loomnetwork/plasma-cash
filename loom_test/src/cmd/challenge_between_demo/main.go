@@ -4,8 +4,9 @@ import (
 	"client"
 	"context"
 	"fmt"
-    "math/big"
 	"log"
+	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -36,7 +37,7 @@ func main() {
 	// Give Eve 5 tokens
 	eve.Register()
 
-	startBlockHeader, err := ganache.HeaderByNumber(context.TODO(), nil)
+	_, err = ganache.HeaderByNumber(context.TODO(), nil)
 	exitIfError(err)
 
 	// Eve deposits a coin
@@ -44,7 +45,9 @@ func main() {
 	deposit1, err := eve.RootChain.DepositEventData(txHash)
 	exitIfError(err)
 
-	authority.DebugForwardDepositEvents(startBlockHeader.Number.Uint64(), startBlockHeader.Number.Uint64()+100)
+	time.Sleep(6 * time.Second)
+
+	//authority.DebugForwardDepositEvents(startBlockHeader.Number.Uint64(), startBlockHeader.Number.Uint64()+100)
 
 	// Eve sends her plasma coin to Bob
 	coin, err := eve.PlasmaCoin(deposit1.Slot)

@@ -1,1 +1,16 @@
-PlasmaCashEnabled: true
+PlasmaCash:
+  ContractEnabled: True
+  OracleEnabled: True
+  OracleConfig:
+    PlasmaBlockInterval: 1000
+    DAppChainCfg:
+      WriteURI: "http://localhost:46658/rpc"
+      ReadURI: "http://localhost:46658/query"
+      PrivateKeyPath: "/Users/parth/gopath/src/github.com/loomnetwork/plasma-cash/loom_test/test.key"
+    EthClientCfg:
+      EthereumURI: "http://localhost:8545"
+      PlasmaHexAddress: "0x9e51aeeeca736cd81d27e025465834b8ec08628a"
+      PrivateKeyPath: "/Users/parth/gopath/src/github.com/loomnetwork/plasma-cash/eth.key"
+      OverrideGas: false
+      TxPollInterval: 1
+      TxTimeout: 10
