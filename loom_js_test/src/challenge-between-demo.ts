@@ -38,11 +38,7 @@ export async function runChallengeBetweenDemo(t: test.Test) {
   )
   t.equal(deposits.length, 1, 'Eve has correct number of deposits')
 
-  // NOTE: In practice the Plasma Cash Oracle will submit the deposits to the DAppChain,
-  // we're doing it here manually to simplify the test setup.
-  for (let i = 0; i < deposits.length; i++) {
-    await authority.submitPlasmaDepositAsync(deposits[i])
-  }
+  await sleep(8000)
 
   const deposit1Slot = deposits[0].slot
 
