@@ -60,7 +60,7 @@ export async function runChallengeBeforeDemo(t: test.Test) {
     slot: deposit1Slot,
     prevBlockNum: coin.depositBlockNum,
     denomination: 1,
-    newOwner: mallory
+    newOwner: mallory.ethAddress
   })
 
   // Operator includes it
@@ -71,7 +71,7 @@ export async function runChallengeBeforeDemo(t: test.Test) {
     slot: deposit1Slot,
     prevBlockNum: trudyToMalloryBlock,
     denomination: 1,
-    newOwner: trudy
+    newOwner: trudy.ethAddress
   })
 
   // Operator includes it

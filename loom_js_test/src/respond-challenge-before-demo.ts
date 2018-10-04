@@ -60,7 +60,7 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
     slot: deposit1Slot,
     prevBlockNum: coin.depositBlockNum,
     denomination: 1,
-    newOwner: dan
+    newOwner: dan.ethAddress
   })
 
   // Operator includes it

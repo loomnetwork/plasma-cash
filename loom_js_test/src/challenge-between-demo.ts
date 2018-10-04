@@ -52,7 +52,7 @@ export async function runChallengeBetweenDemo(t: test.Test) {
     slot: deposit1Slot,
     prevBlockNum: coin.depositBlockNum,
     denomination: 1,
-    newOwner: bob
+    newOwner: bob.ethAddress
   })
 
   const blocks = await eve.getBlockNumbersAsync(coin.depositBlockNum)
@@ -67,7 +67,7 @@ export async function runChallengeBetweenDemo(t: test.Test) {
     slot: deposit1Slot,
     prevBlockNum: coin.depositBlockNum,
     denomination: 1,
-    newOwner: alice
+    newOwner: alice.ethAddress
   })
 
   const eveToAliceBlockNum = await authority.submitPlasmaBlockAsync()

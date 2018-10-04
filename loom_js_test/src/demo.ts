@@ -86,14 +86,14 @@ export async function runDemo(t: test.Test) {
     slot: deposit3.slot,
     prevBlockNum: deposit3.blockNumber,
     denomination: 1,
-    newOwner: bob
+    newOwner: bob.ethAddress
   })
   // Alice -> Charlie
   await alice.transferTokenAsync({
     slot: deposit2.slot,
     prevBlockNum: deposit2.blockNumber,
     denomination: 1,
-    newOwner: charlie
+    newOwner: charlie.ethAddress
   })
   const plasmaBlockNum1 = await authority.submitPlasmaBlockAsync()
 
@@ -105,7 +105,7 @@ export async function runDemo(t: test.Test) {
     slot: deposit3.slot,
     prevBlockNum: new BN(1000),
     denomination: 1,
-    newOwner: charlie
+    newOwner: charlie.ethAddress
   })
   const plasmaBlockNum2 = await authority.submitPlasmaBlockAsync()
 

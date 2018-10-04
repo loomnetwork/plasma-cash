@@ -68,7 +68,7 @@ export async function runChallengeAfterDemo(t: test.Test) {
     slot: deposit1Slot,
     prevBlockNum: coin.depositBlockNum,
     denomination: 1,
-    newOwner: dan
+    newOwner: dan.ethAddress
   })
   const blocks = await mallory.getBlockNumbersAsync(coin.depositBlockNum)
   const proofs = await mallory.getCoinHistoryAsync(deposit1Slot, blocks)
