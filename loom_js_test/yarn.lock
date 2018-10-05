@@ -4450,7 +4450,7 @@ long@^3.2.0:
 
 "loom-js@git+https://github.com/loomnetwork/loom-js.git#build-files":
   version "1.25.0"
-  resolved "git+https://github.com/loomnetwork/loom-js.git#9f7adfee9284efea7768917dca82cca5541b8ea2"
+  resolved "git+https://github.com/loomnetwork/loom-js.git#9add9c59d81572ba6215beb9c7a0fa4b8686ae13"
   dependencies:
     axios "^0.18.0"
     bn.js "^4.11.8"
