@@ -66,13 +66,14 @@ export async function runChallengeAfterDemo(t: test.Test) {
     denomination: 1,
     newOwner: dan.ethAddress
   })
+  const plasmaBlock3 = await authority.submitPlasmaBlockAsync()
+
   const blocks = await mallory.getBlockNumbersAsync(coin.depositBlockNum)
   const proofs = await mallory.getCoinHistoryAsync(deposit1Slot, blocks)
   t.equal(await dan.verifyCoinHistoryAsync(deposit1Slot, proofs), true)
 
   const danCoin = dan.watchExit(deposit1Slot, coin.depositBlockNum)
 
-  const plasmaBlock3 = await authority.submitPlasmaBlockAsync()
 
   // Mallory attempts to exit spent coin (the one sent to Dan)
   await mallory.startExitAsync({

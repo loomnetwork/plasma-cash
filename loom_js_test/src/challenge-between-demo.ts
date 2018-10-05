@@ -51,12 +51,12 @@ export async function runChallengeBetweenDemo(t: test.Test) {
     newOwner: bob.ethAddress
   })
 
+  const eveToBobBlockNum = await authority.submitPlasmaBlockAsync()
+
   const blocks = await eve.getBlockNumbersAsync(coin.depositBlockNum)
   const proofs = await eve.getCoinHistoryAsync(deposit1Slot, blocks)
   t.equal(await bob.verifyCoinHistoryAsync(deposit1Slot, proofs), true)
   const bobCoin = bob.watchExit(deposit1Slot, coin.depositBlockNum)
-
-  const eveToBobBlockNum = await authority.submitPlasmaBlockAsync()
 
   // Eve sends this same plasma coin to Alice
   await eve.transferTokenAsync({
