@@ -65,7 +65,7 @@ func main() {
 	exitIfError(err)
 	log.Printf("current block: %v", currentBlock)
 
-	startBlockHeader, err := ganache.HeaderByNumber(context.TODO(), nil)
+	_, err = ganache.HeaderByNumber(context.TODO(), nil)
 	exitIfError(err)
 
 	// Alice deposits 3 of her coins to the plasma contract and gets 3 plasma nft
@@ -78,12 +78,18 @@ func main() {
 	slots = append(slots, deposit1.Slot)
 	alice.DebugCoinMetaData(slots)
 
+	log.Printf("Checkpoint 1")
+	log.Println(deposit1.Slot)
+
 	txHash = alice.Deposit(tokenID.Add(tokenID, big.NewInt(1)))
 	time.Sleep(1 * time.Second)
 	deposit2, err := alice.RootChain.DepositEventData(txHash)
 	exitIfError(err)
 	slots = append(slots, deposit2.Slot)
 	alice.DebugCoinMetaData(slots)
+
+	log.Printf("Checkpoint 2")
+	log.Println(deposit2.Slot)
 
 	txHash = alice.Deposit(tokenID.Add(tokenID, big.NewInt(2)))
 	time.Sleep(1 * time.Second)
@@ -92,10 +98,13 @@ func main() {
 	slots = append(slots, deposit3.Slot)
 	alice.DebugCoinMetaData(slots)
 
-	authority.DebugForwardDepositEvents(startBlockHeader.Number.Uint64(), startBlockHeader.Number.Uint64()+100)
+	log.Printf("Checkpoint 3")
+	log.Println(deposit3.Slot)
+	time.Sleep(6 * time.Second)
 
 	//Alice to Bob, and Alice to Charlie. We care about the Alice to Bob
 	// transaction
+
 	account, err := bob.TokenContract.Account()
 	exitIfError(err)
 	err = alice.SendTransaction(deposit3.Slot, deposit3.BlockNum, big.NewInt(1), account.Address) //aliceToBob
@@ -111,6 +120,8 @@ func main() {
 	// Add an empty block in betweeen (for proof of exclusion reasons)
 	exitIfError(authority.SubmitBlock())
 
+	log.Println("Checkpoint 4")
+
 	// Bob to Charlie
 	blkNum := plasmaBlock1
 	account, err = charlie.TokenContract.Account() // the prev transaction was included in block 1000
@@ -119,6 +130,7 @@ func main() {
 	exitIfError(err)
 
 	// TODO: verify coin history
+	log.Println("Checkpoint 5")
 
 	exitIfError(authority.SubmitBlock())
 	plasmaBlock2, err := authority.GetBlockNumber()
@@ -128,6 +140,7 @@ func main() {
 	// included his transaction.
 	charlie.DebugCoinMetaData(slots)
 	_, err = charlie.StartExit(deposit3.Slot, plasmaBlock1, plasmaBlock2)
+	log.Println("Checkpoint 6")
 	exitIfError(err)
 	charlie.DebugCoinMetaData(slots)
 

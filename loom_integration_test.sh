@@ -62,6 +62,8 @@ function init_honest_dappchain {
     rm -rf app.db
     rm -rf chaindata
     cp $REPO_ROOT/loom_test/loom-test.yml $LOOM_DIR/loom.yml    
+    cp $REPO_ROOT/loom_test/eth.key $LOOM_DIR/eth.key
+    cp $REPO_ROOT/loom_test/test.key $LOOM_DIR/test.key
     $LOOM_BIN init -f
     echo 'Loom DAppChain initialized in ' $LOOM_DIR
 }

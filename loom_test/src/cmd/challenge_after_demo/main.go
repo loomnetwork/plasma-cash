@@ -5,8 +5,9 @@ import (
 	"context"
 	"flag"
 	"fmt"
-    "math/big"
 	"log"
+	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -53,7 +54,7 @@ func main() {
 	exitIfError(err)
 	log.Printf("current block: %v", currentBlock)
 
-	startBlockHeader, err := ganache.HeaderByNumber(context.TODO(), nil)
+	_, err = ganache.HeaderByNumber(context.TODO(), nil)
 	exitIfError(err)
 
 	// Mallory deposits one of her coins to the plasma contract
@@ -76,7 +77,7 @@ func main() {
 		log.Fatal("POST-DEPOSIT: Mallory has incorrect number of tokens")
 	}
 
-	authority.DebugForwardDepositEvents(startBlockHeader.Number.Uint64(), startBlockHeader.Number.Uint64()+100)
+	time.Sleep(6 * time.Second)
 
 	err = authority.SubmitBlock()
 	exitIfError(err)
@@ -101,6 +102,8 @@ func main() {
 	exitIfError(err)
 	log.Printf("account\n")
 
+	time.Sleep(5 * time.Second)
+
 	err = mallory.SendTransaction(depositSlot1, coin.DepositBlockNum, big.NewInt(1), danAccount.Address) //mallory_to_dan
 	exitIfError(err)
 
@@ -109,6 +112,7 @@ func main() {
 	plasmaBlock3, err := authority.GetBlockNumber()
 	exitIfError(err)
 	log.Printf("plasma block 3: %v\n", plasmaBlock3)
+	time.Sleep(4 * time.Second)
 
 	// Mallory attempts to exit spent coin (the one sent to Dan)
 	log.Printf("Mallory trying an exit %d on block number %d\n", depositSlot1, coin.DepositBlockNum)
@@ -166,12 +170,10 @@ func exitIfError(err error) {
 	}
 }
 
-
 func notEquals(x *big.Int, y int64) bool {
-    if x.Cmp(big.NewInt(y)) != 0 {
-        return true
-    } else {
-        return false
-    }
+	if x.Cmp(big.NewInt(y)) != 0 {
+		return true
+	} else {
+		return false
+	}
 }
-

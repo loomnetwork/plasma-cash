@@ -4,8 +4,9 @@ import (
 	"client"
 	"context"
 	"fmt"
-    "math/big"
 	"log"
+	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -37,7 +38,7 @@ func main() {
 	// Give Dan 5 tokens
 	dan.TokenContract.Register()
 
-	startBlockHeader, err := ganache.HeaderByNumber(context.TODO(), nil)
+	_, err = ganache.HeaderByNumber(context.TODO(), nil)
 	exitIfError(err)
 
 	// Dan deposits a coin
@@ -46,8 +47,7 @@ func main() {
 	exitIfError(err)
 	depositSlot1 := depEvent.Slot
 
-	// Forward the deposit to the DAppChain (this will be done by an Oracle in practice)
-	authority.DebugForwardDepositEvents(startBlockHeader.Number.Uint64(), startBlockHeader.Number.Uint64()+100)
+	time.Sleep(6 * time.Second)
 
 	danTokenStart, err := dan.TokenContract.BalanceOf()
 	exitIfError(err)
