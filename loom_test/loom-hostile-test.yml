@@ -4,7 +4,7 @@ PlasmaCash:
   OracleConfig:
     PlasmaBlockInterval: 1000
     DAppChainCfg:
-      ContractName: "plasmacash"
+      ContractName: "hostileoperator"
       WriteURI: "http://localhost:46658/rpc"
       ReadURI: "http://localhost:46658/query"
       PrivateKeyPath: "/Users/parth/gopath/src/github.com/loomnetwork/plasma-cash/loom_test/test.key"
