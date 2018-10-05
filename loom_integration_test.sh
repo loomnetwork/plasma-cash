@@ -168,6 +168,8 @@ init_honest_dappchain
 start_chains
 
 cd $REPO_ROOT/loom_js_test
+rm -rf db/*.json # remove all previously stored db related files
+
 yarn jenkins:test:honest
 
 stop_chains
