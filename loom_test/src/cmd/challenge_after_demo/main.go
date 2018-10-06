@@ -137,6 +137,7 @@ func main() {
 	danBalanceBefore, err := ganache.BalanceAt(context.TODO(), common.HexToAddress(danAccount.Address), nil)
 	exitIfError(err)
 	err = dan.WithdrawBonds()
+	time.Sleep(2 * time.Second)
 	exitIfError(err)
 	danBalanceAfter, err := ganache.BalanceAt(context.TODO(), common.HexToAddress(danAccount.Address), nil)
 	exitIfError(err)

@@ -102,6 +102,7 @@ func main() {
 	exitIfError(err)
 	fmt.Println("Bob attempts to withdraw bonds")
 	err = bob.WithdrawBonds()
+	time.Sleep(2 * time.Second)
 	exitIfError(err)
 	bobBalanceAfter, err := ganache.BalanceAt(context.TODO(), common.HexToAddress(bobAccount.Address), nil)
 	exitIfError(err)
