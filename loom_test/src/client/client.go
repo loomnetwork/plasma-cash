@@ -8,7 +8,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/pkg/errors"
 
 	"github.com/loomnetwork/go-loom/client/plasma_cash"
 	"github.com/loomnetwork/go-loom/client/plasma_cash/eth"
@@ -41,27 +40,6 @@ func (c *Client) Deposit(tokenID *big.Int) common.Hash {
 	return txHash
 }
 
-// DebugForwardDepositEvents forwards deposit event data from the Plasma Cash contract on Ethereum
-// to the DAppChain. The parameters should used to specify the Ethereum block range from which
-// event data should be retrieved. In practice this will be done by the Plasma Cash Oracle, this
-// function is only for testing.
-//
-func (c *Client) DebugForwardDepositEvents(startBlockNum, endBlockNum uint64) {
-	//To prevent us to having to run the oracle, we are going to run the oracle manually here
-	//Normally this would run as a seperate process, in future tests we can spin it up independantly
-	deposits, err := c.plasmaEthClient.FetchDeposits(startBlockNum, endBlockNum)
-	if err != nil {
-		panic(errors.Wrap(err, "failed to fetch Plasma deposits from Ethereum"))
-	}
-
-	for _, deposit := range deposits {
-		fmt.Printf("Forwarded deposit event data for slot %v\n", deposit.Slot)
-		if err := c.childChain.Deposit(deposit); err != nil {
-			panic(err)
-		}
-	}
-}
-
 // Plasma Functions
 
 func Transaction(slot uint64, prevTxBlkNum *big.Int, denomination *big.Int, address string) plasma_cash.Tx {
@@ -87,6 +65,8 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum *big.Int, txBlkNum *big.Int
 		return nil, err
 	}
 
+	fmt.Println("Checkpoint Client.go 8")
+
 	blkModInterval := new(big.Int)
 	blkModInterval = blkModInterval.Mod(txBlkNum, big.NewInt(c.childBlockInterval))
 	if blkModInterval.Cmp(big.NewInt(0)) != 0 {
@@ -109,15 +89,19 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum *big.Int, txBlkNum *big.Int
 			exitingTxSig,
 			big.NewInt(0), txBlkNum)
 		if err != nil {
+			fmt.Println("Error Checkpoint Client.go 9")
 			return nil, err
 		}
 		return txHash, nil
 	}
 
+	fmt.Println("Checkpoint Client.go 10")
+
 	// Otherwise, they should get the raw tx info from the block
 	// And the merkle proof and submit these
 	exitingTx, exitingTxProof, err := c.getTxAndProof(txBlkNum, slot)
 	if err != nil {
+		fmt.Println("Error Here 11")
 		return nil, err
 	}
 	prevTx, prevTxProof, err := c.getTxAndProof(prevTxBlkNum, slot)
@@ -125,6 +109,9 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum *big.Int, txBlkNum *big.Int
 		return nil, err
 	}
 	sig := exitingTx.Sig()
+
+	fmt.Println("Here 12")
+	fmt.Println(slot, prevTx, exitingTx, prevTxProof, exitingTxProof, sig, prevTxBlkNum, txBlkNum)
 
 	return c.RootChain.StartExit(
 		slot,

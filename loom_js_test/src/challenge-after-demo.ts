@@ -50,11 +50,7 @@ export async function runChallengeAfterDemo(t: test.Test) {
     'POST-DEPOSIT: Mallory has correct number of tokens'
   )
 
-  // NOTE: In practice the Plasma Cash Oracle will submit the deposits to the DAppChain,
-  // we're doing it here manually to simplify the test setup.
-  for (let i = 0; i < deposits.length; i++) {
-    await authority.submitPlasmaDepositAsync(deposits[i])
-  }
+  await sleep(8000)
 
   const plasmaBlock1 = await authority.submitPlasmaBlockAsync()
   const plasmaBlock2 = await authority.submitPlasmaBlockAsync()
@@ -68,16 +64,16 @@ export async function runChallengeAfterDemo(t: test.Test) {
     slot: deposit1Slot,
     prevBlockNum: coin.depositBlockNum,
     denomination: 1,
-    newOwner: dan
+    newOwner: dan.ethAddress
   })
+  const plasmaBlock3 = await authority.submitPlasmaBlockAsync()
+
   const blocks = await mallory.getBlockNumbersAsync(coin.depositBlockNum)
   const proofs = await mallory.getCoinHistoryAsync(deposit1Slot, blocks)
   t.equal(await dan.verifyCoinHistoryAsync(deposit1Slot, proofs), true)
 
   const danCoin = dan.watchExit(deposit1Slot, coin.depositBlockNum)
 
-
-  const plasmaBlock3 = await authority.submitPlasmaBlockAsync()
 
   // Mallory attempts to exit spent coin (the one sent to Dan)
   await mallory.startExitAsync({

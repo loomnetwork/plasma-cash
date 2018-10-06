@@ -48,7 +48,7 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
   )
   t.equal(deposits.length, 1, 'All deposit events accounted for')
 
-  await authority.submitPlasmaDepositAsync(deposits[0])
+  await sleep(8000)
 
   const plasmaBlock1 = await authority.submitPlasmaBlockAsync()
   const plasmaBlock2 = await authority.submitPlasmaBlockAsync()
@@ -60,7 +60,7 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
     slot: deposit1Slot,
     prevBlockNum: coin.depositBlockNum,
     denomination: 1,
-    newOwner: dan
+    newOwner: dan.ethAddress
   })
 
   // Operator includes it

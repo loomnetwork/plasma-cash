@@ -45,7 +45,7 @@ export async function runChallengeBeforeDemo(t: test.Test) {
   )
   t.equal(deposits.length, 1, 'All deposit events accounted for')
 
-  await authority.submitPlasmaDepositAsync(deposits[0])
+  await sleep(8000)
 
   const plasmaBlock1 = await authority.submitPlasmaBlockAsync()
   const plasmaBlock2 = await authority.submitPlasmaBlockAsync()
@@ -60,7 +60,7 @@ export async function runChallengeBeforeDemo(t: test.Test) {
     slot: deposit1Slot,
     prevBlockNum: coin.depositBlockNum,
     denomination: 1,
-    newOwner: mallory
+    newOwner: mallory.ethAddress
   })
 
   // Operator includes it
@@ -71,7 +71,7 @@ export async function runChallengeBeforeDemo(t: test.Test) {
     slot: deposit1Slot,
     prevBlockNum: trudyToMalloryBlock,
     denomination: 1,
-    newOwner: trudy
+    newOwner: trudy.ethAddress
   })
 
   // Operator includes it

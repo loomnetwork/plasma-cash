@@ -6,7 +6,7 @@
 set -exo pipefail
 
 # Loom build to use for tests when running on Jenkins, this build will be automatically downloaded.
-BUILD_NUMBER=466
+BUILD_NUMBER=470
 
 # These can be toggled via the options below, only useful when running the script locally.
 LOOM_INIT_ONLY=false
@@ -61,13 +61,20 @@ function init_honest_dappchain {
     cd $LOOM_DIR
     rm -rf app.db
     rm -rf chaindata
+    cp $REPO_ROOT/loom_test/loom-test.yml $LOOM_DIR/loom.yml    
+    cp $REPO_ROOT/loom_test/eth.key $LOOM_DIR/eth.key
+    cp $REPO_ROOT/loom_test/test.key $LOOM_DIR/test.key
     $LOOM_BIN init -f
     echo 'Loom DAppChain initialized in ' $LOOM_DIR
 }
 
 function init_hostile_dappchain {
-    init_honest_dappchain
-
+    cd $LOOM_DIR
+    rm -rf app.db
+    rm -rf chaindata
+    cp $REPO_ROOT/loom_test/loom-hostile-test.yml $LOOM_DIR/loom.yml
+    $LOOM_BIN init -f
+    echo 'Hostile Loom DAppChain initialized in ' $LOOM_DIR
     cd $REPO_ROOT/loom_test
     rm -rf $LOOM_DIR/contracts; true
     mkdir $LOOM_DIR/contracts
@@ -120,8 +127,6 @@ fi
 echo "REPO_ROOT=(${REPO_ROOT})"
 echo "GOPATH=(${GOPATH})"
 
-cp $REPO_ROOT/loom_test/loom-test.yml $LOOM_DIR/loom.yml
-
 if [[ "$DEBUG_LOOM" == false ]]; then
     init_honest_dappchain
 fi
@@ -163,6 +168,8 @@ init_honest_dappchain
 start_chains
 
 cd $REPO_ROOT/loom_js_test
+rm -rf db/*.json # remove all previously stored db related files
+
 yarn jenkins:test:honest
 
 stop_chains
