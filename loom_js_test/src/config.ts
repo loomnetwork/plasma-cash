@@ -1,6 +1,6 @@
 import Web3 from 'web3'
 import {
-  Entity,
+  User,
   EthereumPlasmaClient,
   CryptoUtils,
   NonceTxMiddleware,
@@ -11,7 +11,8 @@ import {
   CachedDAppChainPlasmaClient,
   Client,
   PlasmaDB,
-  createJSONRPCClient
+  createJSONRPCClient,
+  Entity
 } from 'loom-js'
 
 export const DEFAULT_GAS = '3141592'
@@ -69,17 +70,14 @@ export function createTestEntity(web3: Web3, ethPrivateKey: string, database?: P
   ]
   const callerAddress = new Address('default', LocalAddress.fromPublicKey(pubKey))
   const contractName = useHostileOperator ? 'hostileoperator' : undefined
-  let dAppPlasmaClient
-  if (database !== undefined) {
-    dAppPlasmaClient = new CachedDAppChainPlasmaClient({ dAppClient, callerAddress, database, contractName })
-  } else {
-    dAppPlasmaClient = new DAppChainPlasmaClient({ dAppClient, callerAddress, contractName })
-  }
-  return new Entity(web3, {
+  const dAppPlasmaClient = new DAppChainPlasmaClient({ dAppClient, callerAddress, contractName })
+  // @ts-ignore
+  return new User(web3, {
     ethAccount,
     ethPlasmaClient,
     dAppPlasmaClient,
     defaultGas: DEFAULT_GAS,
     childBlockInterval: CHILD_BLOCK_INTERVAL
-  })
+  }
+  )
 }

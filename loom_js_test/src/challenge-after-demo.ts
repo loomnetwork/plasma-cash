@@ -1,7 +1,7 @@
 import test from 'tape'
 import Web3 from 'web3'
 import BN from 'bn.js'
-import { IPlasmaDeposit, marshalDepositEvent } from 'loom-js'
+import { createUser } from 'loom-js'
 
 import { increaseTime, getEthBalanceAtAddress } from './ganache-helpers'
 import { sleep, createTestEntity, ADDRESSES, ACCOUNTS } from './config'
@@ -15,11 +15,14 @@ function setupContracts(web3: Web3): { cards: EthCardsContract } {
 }
 
 export async function runChallengeAfterDemo(t: test.Test) {
-  const web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8545'))
+  const web3Endpoint = 'ws://127.0.0.1:8545'
+  const dappchainEndpoint = 'http://localhost:46658'
+  const web3 = new Web3(new Web3.providers.WebsocketProvider(web3Endpoint))
   const { cards } = setupContracts(web3)
-  const authority = createTestEntity(web3, ACCOUNTS.authority)
-  const mallory = createTestEntity(web3, ACCOUNTS.mallory)
-  const dan = createTestEntity(web3, ACCOUNTS.dan)
+
+  const authority = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.authority)
+  const mallory = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.mallory)
+  const dan = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.dan)
 
   // Give Mallory 5 tokens
   await cards.registerAsync(mallory.ethAddress)
@@ -29,18 +32,11 @@ export async function runChallengeAfterDemo(t: test.Test) {
   const malloryTokensStart = await cards.balanceOfAsync(mallory.ethAddress)
   t.equal(malloryTokensStart.toNumber(), 5, 'START: Mallory has correct number of tokens')
 
-  const startBlockNum = await web3.eth.getBlockNumber()
-
   // Mallory deposits one of her coins to the plasma contract
   await cards.depositToPlasmaAsync({ tokenId: 6, from: mallory.ethAddress })
   await cards.depositToPlasmaAsync({ tokenId: 7, from: mallory.ethAddress })
 
-  const depositEvents: any[] = await authority.plasmaCashContract.getPastEvents('Deposit', {
-    fromBlock: startBlockNum
-  })
-  const deposits = depositEvents.map<IPlasmaDeposit>(event =>
-    marshalDepositEvent(event.returnValues)
-  )
+  const deposits = await mallory.deposits()
   t.equal(deposits.length, 2, 'Mallory has correct number of deposits')
 
   const malloryTokensPostDeposit = await cards.balanceOfAsync(mallory.ethAddress)
@@ -52,30 +48,24 @@ export async function runChallengeAfterDemo(t: test.Test) {
 
   await sleep(8000)
 
-  const plasmaBlock1 = await authority.submitPlasmaBlockAsync()
-  const plasmaBlock2 = await authority.submitPlasmaBlockAsync()
+  await authority.submitPlasmaBlockAsync()
+  await authority.submitPlasmaBlockAsync()
 
   const deposit1Slot = deposits[0].slot
 
   // Mallory -> Dan
-  // Coin 6 was the first deposit of
   const coin = await mallory.getPlasmaCoinAsync(deposit1Slot)
-  await mallory.transferTokenAsync({
-    slot: deposit1Slot,
-    prevBlockNum: coin.depositBlockNum,
-    denomination: 1,
-    newOwner: dan.ethAddress
-  })
-  const plasmaBlock3 = await authority.submitPlasmaBlockAsync()
+  await mallory.transfer(deposit1Slot, dan.ethAddress)
+  await authority.submitPlasmaBlockAsync()
 
   const blocks = await mallory.getBlockNumbersAsync(coin.depositBlockNum)
   const proofs = await mallory.getCoinHistoryAsync(deposit1Slot, blocks)
   t.equal(await dan.verifyCoinHistoryAsync(deposit1Slot, proofs), true)
-
   const danCoin = dan.watchExit(deposit1Slot, coin.depositBlockNum)
 
 
   // Mallory attempts to exit spent coin (the one sent to Dan)
+  // Needs to use the low level API to make an invalid tx
   await mallory.startExitAsync({
     slot: deposit1Slot,
     prevBlockNum: new BN(0),
@@ -84,11 +74,8 @@ export async function runChallengeAfterDemo(t: test.Test) {
 
   // Having successufly challenged Mallory's exit Dan should be able to exit the coin
   await sleep(2000)
-  await dan.startExitAsync({
-    slot: deposit1Slot,
-    prevBlockNum: coin.depositBlockNum,
-    exitBlockNum: plasmaBlock3
-  })
+  await dan.exit(deposit1Slot)
+  
   dan.stopWatching(danCoin)
 
   // Jump forward in time by 8 days
@@ -111,5 +98,11 @@ export async function runChallengeAfterDemo(t: test.Test) {
   // Close the websocket, hacky :/
   // @ts-ignore
   web3.currentProvider.connection.close()
+  // @ts-ignore
+  authority.web3.currentProvider.connection.close()
+  // @ts-ignore
+  dan.web3.currentProvider.connection.close()
+  // @ts-ignore
+  mallory.web3.currentProvider.connection.close()
   t.end()
 }
