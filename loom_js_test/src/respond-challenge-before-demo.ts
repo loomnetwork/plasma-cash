@@ -62,7 +62,7 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
   // Now that the exit has been finalized, stop watching challenges
   dan.stopWatching(danExit)
 
-  await dan.withdrawCoinAsync(deposit1Slot)
+  await dan.withdrawAsync(deposit1Slot)
 
   const danBalanceBefore = await getEthBalanceAtAddress(web3, dan.ethAddress)
   await dan.withdrawBondsAsync()

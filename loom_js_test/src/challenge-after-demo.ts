@@ -75,7 +75,7 @@ export async function runChallengeAfterDemo(t: test.Test) {
 
   await authority.finalizeExitsAsync()
 
-  await dan.withdrawCoinAsync(deposit1Slot)
+  await dan.withdrawAsync(deposit1Slot)
 
   const danBalanceBefore = await getEthBalanceAtAddress(web3, dan.ethAddress)
   await dan.withdrawBondsAsync()

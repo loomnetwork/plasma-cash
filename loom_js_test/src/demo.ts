@@ -115,7 +115,7 @@ export async function runDemo(t: test.Test) {
   await authority.finalizeExitsAsync()
   // Charlie should now be able to withdraw the UTXO (plasma token) which contains ERC721 token #2
   // into his wallet.
-  await charlie.withdrawCoinAsync(deposit3.slot)
+  await charlie.withdrawAsync(deposit3.slot)
 
   balance = await cards.balanceOfAsync(alice.ethAddress)
   t.equal(balance.toNumber(), 2, 'alice should have 2 tokens in cards contract')
