@@ -1,7 +1,7 @@
 import test from 'tape'
 import BN from 'bn.js'
 import Web3 from 'web3'
-import { IPlasmaDeposit, marshalDepositEvent, createUser } from 'loom-js'
+import { createUser } from 'loom-js'
 
 import { increaseTime, getEthBalanceAtAddress } from './ganache-helpers'
 import { sleep, ADDRESSES, ACCOUNTS, setupContracts } from './config'

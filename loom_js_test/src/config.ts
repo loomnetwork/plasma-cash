@@ -8,7 +8,6 @@ import {
   Address,
   LocalAddress,
   DAppChainPlasmaClient,
-  CachedDAppChainPlasmaClient,
   Client,
   PlasmaDB,
   createJSONRPCClient,
@@ -63,7 +62,7 @@ export function enableHostilePlasmaCashOperator(enable: boolean) {
   useHostileOperator = enable
 }
 
-export function createTestEntity(web3: Web3, ethPrivateKey: string, database?: PlasmaDB): Entity {
+export function createTestEntity(web3: Web3, ethPrivateKey: string, database: PlasmaDB): Entity {
   const ethAccount = web3.eth.accounts.privateKeyToAccount(ethPrivateKey)
   const ethPlasmaClient = new EthereumPlasmaClient(web3, ethAccount, ADDRESSES.root_chain)
   const writer = createJSONRPCClient({ protocols: [{ url: getTestUrls().httpWriteUrl }] })
@@ -78,8 +77,7 @@ export function createTestEntity(web3: Web3, ethPrivateKey: string, database?: P
   ]
   const callerAddress = new Address('default', LocalAddress.fromPublicKey(pubKey))
   const contractName = useHostileOperator ? 'hostileoperator' : undefined
-  const dAppPlasmaClient = new DAppChainPlasmaClient({ dAppClient, callerAddress, contractName })
-  // @ts-ignore
+  const dAppPlasmaClient = new DAppChainPlasmaClient({ dAppClient, callerAddress, contractName, database })
   return new User(web3, {
     ethAccount,
     ethPlasmaClient,

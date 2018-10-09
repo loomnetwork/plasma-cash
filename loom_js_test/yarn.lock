@@ -4448,9 +4448,9 @@ long@^3.2.0:
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/long/-/long-3.2.0.tgz#d821b7138ca1cb581c172990ef14db200b5c474b"
 
-"loom-js@git+https://github.com/loomnetwork/loom-js.git#build-files":
-  version "1.25.0"
-  resolved "git+https://github.com/loomnetwork/loom-js.git#9add9c59d81572ba6215beb9c7a0fa4b8686ae13"
+"loom-js@https://github.com/loomnetwork/loom-js#build-files":
+  version "1.26.0"
+  resolved "https://github.com/loomnetwork/loom-js#0fea029ba8518ba0f17659d0daf1b770c4592dcb"
   dependencies:
     axios "^0.18.0"
     bn.js "^4.11.8"
