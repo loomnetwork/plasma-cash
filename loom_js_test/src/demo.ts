@@ -3,20 +3,12 @@ import Web3 from 'web3'
 import { createUser } from 'loom-js'
 
 import { increaseTime } from './ganache-helpers'
-import { sleep, ADDRESSES, ACCOUNTS } from './config'
-import { EthCardsContract } from './cards-contract'
+import { sleep, ADDRESSES, ACCOUNTS, setupContracts } from './config'
 
 // Alice registers and has 5 coins, and she deposits 3 of them.
 const ALICE_INITIAL_COINS = 5
 const ALICE_DEPOSITED_COINS = 3
 const COINS = [1, 2, 3]
-
-// All the contracts are expected to have been deployed to Ganache when this function is called.
-function setupContracts(web3: Web3): { cards: EthCardsContract } {
-  const abi = require('./contracts/cards-abi.json')
-  const cards = new EthCardsContract(new web3.eth.Contract(abi, ADDRESSES.token_contract))
-  return { cards }
-}
 
 export async function runDemo(t: test.Test) {
   const web3Endpoint = 'ws://127.0.0.1:8545'
@@ -85,15 +77,18 @@ export async function runDemo(t: test.Test) {
   // Add an empty block in between (for proof of exclusion)
   await authority.submitPlasmaBlockAsync()
 
-  let bobCoins = await bob.getUserCoinsAsync()
-  t.ok(bobCoins[0].slot.eq(deposit3.slot), "Bob has correct coin")
-
-  let charlieCoins = await charlie.getUserCoinsAsync()
-  t.ok(charlieCoins[0].slot.eq(deposit2.slot), "Charlie has correct coin")
-
-
   // Multiple refreshes don't break it
   await bob.refreshAsync()
+  await charlie.refreshAsync()
+
+  // The legit operator will allow access to these variables as usual. The non-legit operator won't and as a result `getUserCoinsAsync` is empty
+  if (bob._dAppPlasmaClient.contractName === 'plasmacash')  {
+    let bobCoins = await bob.getUserCoinsAsync()
+    t.ok(bobCoins[0].slot.eq(deposit3.slot), "Bob has correct coin")
+    let charlieCoins = await charlie.getUserCoinsAsync()
+    t.ok(charlieCoins[0].slot.eq(deposit2.slot), "Charlie has correct coin")
+  }
+
   await bob.refreshAsync()
   await bob.refreshAsync()
 
@@ -102,7 +97,6 @@ export async function runDemo(t: test.Test) {
 
   await authority.submitPlasmaBlockAsync()
 
-  await charlie.refreshAsync()
   await charlie.refreshAsync()
   await charlie.refreshAsync()
 

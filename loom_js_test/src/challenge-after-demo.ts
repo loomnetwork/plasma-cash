@@ -4,15 +4,7 @@ import BN from 'bn.js'
 import { createUser } from 'loom-js'
 
 import { increaseTime, getEthBalanceAtAddress } from './ganache-helpers'
-import { sleep, createTestEntity, ADDRESSES, ACCOUNTS } from './config'
-import { EthCardsContract } from './cards-contract'
-
-// All the contracts are expected to have been deployed to Ganache when this function is called.
-function setupContracts(web3: Web3): { cards: EthCardsContract } {
-  const abi = require('./contracts/cards-abi.json')
-  const cards = new EthCardsContract(new web3.eth.Contract(abi, ADDRESSES.token_contract))
-  return { cards }
-}
+import { sleep, ADDRESSES, ACCOUNTS, setupContracts } from './config'
 
 export async function runChallengeAfterDemo(t: test.Test) {
   const web3Endpoint = 'ws://127.0.0.1:8545'

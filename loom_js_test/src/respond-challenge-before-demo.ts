@@ -2,34 +2,21 @@ import test from 'tape'
 import BN from 'bn.js'
 import Web3 from 'web3'
 import {
-  IPlasmaDeposit,
-  marshalDepositEvent,
-  IPlasmaChallenge,
-  marshalChallengeEvent
+  createUser
 } from 'loom-js'
 
 import { increaseTime, getEthBalanceAtAddress } from './ganache-helpers'
-import { sleep, createTestEntity, ADDRESSES, ACCOUNTS } from './config'
-import { EthCardsContract } from './cards-contract'
-
-// Alice registers and has 5 coins, and she deposits 3 of them.
-const ALICE_INITIAL_COINS = 5
-const ALICE_DEPOSITED_COINS = 3
-const COINS = [1, 2, 3]
-
-// All the contracts are expected to have been deployed to Ganache when this function is called.
-function setupContracts(web3: Web3): { cards: EthCardsContract } {
-  const abi = require('./contracts/cards-abi.json')
-  const cards = new EthCardsContract(new web3.eth.Contract(abi, ADDRESSES.token_contract))
-  return { cards }
-}
+import { sleep, ADDRESSES, ACCOUNTS, setupContracts } from './config'
 
 export async function runRespondChallengeBeforeDemo(t: test.Test) {
-  const web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8545'))
+  const web3Endpoint = 'ws://127.0.0.1:8545'
+  const dappchainEndpoint = 'http://localhost:46658'
+  const web3 = new Web3(new Web3.providers.WebsocketProvider(web3Endpoint))
   const { cards } = setupContracts(web3)
-  const authority = createTestEntity(web3, ACCOUNTS.authority)
-  const dan = createTestEntity(web3, ACCOUNTS.dan)
-  const trudy = createTestEntity(web3, ACCOUNTS.trudy)
+
+  const authority = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.authority)
+  const dan  = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.dan )
+  const trudy = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.trudy)
 
   // Give Trudy 5 tokens
   await cards.registerAsync(trudy.ethAddress)
@@ -40,12 +27,7 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
   // Trudy deposits a coin
   await cards.depositToPlasmaAsync({ tokenId: 21, from: trudy.ethAddress })
 
-  const depositEvents: any[] = await authority.plasmaCashContract.getPastEvents('Deposit', {
-    fromBlock: startBlockNum
-  })
-  const deposits = depositEvents.map<IPlasmaDeposit>(event =>
-    marshalDepositEvent(event.returnValues)
-  )
+  const deposits = await trudy.deposits()
   t.equal(deposits.length, 1, 'All deposit events accounted for')
 
   await sleep(8000)
@@ -56,22 +38,13 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
 
   // Trudy sends her coin to Dan
   const coin = await trudy.getPlasmaCoinAsync(deposit1Slot)
-  await trudy.transferTokenAsync({
-    slot: deposit1Slot,
-    prevBlockNum: coin.depositBlockNum,
-    denomination: 1,
-    newOwner: dan.ethAddress
-  })
+  await trudy.transfer(deposit1Slot, dan.ethAddress)
 
   // Operator includes it
-  const trudyToDanBlock = await authority.submitPlasmaBlockAsync()
+  await authority.submitPlasmaBlockAsync()
 
   // Dan exits the coin received by Trudy
-  await dan.startExitAsync({
-    slot: deposit1Slot,
-    prevBlockNum: coin.depositBlockNum,
-    exitBlockNum: trudyToDanBlock
-  })
+  await dan.exit(deposit1Slot)
   const danExit = dan.watchChallenge(deposit1Slot, coin.depositBlockNum)
 
   // Trudy tries to challengeBefore Dan's exit
@@ -101,8 +74,16 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
   // 1 in this demo and 1 in a previous one.
   t.equal(danTokensEnd.toNumber(), 7, 'END: Dan has correct number of tokens')
 
+
   // Close the websocket, hacky :/
   // @ts-ignore
   web3.currentProvider.connection.close()
+  // @ts-ignore
+  authority.web3.currentProvider.connection.close()
+  // @ts-ignore
+  dan.web3.currentProvider.connection.close()
+  // @ts-ignore
+  trudy.web3.currentProvider.connection.close()
+
   t.end()
 }

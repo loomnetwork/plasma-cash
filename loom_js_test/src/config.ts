@@ -14,6 +14,7 @@ import {
   createJSONRPCClient,
   Entity
 } from 'loom-js'
+import { EthCardsContract } from './cards-contract';
 
 export const DEFAULT_GAS = '3141592'
 export const CHILD_BLOCK_INTERVAL = 1000
@@ -48,6 +49,13 @@ export function getTestUrls() {
     httpWriteUrl: process.env.TEST_LOOM_DAPP_HTTP_WRITE_URL || 'http://127.0.0.1:46658/rpc',
     httpReadUrl: process.env.TEST_LOOM_DAPP_HTTP_READ_URL || 'http://127.0.0.1:46658/query'
   }
+}
+
+// All the contracts are expected to have been deployed to Ganache when this function is called.
+export function setupContracts(web3: Web3): { cards: EthCardsContract } {
+  const abi = require('./contracts/cards-abi.json')
+  const cards = new EthCardsContract(new web3.eth.Contract(abi, ADDRESSES.token_contract))
+  return { cards }
 }
 
 var useHostileOperator = false

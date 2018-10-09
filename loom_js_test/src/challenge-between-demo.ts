@@ -1,41 +1,29 @@
 import test from 'tape'
 import Web3 from 'web3'
-import { IPlasmaDeposit, marshalDepositEvent } from 'loom-js'
+import { createUser, IPlasmaDeposit, marshalDepositEvent } from 'loom-js'
 
 import { increaseTime, getEthBalanceAtAddress } from './ganache-helpers'
-import { sleep, ADDRESSES, ACCOUNTS, createTestEntity } from './config'
-import { EthCardsContract } from './cards-contract'
-
-// All the contracts are expected to have been deployed to Ganache when this function is called.
-function setupContracts(web3: Web3): { cards: EthCardsContract } {
-  const abi = require('./contracts/cards-abi.json')
-  const cards = new EthCardsContract(new web3.eth.Contract(abi, ADDRESSES.token_contract))
-  return { cards }
-}
+import { sleep, ADDRESSES, ACCOUNTS, setupContracts } from './config'
 
 export async function runChallengeBetweenDemo(t: test.Test) {
-  const web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8545'))
+  const web3Endpoint = 'ws://127.0.0.1:8545'
+  const dappchainEndpoint = 'http://localhost:46658'
+  const web3 = new Web3(new Web3.providers.WebsocketProvider(web3Endpoint))
   const { cards } = setupContracts(web3)
-  const authority = createTestEntity(web3, ACCOUNTS.authority)
-  const alice = createTestEntity(web3, ACCOUNTS.alice)
-  const bob = createTestEntity(web3, ACCOUNTS.bob)
-  const eve = createTestEntity(web3, ACCOUNTS.eve)
+
+  const authority = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.authority)
+  const alice = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.alice)
+  const bob = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.bob)
+  const eve = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.eve)
 
   const bobTokensStart = await cards.balanceOfAsync(bob.ethAddress)
 
   // Give Eve 5 tokens
   await cards.registerAsync(eve.ethAddress)
 
-  const startBlockNum = await web3.eth.getBlockNumber()
-
   // Eve deposits a coin
   await cards.depositToPlasmaAsync({ tokenId: 11, from: eve.ethAddress })
-  const depositEvents: any[] = await authority.plasmaCashContract.getPastEvents('Deposit', {
-    fromBlock: startBlockNum
-  })
-  const deposits = depositEvents.map<IPlasmaDeposit>(event =>
-    marshalDepositEvent(event.returnValues)
-  )
+  const deposits = await eve.deposits()
   t.equal(deposits.length, 1, 'Eve has correct number of deposits')
 
   await sleep(8000)
@@ -44,12 +32,7 @@ export async function runChallengeBetweenDemo(t: test.Test) {
 
   // Eve sends her plasma coin to Bob
   const coin = await eve.getPlasmaCoinAsync(deposit1Slot)
-  await eve.transferTokenAsync({
-    slot: deposit1Slot,
-    prevBlockNum: coin.depositBlockNum,
-    denomination: 1,
-    newOwner: bob.ethAddress
-  })
+  await eve.transfer(deposit1Slot, bob.ethAddress)
 
   const eveToBobBlockNum = await authority.submitPlasmaBlockAsync()
 
@@ -59,30 +42,22 @@ export async function runChallengeBetweenDemo(t: test.Test) {
   const bobCoin = bob.watchExit(deposit1Slot, coin.depositBlockNum)
 
   // Eve sends this same plasma coin to Alice
-  await eve.transferTokenAsync({
-    slot: deposit1Slot,
-    prevBlockNum: coin.depositBlockNum,
-    denomination: 1,
-    newOwner: alice.ethAddress
-  })
+  await eve.transfer(deposit1Slot, alice.ethAddress)
 
   const eveToAliceBlockNum = await authority.submitPlasmaBlockAsync()
 
-  // Alice attempts to exit here double-spent coin
+  // Alice attempts to exit her double-spent coin
+  // Low level call to exit the double spend
   await alice.startExitAsync({
     slot: deposit1Slot,
     prevBlockNum: coin.depositBlockNum,
     exitBlockNum: eveToAliceBlockNum
   })
-  // Dan challenges here
+  // Bob challenges here
 
   await sleep(2000)
 
-  await bob.startExitAsync({
-    slot: deposit1Slot,
-    prevBlockNum: coin.depositBlockNum,
-    exitBlockNum: eveToBobBlockNum
-  })
+  await bob.exit(deposit1Slot)
   bob.stopWatching(bobCoin)
 
   // Jump forward in time by 8 days
@@ -110,6 +85,15 @@ export async function runChallengeBetweenDemo(t: test.Test) {
 
   // Close the websocket, hacky :/
   // @ts-ignore
+  authority.web3.currentProvider.connection.close()
+  // @ts-ignore
+  alice.web3.currentProvider.connection.close()
+  // @ts-ignore
+  bob.web3.currentProvider.connection.close()
+  // @ts-ignore
+  eve.web3.currentProvider.connection.close()
+  // @ts-ignore
   web3.currentProvider.connection.close()
+
   t.end()
 }
