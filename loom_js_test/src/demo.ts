@@ -1,6 +1,6 @@
 import test from 'tape'
 import Web3 from 'web3'
-import { createUser } from 'loom-js'
+import { PlasmaUser } from 'loom-js'
 
 import { increaseTime } from './ganache-helpers'
 import { sleep, ADDRESSES, ACCOUNTS, setupContracts } from './config'
@@ -16,10 +16,10 @@ export async function runDemo(t: test.Test) {
   const web3 = new Web3(new Web3.providers.WebsocketProvider(web3Endpoint))
   const { cards } = setupContracts(web3)
 
-  const authority = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.authority)
-  const alice = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.alice)
-  const bob = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.bob)
-  const charlie = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.charlie)
+  const authority = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.authority)
+  const alice = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.alice)
+  const bob = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.bob)
+  const charlie = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.charlie)
 
   await cards.registerAsync(alice.ethAddress)
   let balance = await cards.balanceOfAsync(alice.ethAddress)
@@ -65,9 +65,9 @@ export async function runDemo(t: test.Test) {
   const deposit2 = deposits[1]
   const deposit3 = deposits[2]
   // Alice -> Bob
-  await alice.transfer(deposit3.slot, bob.ethAddress)
+  await alice.transferAsync(deposit3.slot, bob.ethAddress)
   // Alice -> Charlie
-  await alice.transfer(deposit2.slot, charlie.ethAddress)
+  await alice.transferAsync(deposit2.slot, charlie.ethAddress)
 
   let aliceCoins = await alice.getUserCoinsAsync()
   t.ok(aliceCoins[0].slot.eq(deposits[0].slot), "Alice has correct coin")
@@ -82,7 +82,7 @@ export async function runDemo(t: test.Test) {
   await charlie.refreshAsync()
 
   // The legit operator will allow access to these variables as usual. The non-legit operator won't and as a result `getUserCoinsAsync` is empty
-  if (bob._dAppPlasmaClient.contractName === 'plasmacash')  {
+  if (bob.contractName !== 'hostileoperator')  {
     let bobCoins = await bob.getUserCoinsAsync()
     t.ok(bobCoins[0].slot.eq(deposit3.slot), "Bob has correct coin")
     let charlieCoins = await charlie.getUserCoinsAsync()
@@ -93,7 +93,7 @@ export async function runDemo(t: test.Test) {
   await bob.refreshAsync()
 
   // Bob -> Charlie
-  await bob.transfer(deposit3.slot, charlie.ethAddress)
+  await bob.transferAsync(deposit3.slot, charlie.ethAddress)
 
   await authority.submitPlasmaBlockAsync()
 
@@ -106,7 +106,7 @@ export async function runDemo(t: test.Test) {
   t.equal(await charlie.verifyCoinHistoryAsync(deposit3.slot, proofs), true, "Coin history verified")
   let charlieCoin = charlie.watchExit(deposit3.slot, coin.depositBlockNum)
 
-  await charlie.exit(deposit3.slot)
+  await charlie.exitAsync(deposit3.slot)
   charlie.stopWatching(charlieCoin)
 
   // Jump forward in time by 8 days
@@ -115,7 +115,7 @@ export async function runDemo(t: test.Test) {
   await authority.finalizeExitsAsync()
   // Charlie should now be able to withdraw the UTXO (plasma token) which contains ERC721 token #2
   // into his wallet.
-  await charlie.withdrawAsync(deposit3.slot)
+  await charlie.withdrawCoinAsync(deposit3.slot)
 
   balance = await cards.balanceOfAsync(alice.ethAddress)
   t.equal(balance.toNumber(), 2, 'alice should have 2 tokens in cards contract')
@@ -126,13 +126,10 @@ export async function runDemo(t: test.Test) {
 
   // Close the websocket, hacky :/
   // @ts-ignore
-  authority.web3.currentProvider.connection.close()
-  // @ts-ignore
-  alice.web3.currentProvider.connection.close()
-  // @ts-ignore
-  bob.web3.currentProvider.connection.close()
-  // @ts-ignore
-  charlie.web3.currentProvider.connection.close()
+  authority.disconnect()
+  alice.disconnect()
+  bob.disconnect()
+  charlie.disconnect()
   // @ts-ignore
   web3.currentProvider.connection.close()
 

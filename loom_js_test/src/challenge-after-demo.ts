@@ -1,7 +1,7 @@
 import test from 'tape'
 import Web3 from 'web3'
 import BN from 'bn.js'
-import { createUser } from 'loom-js'
+import { PlasmaUser } from 'loom-js'
 
 import { increaseTime, getEthBalanceAtAddress } from './ganache-helpers'
 import { sleep, ADDRESSES, ACCOUNTS, setupContracts } from './config'
@@ -12,9 +12,9 @@ export async function runChallengeAfterDemo(t: test.Test) {
   const web3 = new Web3(new Web3.providers.WebsocketProvider(web3Endpoint))
   const { cards } = setupContracts(web3)
 
-  const authority = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.authority)
-  const mallory = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.mallory)
-  const dan = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.dan)
+  const authority = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.authority)
+  const mallory = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.mallory)
+  const dan = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.dan)
 
   // Give Mallory 5 tokens
   await cards.registerAsync(mallory.ethAddress)
@@ -47,7 +47,7 @@ export async function runChallengeAfterDemo(t: test.Test) {
 
   // Mallory -> Dan
   const coin = await mallory.getPlasmaCoinAsync(deposit1Slot)
-  await mallory.transfer(deposit1Slot, dan.ethAddress)
+  await mallory.transferAsync(deposit1Slot, dan.ethAddress)
   await authority.submitPlasmaBlockAsync()
 
   const blocks = await mallory.getBlockNumbersAsync(coin.depositBlockNum)
@@ -66,7 +66,7 @@ export async function runChallengeAfterDemo(t: test.Test) {
 
   // Having successufly challenged Mallory's exit Dan should be able to exit the coin
   await sleep(2000)
-  await dan.exit(deposit1Slot)
+  await dan.exitAsync(deposit1Slot)
   
   dan.stopWatching(danCoin)
 
@@ -75,7 +75,7 @@ export async function runChallengeAfterDemo(t: test.Test) {
 
   await authority.finalizeExitsAsync()
 
-  await dan.withdrawAsync(deposit1Slot)
+  await dan.withdrawCoinAsync(deposit1Slot)
 
   const danBalanceBefore = await getEthBalanceAtAddress(web3, dan.ethAddress)
   await dan.withdrawBondsAsync()
@@ -90,11 +90,8 @@ export async function runChallengeAfterDemo(t: test.Test) {
   // Close the websocket, hacky :/
   // @ts-ignore
   web3.currentProvider.connection.close()
-  // @ts-ignore
-  authority.web3.currentProvider.connection.close()
-  // @ts-ignore
-  dan.web3.currentProvider.connection.close()
-  // @ts-ignore
-  mallory.web3.currentProvider.connection.close()
+  authority.disconnect()
+  dan.disconnect()
+  mallory.disconnect()
   t.end()
 }

@@ -1,7 +1,7 @@
 import test from 'tape'
 import BN from 'bn.js'
 import Web3 from 'web3'
-import { createUser } from 'loom-js'
+import { PlasmaUser } from 'loom-js'
 
 import { increaseTime, getEthBalanceAtAddress } from './ganache-helpers'
 import { sleep, ADDRESSES, ACCOUNTS, setupContracts } from './config'
@@ -12,10 +12,10 @@ export async function runChallengeBeforeDemo(t: test.Test) {
   const web3 = new Web3(new Web3.providers.WebsocketProvider(web3Endpoint))
   const { cards } = setupContracts(web3)
 
-  const authority = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.authority)
-  const dan  = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.dan)
-  const trudy = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.trudy)
-  const mallory = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.mallory)
+  const authority = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.authority)
+  const dan  = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.dan)
+  const trudy = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.trudy)
+  const mallory = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.mallory)
 
   // Give Dan 5 tokens
   await cards.registerAsync(dan.ethAddress)
@@ -103,14 +103,9 @@ export async function runChallengeBeforeDemo(t: test.Test) {
   // Close the websocket, hacky :/
   // @ts-ignore
   web3.currentProvider.connection.close()
-  // @ts-ignore
-  authority.web3.currentProvider.connection.close()
-  // @ts-ignore
-  dan.web3.currentProvider.connection.close()
-  // @ts-ignore
-  trudy.web3.currentProvider.connection.close()
-  // @ts-ignore
-  mallory.web3.currentProvider.connection.close()
-
+  authority.disconnect()
+  dan.disconnect()
+  trudy.disconnect()
+  mallory.disconnect()
   t.end()
 }

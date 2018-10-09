@@ -1,6 +1,6 @@
 import test from 'tape'
 import Web3 from 'web3'
-import { createUser } from 'loom-js'
+import { PlasmaUser } from 'loom-js'
 
 import { increaseTime, getEthBalanceAtAddress } from './ganache-helpers'
 import { sleep, ADDRESSES, ACCOUNTS, setupContracts } from './config'
@@ -11,10 +11,10 @@ export async function runChallengeBetweenDemo(t: test.Test) {
   const web3 = new Web3(new Web3.providers.WebsocketProvider(web3Endpoint))
   const { cards } = setupContracts(web3)
 
-  const authority = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.authority)
-  const alice = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.alice)
-  const bob = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.bob)
-  const eve = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.eve)
+  const authority = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.authority)
+  const alice = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.alice)
+  const bob = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.bob)
+  const eve = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.eve)
 
   const bobTokensStart = await cards.balanceOfAsync(bob.ethAddress)
 
@@ -32,7 +32,7 @@ export async function runChallengeBetweenDemo(t: test.Test) {
 
   // Eve sends her plasma coin to Bob
   const coin = await eve.getPlasmaCoinAsync(deposit1Slot)
-  await eve.transfer(deposit1Slot, bob.ethAddress)
+  await eve.transferAsync(deposit1Slot, bob.ethAddress)
 
   const eveToBobBlockNum = await authority.submitPlasmaBlockAsync()
 
@@ -42,7 +42,7 @@ export async function runChallengeBetweenDemo(t: test.Test) {
   const bobCoin = bob.watchExit(deposit1Slot, coin.depositBlockNum)
 
   // Eve sends this same plasma coin to Alice
-  await eve.transfer(deposit1Slot, alice.ethAddress)
+  await eve.transferAsync(deposit1Slot, alice.ethAddress)
 
   const eveToAliceBlockNum = await authority.submitPlasmaBlockAsync()
 
@@ -57,7 +57,7 @@ export async function runChallengeBetweenDemo(t: test.Test) {
 
   await sleep(2000)
 
-  await bob.exit(deposit1Slot)
+  await bob.exitAsync(deposit1Slot)
   bob.stopWatching(bobCoin)
 
   // Jump forward in time by 8 days
@@ -65,7 +65,7 @@ export async function runChallengeBetweenDemo(t: test.Test) {
 
   await authority.finalizeExitsAsync()
 
-  await bob.withdrawAsync(deposit1Slot)
+  await bob.withdrawCoinAsync(deposit1Slot)
 
   const bobBalanceBefore = await getEthBalanceAtAddress(web3, bob.ethAddress)
 
@@ -85,15 +85,11 @@ export async function runChallengeBetweenDemo(t: test.Test) {
 
   // Close the websocket, hacky :/
   // @ts-ignore
-  authority.web3.currentProvider.connection.close()
-  // @ts-ignore
-  alice.web3.currentProvider.connection.close()
-  // @ts-ignore
-  bob.web3.currentProvider.connection.close()
-  // @ts-ignore
-  eve.web3.currentProvider.connection.close()
-  // @ts-ignore
   web3.currentProvider.connection.close()
+  authority.disconnect()
+  alice.disconnect()
+  bob.disconnect()
+  eve.disconnect()
 
   t.end()
 }

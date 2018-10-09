@@ -2,7 +2,7 @@ import test from 'tape'
 import BN from 'bn.js'
 import Web3 from 'web3'
 import {
-  createUser
+  PlasmaUser
 } from 'loom-js'
 
 import { increaseTime, getEthBalanceAtAddress } from './ganache-helpers'
@@ -14,9 +14,9 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
   const web3 = new Web3(new Web3.providers.WebsocketProvider(web3Endpoint))
   const { cards } = setupContracts(web3)
 
-  const authority = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.authority)
-  const dan  = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.dan )
-  const trudy = createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.trudy)
+  const authority = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.authority)
+  const dan  = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.dan )
+  const trudy = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.trudy)
 
   // Give Trudy 5 tokens
   await cards.registerAsync(trudy.ethAddress)
@@ -38,13 +38,13 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
 
   // Trudy sends her coin to Dan
   const coin = await trudy.getPlasmaCoinAsync(deposit1Slot)
-  await trudy.transfer(deposit1Slot, dan.ethAddress)
+  await trudy.transferAsync(deposit1Slot, dan.ethAddress)
 
   // Operator includes it
   await authority.submitPlasmaBlockAsync()
 
   // Dan exits the coin received by Trudy
-  await dan.exit(deposit1Slot)
+  await dan.exitAsync(deposit1Slot)
   const danExit = dan.watchChallenge(deposit1Slot, coin.depositBlockNum)
 
   // Trudy tries to challengeBefore Dan's exit
@@ -62,7 +62,7 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
   // Now that the exit has been finalized, stop watching challenges
   dan.stopWatching(danExit)
 
-  await dan.withdrawAsync(deposit1Slot)
+  await dan.withdrawCoinAsync(deposit1Slot)
 
   const danBalanceBefore = await getEthBalanceAtAddress(web3, dan.ethAddress)
   await dan.withdrawBondsAsync()
@@ -78,12 +78,9 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
   // Close the websocket, hacky :/
   // @ts-ignore
   web3.currentProvider.connection.close()
-  // @ts-ignore
-  authority.web3.currentProvider.connection.close()
-  // @ts-ignore
-  dan.web3.currentProvider.connection.close()
-  // @ts-ignore
-  trudy.web3.currentProvider.connection.close()
+  authority.disconnect()
+  dan.disconnect()
+  trudy.disconnect()
 
   t.end()
 }
