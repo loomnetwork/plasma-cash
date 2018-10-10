@@ -12,10 +12,30 @@ export async function runChallengeBeforeDemo(t: test.Test) {
   const web3 = new Web3(new Web3.providers.WebsocketProvider(web3Endpoint))
   const { cards } = setupContracts(web3)
 
-  const authority = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.authority)
-  const dan  = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.dan)
-  const trudy = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.trudy)
-  const mallory = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.mallory)
+  const authority = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.authority
+  )
+  const dan = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.dan
+  )
+  const trudy = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.trudy
+  )
+  const mallory = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.mallory
+  )
 
   // Give Dan 5 tokens
   await cards.registerAsync(dan.ethAddress)
@@ -51,7 +71,6 @@ export async function runChallengeBeforeDemo(t: test.Test) {
   // Operator includes it
   const trudyToMalloryBlock = await authority.submitPlasmaBlockAsync()
 
-  
   // Low level call for the malicious transfers
   await mallory.transferTokenAsync({
     slot: deposit1Slot,

@@ -12,9 +12,24 @@ export async function runChallengeAfterDemo(t: test.Test) {
   const web3 = new Web3(new Web3.providers.WebsocketProvider(web3Endpoint))
   const { cards } = setupContracts(web3)
 
-  const authority = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.authority)
-  const mallory = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.mallory)
-  const dan = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.dan)
+  const authority = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.authority
+  )
+  const mallory = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.mallory
+  )
+  const dan = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.dan
+  )
 
   // Give Mallory 5 tokens
   await cards.registerAsync(mallory.ethAddress)
@@ -49,9 +64,8 @@ export async function runChallengeAfterDemo(t: test.Test) {
   const coin = await mallory.getPlasmaCoinAsync(deposit1Slot)
   await mallory.transferAsync(deposit1Slot, dan.ethAddress)
   await authority.submitPlasmaBlockAsync()
-  t.equal(await dan.checkHistoryAsync(coin), true, "Coin history verified")
+  t.equal(await dan.checkHistoryAsync(coin), true, 'Coin history verified')
   const danCoin = dan.watchExit(deposit1Slot, coin.depositBlockNum)
-
 
   // Mallory attempts to exit spent coin (the one sent to Dan)
   // Needs to use the low level API to make an invalid tx
@@ -64,7 +78,7 @@ export async function runChallengeAfterDemo(t: test.Test) {
   // Having successufly challenged Mallory's exit Dan should be able to exit the coin
   await sleep(2000)
   await dan.exitAsync(deposit1Slot)
-  
+
   dan.stopWatching(danCoin)
 
   // Jump forward in time by 8 days

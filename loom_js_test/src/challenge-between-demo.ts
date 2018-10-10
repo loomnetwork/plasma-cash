@@ -11,10 +11,30 @@ export async function runChallengeBetweenDemo(t: test.Test) {
   const web3 = new Web3(new Web3.providers.WebsocketProvider(web3Endpoint))
   const { cards } = setupContracts(web3)
 
-  const authority = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.authority)
-  const alice = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.alice)
-  const bob = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.bob)
-  const eve = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.eve)
+  const authority = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.authority
+  )
+  const alice = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.alice
+  )
+  const bob = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.bob
+  )
+  const eve = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.eve
+  )
 
   const bobTokensStart = await cards.balanceOfAsync(bob.ethAddress)
 
@@ -35,7 +55,7 @@ export async function runChallengeBetweenDemo(t: test.Test) {
   await eve.transferAsync(deposit1Slot, bob.ethAddress)
   const eveToBobBlockNum = await authority.submitPlasmaBlockAsync()
 
-  t.equal(await bob.checkHistoryAsync(coin), true, "Coin history verified")
+  t.equal(await bob.checkHistoryAsync(coin), true, 'Coin history verified')
   const bobCoin = bob.watchExit(deposit1Slot, coin.depositBlockNum)
 
   // Eve sends this same plasma coin to Alice

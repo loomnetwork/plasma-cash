@@ -5,7 +5,7 @@ import { runChallengeAfterDemo } from './challenge-after-demo'
 import { runChallengeBetweenDemo } from './challenge-between-demo'
 import { runChallengeBeforeDemo } from './challenge-before-demo'
 import { runRespondChallengeBeforeDemo } from './respond-challenge-before-demo'
-import { PlasmaUser } from 'loom-js';
+import { PlasmaUser } from 'loom-js'
 
 // TODO: Redeploy the Solidity contracts before each demo so the demos don't share any state.
 

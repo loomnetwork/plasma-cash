@@ -1,9 +1,7 @@
 import test from 'tape'
 import BN from 'bn.js'
 import Web3 from 'web3'
-import {
-  PlasmaUser
-} from 'loom-js'
+import { PlasmaUser } from 'loom-js'
 
 import { increaseTime, getEthBalanceAtAddress } from './ganache-helpers'
 import { sleep, ADDRESSES, ACCOUNTS, setupContracts } from './config'
@@ -14,9 +12,24 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
   const web3 = new Web3(new Web3.providers.WebsocketProvider(web3Endpoint))
   const { cards } = setupContracts(web3)
 
-  const authority = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.authority)
-  const dan  = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.dan )
-  const trudy = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.trudy)
+  const authority = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.authority
+  )
+  const dan = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.dan
+  )
+  const trudy = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.trudy
+  )
 
   // Give Trudy 5 tokens
   await cards.registerAsync(trudy.ethAddress)
@@ -73,7 +86,6 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
   // Dan had initially 5 from when he registered and he received 2 coins
   // 1 in this demo and 1 in a previous one.
   t.equal(danTokensEnd.toNumber(), 7, 'END: Dan has correct number of tokens')
-
 
   // Close the websocket, hacky :/
   // @ts-ignore

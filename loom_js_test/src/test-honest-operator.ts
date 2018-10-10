@@ -2,7 +2,7 @@ import test from 'tape'
 
 import { runDemo } from './demo'
 import { runChallengeAfterDemo } from './challenge-after-demo'
-import { PlasmaUser } from 'loom-js';
+import { PlasmaUser } from 'loom-js'
 
 // TODO: Redeploy the Solidity contracts before each demo so the demos don't share any state.
 

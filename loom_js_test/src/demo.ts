@@ -16,10 +16,30 @@ export async function runDemo(t: test.Test) {
   const web3 = new Web3(new Web3.providers.WebsocketProvider(web3Endpoint))
   const { cards } = setupContracts(web3)
 
-  const authority = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.authority)
-  const alice = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.alice)
-  const bob = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.bob)
-  const charlie = PlasmaUser.createUser(web3Endpoint, ADDRESSES.root_chain, dappchainEndpoint, ACCOUNTS.charlie)
+  const authority = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.authority
+  )
+  const alice = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.alice
+  )
+  const bob = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.bob
+  )
+  const charlie = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.charlie
+  )
 
   await cards.registerAsync(alice.ethAddress)
   let balance = await cards.balanceOfAsync(alice.ethAddress)
@@ -70,17 +90,32 @@ export async function runDemo(t: test.Test) {
   await alice.transferAsync(deposit2.slot, charlie.ethAddress)
 
   let aliceCoins = await alice.getUserCoinsAsync()
-  t.ok(aliceCoins[0].slot.eq(deposits[0].slot), "Alice has correct coin")
+  t.ok(aliceCoins[0].slot.eq(deposits[0].slot), 'Alice has correct coin')
 
   const inclusionBlock = await authority.submitPlasmaBlockAsync()
 
-  // For alice's piece of mind, when transacting, she has to verify that her transaction was included and is not withheld _in limbo_. 
-  t.equal(await alice.verifyInclusion(deposit2.slot, inclusionBlock), true, "alice verified tx is not in limbo")
-  t.equal(await charlie.verifyInclusion(deposit2.slot, inclusionBlock), true, "charlie verified tx is not in limbo")
+  // For alice's piece of mind, when transacting, she has to verify that her transaction was included and is not withheld _in limbo_.
+  t.equal(
+    await alice.verifyInclusion(deposit2.slot, inclusionBlock),
+    true,
+    'alice verified tx is not in limbo'
+  )
+  t.equal(
+    await charlie.verifyInclusion(deposit2.slot, inclusionBlock),
+    true,
+    'charlie verified tx is not in limbo'
+  )
 
-  t.equal(await alice.verifyInclusion(deposit3.slot, inclusionBlock), true, "alice verified tx is not in limbo")
-  t.equal(await bob.verifyInclusion(deposit3.slot, inclusionBlock), true, "bob verified tx is not in limbo")
-
+  t.equal(
+    await alice.verifyInclusion(deposit3.slot, inclusionBlock),
+    true,
+    'alice verified tx is not in limbo'
+  )
+  t.equal(
+    await bob.verifyInclusion(deposit3.slot, inclusionBlock),
+    true,
+    'bob verified tx is not in limbo'
+  )
 
   // Add an empty block in between (for proof of exclusion)
   await authority.submitPlasmaBlockAsync()
@@ -90,11 +125,11 @@ export async function runDemo(t: test.Test) {
   await charlie.refreshAsync()
 
   // The legit operator will allow access to these variables as usual. The non-legit operator won't and as a result `getUserCoinsAsync` is empty
-  if (bob.contractName !== 'hostileoperator')  {
+  if (bob.contractName !== 'hostileoperator') {
     let bobCoins = await bob.getUserCoinsAsync()
-    t.ok(bobCoins[0].slot.eq(deposit3.slot), "Bob has correct coin")
+    t.ok(bobCoins[0].slot.eq(deposit3.slot), 'Bob has correct coin')
     let charlieCoins = await charlie.getUserCoinsAsync()
-    t.ok(charlieCoins[0].slot.eq(deposit2.slot), "Charlie has correct coin")
+    t.ok(charlieCoins[0].slot.eq(deposit2.slot), 'Charlie has correct coin')
   }
 
   await bob.refreshAsync()
@@ -109,7 +144,7 @@ export async function runDemo(t: test.Test) {
   await charlie.refreshAsync()
 
   const coin = await charlie.getPlasmaCoinAsync(deposit3.slot)
-  t.equal(await charlie.checkHistoryAsync(coin), true, "Coin history verified")
+  t.equal(await charlie.checkHistoryAsync(coin), true, 'Coin history verified')
   let charlieCoin = charlie.watchExit(deposit3.slot, coin.depositBlockNum)
 
   await charlie.exitAsync(deposit3.slot)

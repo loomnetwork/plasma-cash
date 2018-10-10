@@ -1,5 +1,5 @@
 import Web3 from 'web3'
-import { EthCardsContract } from './cards-contract';
+import { EthCardsContract } from './cards-contract'
 
 export const DEFAULT_GAS = '3141592'
 export const CHILD_BLOCK_INTERVAL = 1000
