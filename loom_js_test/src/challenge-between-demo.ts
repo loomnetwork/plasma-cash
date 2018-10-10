@@ -33,12 +33,9 @@ export async function runChallengeBetweenDemo(t: test.Test) {
   // Eve sends her plasma coin to Bob
   const coin = await eve.getPlasmaCoinAsync(deposit1Slot)
   await eve.transferAsync(deposit1Slot, bob.ethAddress)
-
   const eveToBobBlockNum = await authority.submitPlasmaBlockAsync()
 
-  const blocks = await eve.getBlockNumbersAsync(coin.depositBlockNum)
-  const proofs = await eve.getCoinHistoryAsync(deposit1Slot, blocks)
-  t.equal(await bob.verifyCoinHistoryAsync(deposit1Slot, proofs), true)
+  t.equal(await bob.checkHistoryAsync(coin), true, "Coin history verified")
   const bobCoin = bob.watchExit(deposit1Slot, coin.depositBlockNum)
 
   // Eve sends this same plasma coin to Alice

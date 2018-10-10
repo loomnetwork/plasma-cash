@@ -72,7 +72,15 @@ export async function runDemo(t: test.Test) {
   let aliceCoins = await alice.getUserCoinsAsync()
   t.ok(aliceCoins[0].slot.eq(deposits[0].slot), "Alice has correct coin")
 
-  await authority.submitPlasmaBlockAsync()
+  const inclusionBlock = await authority.submitPlasmaBlockAsync()
+
+  // For alice's piece of mind, when transacting, she has to verify that her transaction was included and is not withheld _in limbo_. 
+  t.equal(await alice.verifyInclusion(deposit2.slot, inclusionBlock), true, "alice verified tx is not in limbo")
+  t.equal(await charlie.verifyInclusion(deposit2.slot, inclusionBlock), true, "charlie verified tx is not in limbo")
+
+  t.equal(await alice.verifyInclusion(deposit3.slot, inclusionBlock), true, "alice verified tx is not in limbo")
+  t.equal(await bob.verifyInclusion(deposit3.slot, inclusionBlock), true, "bob verified tx is not in limbo")
+
 
   // Add an empty block in between (for proof of exclusion)
   await authority.submitPlasmaBlockAsync()
@@ -101,9 +109,7 @@ export async function runDemo(t: test.Test) {
   await charlie.refreshAsync()
 
   const coin = await charlie.getPlasmaCoinAsync(deposit3.slot)
-  const blocks = await bob.getBlockNumbersAsync(coin.depositBlockNum)
-  const proofs = await bob.getCoinHistoryAsync(deposit3.slot, blocks)
-  t.equal(await charlie.verifyCoinHistoryAsync(deposit3.slot, proofs), true, "Coin history verified")
+  t.equal(await charlie.checkHistoryAsync(coin), true, "Coin history verified")
   let charlieCoin = charlie.watchExit(deposit3.slot, coin.depositBlockNum)
 
   await charlie.exitAsync(deposit3.slot)
