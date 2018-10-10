@@ -96,23 +96,23 @@ export async function runDemo(t: test.Test) {
 
   // For alice's piece of mind, when transacting, she has to verify that her transaction was included and is not withheld _in limbo_.
   t.equal(
-    await alice.verifyInclusion(deposit2.slot, inclusionBlock),
+    await alice.verifyInclusionAsync(deposit2.slot, inclusionBlock),
     true,
     'alice verified tx is not in limbo'
   )
   t.equal(
-    await charlie.verifyInclusion(deposit2.slot, inclusionBlock),
+    await charlie.verifyInclusionAsync(deposit2.slot, inclusionBlock),
     true,
     'charlie verified tx is not in limbo'
   )
 
   t.equal(
-    await alice.verifyInclusion(deposit3.slot, inclusionBlock),
+    await alice.verifyInclusionAsync(deposit3.slot, inclusionBlock),
     true,
     'alice verified tx is not in limbo'
   )
   t.equal(
-    await bob.verifyInclusion(deposit3.slot, inclusionBlock),
+    await bob.verifyInclusionAsync(deposit3.slot, inclusionBlock),
     true,
     'bob verified tx is not in limbo'
   )
