@@ -3,23 +3,6 @@ const PrivateKeyProvider = require('truffle-privatekey-provider')
 require('babel-register');
 require('babel-polyfill');
 
-const mnemonic = 'stumble story behind hurt patient ball whisper art swift tongue ice alien';
-
-
-let ropstenProvider, kovanProvider, rinkebyProvider = {}
-
-if (process.env.LIVE_NETWORKS) {
-  ropstenProvider = new HDWalletProvider(mnemonic, 'https://ropsten.infura.io/')
-  kovanProvider = new HDWalletProvider(mnemonic, 'https://kovan.infura.io')
-
-  try {
-    const { rpc, key } = require(require('homedir')()+'/.rinkebykey.json')
-    rinkebyProvider = new PrivateKeyProvider(key, rpc)
-  } catch (e) {
-    rinkebyProvider = new HDWalletProvider(mnemonic, 'https://rinkeby.infura.io')
-  }
-}
-
 const mochaGasSettings = {
   reporter: 'eth-gas-reporter',
   reporterOptions : {
@@ -39,18 +22,19 @@ module.exports = {
     },
     ropsten: {
       network_id: 3,
-      provider: ropstenProvider,
+      provider: () => new HDWalletProvider(process.env.mnemonic, 'https://ropsten.infura.io'),
       gas: 4700036,
     },
     kovan: {
       network_id: 42,
-      provider: kovanProvider,
+      provider: () => new HDWalletProvider(process.env.mnemonic, 'https://kovan.infura.io'),
       gas: 6.9e6,
     },
     rinkeby: {
       network_id: 4,
-      provider: rinkebyProvider,
+      provider: () => new HDWalletProvider(process.env.mnemonic, 'https://rinkeby.infura.io'),
       gas: 6.9e6,
+      skipDryRun: true,
       gasPrice: 15000000001
     },
     coverage: {
