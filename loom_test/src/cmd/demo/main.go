@@ -4,6 +4,7 @@ import (
 	"client"
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"math/big"
 	"time"
@@ -115,6 +116,7 @@ func main() {
 	exitIfError(err)
 	account, err = charlie.TokenContract.Account()
 	exitIfError(err)
+	time.Sleep(5 * time.Second)
 	err = alice.SendTransaction(deposit2.Slot, deposit2.BlockNum, big.NewInt(1), account.Address) //randomTx
 	exitIfError(err)
 	exitIfError(authority.SubmitBlock())
@@ -139,6 +141,9 @@ func main() {
 	exitIfError(authority.SubmitBlock())
 	plasmaBlock2, err := authority.GetBlockNumber()
 	exitIfError(err)
+
+	fmt.Println(plasmaBlock1, plasmaBlock2)
+	//os.Exit(1)
 
 	// Charlie should be able to submit an exit by referencing blocks 0 and 1 which
 	// included his transaction.
