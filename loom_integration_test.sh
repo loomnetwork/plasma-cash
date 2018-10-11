@@ -64,6 +64,7 @@ function init_honest_dappchain {
     cp $REPO_ROOT/loom_test/loom-test.yml $LOOM_DIR/loom.yml    
     cp $REPO_ROOT/loom_test/eth.key $LOOM_DIR/eth.key
     cp $REPO_ROOT/loom_test/test.key $LOOM_DIR/test.key
+    cp $REPO_ROOT/loom_test/oracle.key $LOOM_DIR/oracle.key
     $LOOM_BIN init -f
     echo 'Loom DAppChain initialized in ' $LOOM_DIR
 }

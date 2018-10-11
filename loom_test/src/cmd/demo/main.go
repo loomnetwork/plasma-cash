@@ -80,6 +80,7 @@ func main() {
 
 	log.Printf("Checkpoint 1")
 	log.Println(deposit1.Slot)
+	log.Println(deposit1.BlockNum)
 
 	txHash = alice.Deposit(tokenID.Add(tokenID, big.NewInt(1)))
 	time.Sleep(1 * time.Second)
@@ -90,6 +91,7 @@ func main() {
 
 	log.Printf("Checkpoint 2")
 	log.Println(deposit2.Slot)
+	log.Println(deposit2.BlockNum)
 
 	txHash = alice.Deposit(tokenID.Add(tokenID, big.NewInt(2)))
 	time.Sleep(1 * time.Second)
@@ -99,8 +101,10 @@ func main() {
 	alice.DebugCoinMetaData(slots)
 
 	log.Printf("Checkpoint 3")
-	log.Println(deposit3.Slot)
 	time.Sleep(6 * time.Second)
+
+	log.Println(deposit3.Slot)
+	log.Println(deposit3.BlockNum)
 
 	//Alice to Bob, and Alice to Charlie. We care about the Alice to Bob
 	// transaction
@@ -150,6 +154,8 @@ func main() {
 
 	err = authority.FinalizeExits()
 	exitIfError(err)
+
+	log.Println("Checkpoint 7")
 
 	// Charlie should now be able to withdraw the utxo which included token 2 to his
 	// wallet.

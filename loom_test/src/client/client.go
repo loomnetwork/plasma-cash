@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/big"
 	"strings"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -104,8 +105,10 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum *big.Int, txBlkNum *big.Int
 		fmt.Println("Error Here 11")
 		return nil, err
 	}
+	fmt.Println("Error Here 12 time:", time.Now().UTC().String())
 	prevTx, prevTxProof, err := c.getTxAndProof(prevTxBlkNum, slot)
 	if err != nil {
+		fmt.Println("Error Here 13 time:", time.Now().UTC().String())
 		return nil, err
 	}
 	sig := exitingTx.Sig()
@@ -254,6 +257,7 @@ func (c *Client) DebugCoinMetaData(slots []uint64) {
 // Child Chain Functions
 
 func (c *Client) SubmitBlock() error {
+	/**
 	if err := c.childChain.SubmitBlock(); err != nil {
 		return err
 	}
@@ -270,7 +274,12 @@ func (c *Client) SubmitBlock() error {
 
 	var root [32]byte
 	copy(root[:], block.MerkleHash())
+	fmt.Printf("********* #### Submitting plasmaBlockNum: %s with root: %v", blockNum.String(), root)
 	return c.RootChain.SubmitBlock(blockNum, root)
+	**/
+
+	time.Sleep(5 * time.Second)
+	return nil
 }
 
 func (c *Client) SendTransaction(slot uint64, prevBlock *big.Int, denomination *big.Int, newOwner string) error {
