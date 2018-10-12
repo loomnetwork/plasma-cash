@@ -13,6 +13,10 @@ import (
 )
 
 func main() {
+
+	maxIteration := 20
+	sleepPerIteration := 500 * time.Millisecond
+
 	var hostile bool
 	flag.BoolVar(&hostile, "hostile", false, "run the demo with a hostile Plasma Cash operator")
 	flag.Parse()
@@ -59,6 +63,10 @@ func main() {
 
 	// Mallory deposits one of her coins to the plasma contract
 	txHash := mallory.Deposit(big.NewInt(6))
+	currentBlock, err = client.PollForBlockChange(authority, currentBlock, maxIteration, sleepPerIteration)
+	if err != nil {
+		panic(err)
+	}
 
 	depEvent, err := mallory.RootChain.DepositEventData(txHash)
 	exitIfError(err)
@@ -66,6 +74,12 @@ func main() {
 	slots = append(slots, depEvent.Slot)
 
 	txHash = mallory.Deposit(big.NewInt(7))
+
+	currentBlock, err = client.PollForBlockChange(authority, currentBlock, maxIteration, sleepPerIteration)
+	if err != nil {
+		panic(err)
+	}
+
 	depEvent, err = mallory.RootChain.DepositEventData(txHash)
 	exitIfError(err)
 	slots = append(slots, depEvent.Slot)
@@ -77,9 +91,6 @@ func main() {
 		log.Fatal("POST-DEPOSIT: Mallory has incorrect number of tokens")
 	}
 
-	time.Sleep(6 * time.Second)
-
-	err = authority.SubmitBlock()
 	exitIfError(err)
 	currentBlock, err = authority.GetBlockNumber()
 	exitIfError(err)
@@ -102,17 +113,18 @@ func main() {
 	exitIfError(err)
 	log.Printf("account\n")
 
-	time.Sleep(5 * time.Second)
-
 	err = mallory.SendTransaction(depositSlot1, coin.DepositBlockNum, big.NewInt(1), danAccount.Address) //mallory_to_dan
 	exitIfError(err)
 
-	err = authority.SubmitBlock()
+	currentBlock, err = client.PollForBlockChange(authority, currentBlock, maxIteration, sleepPerIteration)
+	if err != nil {
+		panic(err)
+	}
+
 	exitIfError(err)
 	plasmaBlock3, err := authority.GetBlockNumber()
 	exitIfError(err)
 	log.Printf("plasma block 3: %v\n", plasmaBlock3)
-	time.Sleep(4 * time.Second)
 
 	// Mallory attempts to exit spent coin (the one sent to Dan)
 	log.Printf("Mallory trying an exit %d on block number %d\n", depositSlot1, coin.DepositBlockNum)
@@ -137,7 +149,7 @@ func main() {
 	danBalanceBefore, err := ganache.BalanceAt(context.TODO(), common.HexToAddress(danAccount.Address), nil)
 	exitIfError(err)
 	err = dan.WithdrawBonds()
-	time.Sleep(2 * time.Second)
+
 	exitIfError(err)
 	danBalanceAfter, err := ganache.BalanceAt(context.TODO(), common.HexToAddress(danAccount.Address), nil)
 	exitIfError(err)

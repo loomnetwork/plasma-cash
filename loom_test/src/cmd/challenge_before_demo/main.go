@@ -12,6 +12,10 @@ import (
 )
 
 func main() {
+
+	maxIteration := 20
+	sleepPerIteration := 500 * time.Millisecond
+
 	client.InitClients("http://localhost:8545")
 	client.InitTokenClient("http://localhost:8545")
 	ganache, err := client.ConnectToGanache("http://localhost:8545")
@@ -42,12 +46,23 @@ func main() {
 	exitIfError(err)
 
 	// Dan deposits a coin
+	currentBlock, err := authority.GetBlockNumber()
+	exitIfError(err)
 	txHash := dan.Deposit(big.NewInt(16))
+	currentBlock, err = client.PollForBlockChange(authority, currentBlock, maxIteration, sleepPerIteration)
+	if err != nil {
+		panic(err)
+	}
+
+	txHash = mallory.Deposit(big.NewInt(6))
+	currentBlock, err = client.PollForBlockChange(authority, currentBlock, maxIteration, sleepPerIteration)
+	if err != nil {
+		panic(err)
+	}
+
 	depEvent, err := mallory.RootChain.DepositEventData(txHash)
 	exitIfError(err)
 	depositSlot1 := depEvent.Slot
-
-	time.Sleep(6 * time.Second)
 
 	danTokenStart, err := dan.TokenContract.BalanceOf()
 	exitIfError(err)
@@ -55,19 +70,28 @@ func main() {
 	coin, err := dan.RootChain.PlasmaCoin(depositSlot1)
 	exitIfError(err)
 
-	exitIfError(authority.SubmitBlock())
+	currentBlock, err = client.PollForBlockChange(authority, currentBlock, maxIteration, sleepPerIteration)
+	if err != nil {
+		panic(err)
+	}
 
 	// TODO: Dan should start watching for exits of depositSlot1
 
 	// Trudy sends her invalid coin (which she doesn't own) to Mallory
 	exitIfError(trudy.SendTransaction(depositSlot1, coin.DepositBlockNum, big.NewInt(1), malloryAccount.Address))
-	exitIfError(authority.SubmitBlock())
+	currentBlock, err = client.PollForBlockChange(authority, currentBlock, maxIteration, sleepPerIteration)
+	if err != nil {
+		panic(err)
+	}
 	trudyToMalloryBlockNum, err := authority.GetBlockNumber()
 	exitIfError(err)
 
 	// Mallory sends the invalid coin back to Trudy
 	exitIfError(mallory.SendTransaction(depositSlot1, trudyToMalloryBlockNum, big.NewInt(1), trudyAccount.Address))
-	exitIfError(authority.SubmitBlock())
+	currentBlock, err = client.PollForBlockChange(authority, currentBlock, maxIteration, sleepPerIteration)
+	if err != nil {
+		panic(err)
+	}
 	malloryToTrudyBlockNum, err := authority.GetBlockNumber()
 	exitIfError(err)
 

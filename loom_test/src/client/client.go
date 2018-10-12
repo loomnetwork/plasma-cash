@@ -14,6 +14,36 @@ import (
 	"github.com/loomnetwork/go-loom/client/plasma_cash/eth"
 )
 
+func PollForBlockChange(c *Client, currentBlockNumber *big.Int, maxIteration int, sleepPerIteration time.Duration) (*big.Int, error) {
+	currentIteration := 0
+	var err error
+	var updatedBlockNumber = big.NewInt(0)
+	for {
+		time.Sleep(sleepPerIteration)
+
+		fmt.Printf("Polling, CurrentBlockNumber: %s\n", currentBlockNumber.String())
+
+		updatedBlockNumber, err = c.GetBlockNumber()
+		if err != nil {
+			err = fmt.Errorf("Error while polling for current block number")
+			break
+		}
+
+		if updatedBlockNumber.Cmp(currentBlockNumber) != 0 {
+			fmt.Printf("Updated BlockNumber to: %s\n", updatedBlockNumber.String())
+			break
+		}
+
+		currentIteration += 1
+		if currentIteration >= maxIteration {
+			err = fmt.Errorf("Maximum iteration exceeded but, block didnt change")
+			break
+		}
+	}
+
+	return updatedBlockNumber, err
+}
+
 type Client struct {
 	childChain         plasma_cash.ChainServiceClient
 	RootChain          plasma_cash.RootChainClient
@@ -105,6 +135,7 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum *big.Int, txBlkNum *big.Int
 		fmt.Println("Error Here 11")
 		return nil, err
 	}
+
 	fmt.Println("Error Here 12 time:", time.Now().UTC().String())
 	prevTx, prevTxProof, err := c.getTxAndProof(prevTxBlkNum, slot)
 	if err != nil {
@@ -277,8 +308,6 @@ func (c *Client) SubmitBlock() error {
 	fmt.Printf("********* #### Submitting plasmaBlockNum: %s with root: %v", blockNum.String(), root)
 	return c.RootChain.SubmitBlock(blockNum, root)
 	**/
-
-	time.Sleep(5 * time.Second)
 	return nil
 }
 
