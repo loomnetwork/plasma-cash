@@ -54,12 +54,6 @@ func main() {
 		panic(err)
 	}
 
-	txHash = mallory.Deposit(big.NewInt(6))
-	currentBlock, err = client.PollForBlockChange(authority, currentBlock, maxIteration, sleepPerIteration)
-	if err != nil {
-		panic(err)
-	}
-
 	depEvent, err := mallory.RootChain.DepositEventData(txHash)
 	exitIfError(err)
 	depositSlot1 := depEvent.Slot
