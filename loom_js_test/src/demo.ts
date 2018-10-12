@@ -1,47 +1,56 @@
 import test from 'tape'
-import BN from 'bn.js'
 import Web3 from 'web3'
-import { PlasmaDB, SignedContract, IPlasmaDeposit, marshalDepositEvent } from 'loom-js'
+import { PlasmaUser } from 'loom-js'
 
 import { increaseTime } from './ganache-helpers'
-import { sleep, createTestEntity, ADDRESSES, ACCOUNTS } from './config'
-import { EthCardsContract } from './cards-contract'
+import { sleep, ADDRESSES, ACCOUNTS, setupContracts } from './config'
 
 // Alice registers and has 5 coins, and she deposits 3 of them.
 const ALICE_INITIAL_COINS = 5
 const ALICE_DEPOSITED_COINS = 3
 const COINS = [1, 2, 3]
 
-// All the contracts are expected to have been deployed to Ganache when this function is called.
-function setupContracts(web3: Web3): { cards: EthCardsContract } {
-  const abi = require('./contracts/cards-abi.json')
-  const cards = new EthCardsContract(new web3.eth.Contract(abi, ADDRESSES.token_contract))
-  return { cards }
-}
-
 export async function runDemo(t: test.Test) {
-  const endpoint = 'ws://127.0.0.1:8545'
-  const web3 = new Web3(new Web3.providers.WebsocketProvider(endpoint))
+  const web3Endpoint = 'ws://127.0.0.1:8545'
+  const dappchainEndpoint = 'http://localhost:46658'
+  const web3 = new Web3(new Web3.providers.WebsocketProvider(web3Endpoint))
   const { cards } = setupContracts(web3)
-  const database = new PlasmaDB(endpoint, 'localhost:45578', '0x', ACCOUNTS.charlie) // Demo values to store in the db
 
-  const authority = createTestEntity(web3, ACCOUNTS.authority)
-  const alice = createTestEntity(web3, ACCOUNTS.alice)
-  const bob = createTestEntity(web3, ACCOUNTS.bob)
-  const charlie = createTestEntity(web3, ACCOUNTS.charlie, database)
+  const authority = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.authority
+  )
+  const alice = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.alice
+  )
+  const bob = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.bob
+  )
+  const charlie = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.charlie
+  )
 
   await cards.registerAsync(alice.ethAddress)
   let balance = await cards.balanceOfAsync(alice.ethAddress)
   t.equal(balance.toNumber(), 5)
-
-  const startBlockNum = await web3.eth.getBlockNumber()
 
   for (let i = 0; i < ALICE_DEPOSITED_COINS; i++) {
     await cards.depositToPlasmaAsync({ tokenId: COINS[i], from: alice.ethAddress })
   }
 
   // Get deposit events for all
-  const deposits: IPlasmaDeposit[] = await authority.getDepositEvents(new BN(0), true)
+  const deposits = await authority.allDeposits()
   t.equal(deposits.length, ALICE_DEPOSITED_COINS, 'All deposit events accounted for')
 
   // for (let i = 0; i < deposits.length; i++) {
@@ -73,49 +82,72 @@ export async function runDemo(t: test.Test) {
 
   // Alice to Bob, and Alice to Charlie. We care about the Alice to Bob
   // transaction
-  const deposit3 = deposits[2]
   const deposit2 = deposits[1]
+  const deposit3 = deposits[2]
   // Alice -> Bob
-  await alice.transferTokenAsync({
-    slot: deposit3.slot,
-    prevBlockNum: deposit3.blockNumber,
-    denomination: 1,
-    newOwner: bob.ethAddress
-  })
+  await alice.transferAsync(deposit3.slot, bob.ethAddress)
   // Alice -> Charlie
-  await alice.transferTokenAsync({
-    slot: deposit2.slot,
-    prevBlockNum: deposit2.blockNumber,
-    denomination: 1,
-    newOwner: charlie.ethAddress
-  })
-  const plasmaBlockNum1 = await authority.submitPlasmaBlockAsync()
+  await alice.transferAsync(deposit2.slot, charlie.ethAddress)
+
+  let aliceCoins = await alice.getUserCoinsAsync()
+  t.ok(aliceCoins[0].slot.eq(deposits[0].slot), 'Alice has correct coin')
+
+  const inclusionBlock = await authority.submitPlasmaBlockAsync()
+
+  // For alice's piece of mind, when transacting, she has to verify that her transaction was included and is not withheld _in limbo_.
+  t.equal(
+    await alice.verifyInclusionAsync(deposit2.slot, inclusionBlock),
+    true,
+    'alice verified tx is not in limbo'
+  )
+  t.equal(
+    await charlie.verifyInclusionAsync(deposit2.slot, inclusionBlock),
+    true,
+    'charlie verified tx is not in limbo'
+  )
+
+  t.equal(
+    await alice.verifyInclusionAsync(deposit3.slot, inclusionBlock),
+    true,
+    'alice verified tx is not in limbo'
+  )
+  t.equal(
+    await bob.verifyInclusionAsync(deposit3.slot, inclusionBlock),
+    true,
+    'bob verified tx is not in limbo'
+  )
 
   // Add an empty block in between (for proof of exclusion)
   await authority.submitPlasmaBlockAsync()
 
+  // Multiple refreshes don't break it
+  await bob.refreshAsync()
+  await charlie.refreshAsync()
+
+  // The legit operator will allow access to these variables as usual. The non-legit operator won't and as a result `getUserCoinsAsync` is empty
+  if (bob.contractName !== 'hostileoperator') {
+    let bobCoins = await bob.getUserCoinsAsync()
+    t.ok(bobCoins[0].slot.eq(deposit3.slot), 'Bob has correct coin')
+    let charlieCoins = await charlie.getUserCoinsAsync()
+    t.ok(charlieCoins[0].slot.eq(deposit2.slot), 'Charlie has correct coin')
+  }
+
+  await bob.refreshAsync()
+  await bob.refreshAsync()
+
   // Bob -> Charlie
-  await bob.transferTokenAsync({
-    slot: deposit3.slot,
-    prevBlockNum: new BN(1000),
-    denomination: 1,
-    newOwner: charlie.ethAddress
-  })
-  const plasmaBlockNum2 = await authority.submitPlasmaBlockAsync()
+  await bob.transferAsync(deposit3.slot, charlie.ethAddress)
+
+  await authority.submitPlasmaBlockAsync()
+
+  await charlie.refreshAsync()
+  await charlie.refreshAsync()
 
   const coin = await charlie.getPlasmaCoinAsync(deposit3.slot)
-  const blocks = await bob.getBlockNumbersAsync(coin.depositBlockNum)
-
-  const proofs = await bob.getCoinHistoryAsync(deposit3.slot, blocks)
-  t.equal(await charlie.verifyCoinHistoryAsync(deposit3.slot, proofs), true)
+  t.equal(await charlie.checkHistoryAsync(coin), true, 'Coin history verified')
   let charlieCoin = charlie.watchExit(deposit3.slot, coin.depositBlockNum)
 
-
-  await charlie.startExitAsync({
-    slot: deposit3.slot,
-    prevBlockNum: plasmaBlockNum1,
-    exitBlockNum: plasmaBlockNum2
-  })
+  await charlie.exitAsync(deposit3.slot)
   charlie.stopWatching(charlieCoin)
 
   // Jump forward in time by 8 days
@@ -134,6 +166,11 @@ export async function runDemo(t: test.Test) {
   t.equal(balance.toNumber(), 1, 'charlie should have 1 token in cards contract')
 
   // Close the websocket, hacky :/
+  // @ts-ignore
+  authority.disconnect()
+  alice.disconnect()
+  bob.disconnect()
+  charlie.disconnect()
   // @ts-ignore
   web3.currentProvider.connection.close()
 

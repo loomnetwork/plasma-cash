@@ -1,31 +1,41 @@
 import test from 'tape'
 import BN from 'bn.js'
 import Web3 from 'web3'
-import { IPlasmaDeposit, marshalDepositEvent } from 'loom-js'
+import { PlasmaUser } from 'loom-js'
 
 import { increaseTime, getEthBalanceAtAddress } from './ganache-helpers'
-import { sleep, createTestEntity, ADDRESSES, ACCOUNTS } from './config'
-import { EthCardsContract } from './cards-contract'
-
-// Alice registers and has 5 coins, and she deposits 3 of them.
-const ALICE_INITIAL_COINS = 5
-const ALICE_DEPOSITED_COINS = 3
-const COINS = [1, 2, 3]
-
-// All the contracts are expected to have been deployed to Ganache when this function is called.
-function setupContracts(web3: Web3): { cards: EthCardsContract } {
-  const abi = require('./contracts/cards-abi.json')
-  const cards = new EthCardsContract(new web3.eth.Contract(abi, ADDRESSES.token_contract))
-  return { cards }
-}
+import { sleep, ADDRESSES, ACCOUNTS, setupContracts } from './config'
 
 export async function runChallengeBeforeDemo(t: test.Test) {
-  const web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8545'))
+  const web3Endpoint = 'ws://127.0.0.1:8545'
+  const dappchainEndpoint = 'http://localhost:46658'
+  const web3 = new Web3(new Web3.providers.WebsocketProvider(web3Endpoint))
   const { cards } = setupContracts(web3)
-  const authority = createTestEntity(web3, ACCOUNTS.authority)
-  const dan = createTestEntity(web3, ACCOUNTS.dan)
-  const trudy = createTestEntity(web3, ACCOUNTS.trudy)
-  const mallory = createTestEntity(web3, ACCOUNTS.mallory)
+
+  const authority = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.authority
+  )
+  const dan = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.dan
+  )
+  const trudy = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.trudy
+  )
+  const mallory = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.mallory
+  )
 
   // Give Dan 5 tokens
   await cards.registerAsync(dan.ethAddress)
@@ -36,13 +46,7 @@ export async function runChallengeBeforeDemo(t: test.Test) {
 
   // Dan deposits a coin
   await cards.depositToPlasmaAsync({ tokenId: 16, from: dan.ethAddress })
-
-  const depositEvents: any[] = await authority.plasmaCashContract.getPastEvents('Deposit', {
-    fromBlock: startBlockNum
-  })
-  const deposits = depositEvents.map<IPlasmaDeposit>(event =>
-    marshalDepositEvent(event.returnValues)
-  )
+  const deposits = await dan.deposits()
   t.equal(deposits.length, 1, 'All deposit events accounted for')
 
   await sleep(8000)
@@ -56,6 +60,7 @@ export async function runChallengeBeforeDemo(t: test.Test) {
   const danCoin = dan.watchExit(deposit1Slot, coin.depositBlockNum)
 
   // Trudy creates an invalid spend of the coin to Mallory
+  // Low level call since trudy doesn't actually have the data for this transfer in her state
   await trudy.transferTokenAsync({
     slot: deposit1Slot,
     prevBlockNum: coin.depositBlockNum,
@@ -66,7 +71,7 @@ export async function runChallengeBeforeDemo(t: test.Test) {
   // Operator includes it
   const trudyToMalloryBlock = await authority.submitPlasmaBlockAsync()
 
-  // Mallory gives the coin back to Trudy.
+  // Low level call for the malicious transfers
   await mallory.transferTokenAsync({
     slot: deposit1Slot,
     prevBlockNum: trudyToMalloryBlock,
@@ -77,6 +82,7 @@ export async function runChallengeBeforeDemo(t: test.Test) {
   // Operator includes it
   const malloryToTrudyBlock = await authority.submitPlasmaBlockAsync()
 
+  // Low level call for the malicious exit
   await trudy.startExitAsync({
     slot: deposit1Slot,
     prevBlockNum: trudyToMalloryBlock,
@@ -116,5 +122,9 @@ export async function runChallengeBeforeDemo(t: test.Test) {
   // Close the websocket, hacky :/
   // @ts-ignore
   web3.currentProvider.connection.close()
+  authority.disconnect()
+  dan.disconnect()
+  trudy.disconnect()
+  mallory.disconnect()
   t.end()
 }

@@ -1,18 +1,5 @@
 import Web3 from 'web3'
-import {
-  Entity,
-  EthereumPlasmaClient,
-  CryptoUtils,
-  NonceTxMiddleware,
-  SignedTxMiddleware,
-  Address,
-  LocalAddress,
-  DAppChainPlasmaClient,
-  CachedDAppChainPlasmaClient,
-  Client,
-  PlasmaDB,
-  createJSONRPCClient
-} from 'loom-js'
+import { EthCardsContract } from './cards-contract'
 
 export const DEFAULT_GAS = '3141592'
 export const CHILD_BLOCK_INTERVAL = 1000
@@ -49,37 +36,9 @@ export function getTestUrls() {
   }
 }
 
-var useHostileOperator = false
-export function enableHostilePlasmaCashOperator(enable: boolean) {
-  useHostileOperator = enable
-}
-
-export function createTestEntity(web3: Web3, ethPrivateKey: string, database?: PlasmaDB): Entity {
-  const ethAccount = web3.eth.accounts.privateKeyToAccount(ethPrivateKey)
-  const ethPlasmaClient = new EthereumPlasmaClient(web3, ethAccount, ADDRESSES.root_chain)
-  const writer = createJSONRPCClient({ protocols: [{ url: getTestUrls().httpWriteUrl }] })
-  const reader = createJSONRPCClient({ protocols: [{ url: getTestUrls().httpReadUrl }] })
-  const dAppClient = new Client('default', writer, reader)
-  // TODO: move keys to config file
-  const privKey = CryptoUtils.generatePrivateKey()
-  const pubKey = CryptoUtils.publicKeyFromPrivateKey(privKey)
-  dAppClient.txMiddleware = [
-    new NonceTxMiddleware(pubKey, dAppClient),
-    new SignedTxMiddleware(privKey)
-  ]
-  const callerAddress = new Address('default', LocalAddress.fromPublicKey(pubKey))
-  const contractName = useHostileOperator ? 'hostileoperator' : undefined
-  let dAppPlasmaClient
-  if (database !== undefined) {
-    dAppPlasmaClient = new CachedDAppChainPlasmaClient({ dAppClient, callerAddress, database, contractName })
-  } else {
-    dAppPlasmaClient = new DAppChainPlasmaClient({ dAppClient, callerAddress, contractName })
-  }
-  return new Entity(web3, {
-    ethAccount,
-    ethPlasmaClient,
-    dAppPlasmaClient,
-    defaultGas: DEFAULT_GAS,
-    childBlockInterval: CHILD_BLOCK_INTERVAL
-  })
+// All the contracts are expected to have been deployed to Ganache when this function is called.
+export function setupContracts(web3: Web3): { cards: EthCardsContract } {
+  const abi = require('./contracts/cards-abi.json')
+  const cards = new EthCardsContract(new web3.eth.Contract(abi, ADDRESSES.token_contract))
+  return { cards }
 }
