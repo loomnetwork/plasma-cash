@@ -111,12 +111,18 @@ func (c *HostileOperator) SubmitBlockToMainnet(ctx contract.Context, req *Submit
 	// round to nearest 1000
 	roundedInt := round(pbk.CurrentHeight.Value.Int64(), 1000)
 	pbk.CurrentHeight.Value = *loom.NewBigUIntFromInt(roundedInt)
-	ctx.Set(blockHeightKey, pbk)
 
 	pending := &Pending{}
 	ctx.Get(pendingTXsKey, pending)
 
-	leaves := make(map[uint64][]byte)
+    leaves := make(map[uint64][]byte)
+    if len(pending.Transactions) == 0 {
+        ctx.Logger().Warn("No pending transaction, returning")
+        return &SubmitBlockToMainnetResponse{}, nil
+    } else {
+        ctx.Logger().Warn("Pending transactions, raising blockheight")
+        ctx.Set(blockHeightKey, pbk)
+    }
 
 	for _, v := range pending.Transactions {
 		if v.PreviousBlock == nil || v.PreviousBlock.Value.Int64() == int64(0) {
