@@ -3,7 +3,7 @@ import Web3 from 'web3'
 import { PlasmaUser } from 'loom-js'
 
 import { increaseTime, getEthBalanceAtAddress } from './ganache-helpers'
-import { sleep, ADDRESSES, ACCOUNTS, setupContracts } from './config'
+import { sleep, ADDRESSES, ACCOUNTS, setupContracts, pollForBlockChange } from './config'
 
 export async function runChallengeBetweenDemo(t: test.Test) {
   const web3Endpoint = 'ws://127.0.0.1:8545'
@@ -42,33 +42,32 @@ export async function runChallengeBetweenDemo(t: test.Test) {
   await cards.registerAsync(eve.ethAddress)
 
   // Eve deposits a coin
+  let currentBlock = await authority.getCurrentBlockAsync()
   await cards.depositToPlasmaAsync({ tokenId: 11, from: eve.ethAddress })
+  currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
   const deposits = await eve.deposits()
   t.equal(deposits.length, 1, 'Eve has correct number of deposits')
-
-  await sleep(8000)
 
   const deposit1Slot = deposits[0].slot
 
   // Eve sends her plasma coin to Bob
   const coin = await eve.getPlasmaCoinAsync(deposit1Slot)
   await eve.transferAsync(deposit1Slot, bob.ethAddress)
-  const eveToBobBlockNum = await authority.submitPlasmaBlockAsync()
+  currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
 
-  t.equal(await bob.checkHistoryAsync(coin), true, 'Coin history verified')
+  t.equal(await bob.receiveCoinAsync(deposit1Slot), true, 'Coin history verified')
   const bobCoin = bob.watchExit(deposit1Slot, coin.depositBlockNum)
 
   // Eve sends this same plasma coin to Alice
   await eve.transferAsync(deposit1Slot, alice.ethAddress)
-
-  const eveToAliceBlockNum = await authority.submitPlasmaBlockAsync()
+  currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
 
   // Alice attempts to exit her double-spent coin
   // Low level call to exit the double spend
   await alice.startExitAsync({
     slot: deposit1Slot,
     prevBlockNum: coin.depositBlockNum,
-    exitBlockNum: eveToAliceBlockNum
+    exitBlockNum: currentBlock
   })
   // Bob challenges here
 

@@ -4,7 +4,7 @@ import Web3 from 'web3'
 import { PlasmaUser } from 'loom-js'
 
 import { increaseTime, getEthBalanceAtAddress } from './ganache-helpers'
-import { sleep, ADDRESSES, ACCOUNTS, setupContracts } from './config'
+import { sleep, ADDRESSES, ACCOUNTS, setupContracts, pollForBlockChange } from './config'
 
 export async function runChallengeBeforeDemo(t: test.Test) {
   const web3Endpoint = 'ws://127.0.0.1:8545'
@@ -45,14 +45,14 @@ export async function runChallengeBeforeDemo(t: test.Test) {
   const startBlockNum = await web3.eth.getBlockNumber()
 
   // Dan deposits a coin
+  let currentBlock = await authority.getCurrentBlockAsync()
   await cards.depositToPlasmaAsync({ tokenId: 16, from: dan.ethAddress })
+  currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
   const deposits = await dan.deposits()
   t.equal(deposits.length, 1, 'All deposit events accounted for')
 
   await sleep(8000)
 
-  const plasmaBlock1 = await authority.submitPlasmaBlockAsync()
-  const plasmaBlock2 = await authority.submitPlasmaBlockAsync()
   const deposit1Slot = deposits[0].slot
 
   // Dan starts watching
@@ -69,7 +69,7 @@ export async function runChallengeBeforeDemo(t: test.Test) {
   })
 
   // Operator includes it
-  const trudyToMalloryBlock = await authority.submitPlasmaBlockAsync()
+  const trudyToMalloryBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
 
   // Low level call for the malicious transfers
   await mallory.transferTokenAsync({
@@ -80,7 +80,7 @@ export async function runChallengeBeforeDemo(t: test.Test) {
   })
 
   // Operator includes it
-  const malloryToTrudyBlock = await authority.submitPlasmaBlockAsync()
+  const malloryToTrudyBlock = await pollForBlockChange(authority, trudyToMalloryBlock, 20, 2000)
 
   // Low level call for the malicious exit
   await trudy.startExitAsync({

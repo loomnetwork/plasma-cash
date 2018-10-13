@@ -3,7 +3,8 @@ import Web3 from 'web3'
 import { PlasmaUser } from 'loom-js'
 
 import { increaseTime } from './ganache-helpers'
-import { sleep, ADDRESSES, ACCOUNTS, setupContracts } from './config'
+import { pollForBlockChange, sleep, ADDRESSES, ACCOUNTS, setupContracts } from './config'
+import BN from 'bn.js';
 
 // Alice registers and has 5 coins, and she deposits 3 of them.
 const ALICE_INITIAL_COINS = 5
@@ -44,9 +45,11 @@ export async function runDemo(t: test.Test) {
   await cards.registerAsync(alice.ethAddress)
   let balance = await cards.balanceOfAsync(alice.ethAddress)
   t.equal(balance.toNumber(), 5)
+  let currentBlock = await authority.getCurrentBlockAsync()
 
   for (let i = 0; i < ALICE_DEPOSITED_COINS; i++) {
     await cards.depositToPlasmaAsync({ tokenId: COINS[i], from: alice.ethAddress })
+    currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
   }
 
   // Get deposit events for all
@@ -73,7 +76,6 @@ export async function runDemo(t: test.Test) {
     'plasma contract should have 3 tokens in cards contract'
   )
 
-  await sleep(8000)
 
   const coins = await alice.getUserCoinsAsync()
   t.ok(coins[0].slot.eq(deposits[0].slot), 'got correct deposit coins 1')
@@ -84,26 +86,28 @@ export async function runDemo(t: test.Test) {
   // transaction
   const deposit2 = deposits[1]
   const deposit3 = deposits[2]
+
   // Alice -> Bob
   await alice.transferAsync(deposit3.slot, bob.ethAddress)
   // Alice -> Charlie
   await alice.transferAsync(deposit2.slot, charlie.ethAddress)
+  currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
+  await alice.refreshAsync()
 
   let aliceCoins = await alice.getUserCoinsAsync()
   t.ok(aliceCoins[0].slot.eq(deposits[0].slot), 'Alice has correct coin')
 
-  const inclusionBlock = await authority.submitPlasmaBlockAsync()
-
   // For alice's piece of mind, when transacting, she has to verify that her transaction was included and is not withheld _in limbo_.
+  let inclusionBlock = currentBlock
   t.equal(
     await alice.verifyInclusionAsync(deposit2.slot, inclusionBlock),
     true,
     'alice verified tx is not in limbo'
   )
   t.equal(
-    await charlie.verifyInclusionAsync(deposit2.slot, inclusionBlock),
+    await charlie.receiveCoinAsync(deposit2.slot),
     true,
-    'charlie verified tx is not in limbo'
+    'charlie received coin'
   )
 
   t.equal(
@@ -112,13 +116,10 @@ export async function runDemo(t: test.Test) {
     'alice verified tx is not in limbo'
   )
   t.equal(
-    await bob.verifyInclusionAsync(deposit3.slot, inclusionBlock),
+    await bob.receiveCoinAsync(deposit3.slot),
     true,
-    'bob verified tx is not in limbo'
+    'bob received coin'
   )
-
-  // Add an empty block in between (for proof of exclusion)
-  await authority.submitPlasmaBlockAsync()
 
   // Multiple refreshes don't break it
   await bob.refreshAsync()
@@ -137,14 +138,14 @@ export async function runDemo(t: test.Test) {
 
   // Bob -> Charlie
   await bob.transferAsync(deposit3.slot, charlie.ethAddress)
-
-  await authority.submitPlasmaBlockAsync()
+  // await bob.transferTokenAsync({slot: deposit3.slot, prevBlockNum: new BN(1000), denomination: 1, newOwner: charlie.ethAddress})
+  currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
 
   await charlie.refreshAsync()
   await charlie.refreshAsync()
 
   const coin = await charlie.getPlasmaCoinAsync(deposit3.slot)
-  t.equal(await charlie.checkHistoryAsync(coin), true, 'Coin history verified')
+  t.equal(await charlie.receiveCoinAsync(deposit3.slot), true, 'Coin history verified')
   let charlieCoin = charlie.watchExit(deposit3.slot, coin.depositBlockNum)
 
   await charlie.exitAsync(deposit3.slot)
