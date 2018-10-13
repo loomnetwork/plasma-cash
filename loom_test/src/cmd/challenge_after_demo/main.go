@@ -94,11 +94,6 @@ func main() {
 	currentBlock, err = authority.GetBlockNumber()
 	exitIfError(err)
 
-	err = authority.SubmitBlock()
-	exitIfError(err)
-	currentBlock, err = authority.GetBlockNumber()
-	exitIfError(err)
-
 	// Mallory sends her coin to Dan
 	// Coin 6 was the first deposit of
 	coin, err := mallory.RootChain.PlasmaCoin(depositSlot1)

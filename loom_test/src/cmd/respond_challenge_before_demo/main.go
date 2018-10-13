@@ -58,13 +58,6 @@ func main() {
 	coin, err := trudy.RootChain.PlasmaCoin(depositSlot1)
 	exitIfError(err)
 
-	// Add empty block in between
-	exitIfError(authority.SubmitBlock())
-	currentBlock, err = client.PollForBlockChange(authority, currentBlock, maxIteration, sleepPerIteration)
-	if err != nil {
-		panic(err)
-	}
-
 	// TODO: Trudy should start watching for exits of depositSlot1
 
 	// Trudy sends her coin to Dan

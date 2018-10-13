@@ -203,8 +203,7 @@ func (c *Client) ChallengeBefore(slot uint64, prevTxBlkNum *big.Int, txBlkNum *b
 // RespondChallengeBefore - Respond to an exit with invalid history challenge by proving that
 // you were given the coin under question
 func (c *Client) RespondChallengeBefore(slot uint64, respondingBlockNumber *big.Int, challengingTxHash [32]byte) ([]byte, error) {
-	respondingTx, proof, err := c.getTxAndProof(respondingBlockNumber,
-		slot)
+	respondingTx, proof, err := c.getTxAndProof(respondingBlockNumber, slot)
 	if err != nil {
 		return nil, err
 	}
@@ -300,25 +299,10 @@ func (c *Client) SendTransaction(slot uint64, prevBlock *big.Int, denomination *
 }
 
 func (c *Client) getTxAndProof(blkHeight *big.Int, slot uint64) (plasma_cash.Tx, []byte, error) {
-	block, err := c.childChain.Block(blkHeight)
+	tx, err := c.childChain.PlasmaTx(blkHeight, slot)
 	if err != nil {
 		return nil, nil, err
 	}
-
-	tx, err := block.TxFromSlot(slot)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// server should handle this
-	/*
-		if blkHeight%ChildBlockInterval != 0 {
-			proof := []byte{00000000}
-		} else {
-
-		}
-	*/
-
 	return tx, tx.Proof(), nil
 }
 
