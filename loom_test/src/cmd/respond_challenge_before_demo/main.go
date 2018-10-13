@@ -52,20 +52,18 @@ func main() {
 	exitIfError(err)
 	depositSlot1 := depEvent.Slot
 
-
 	danTokenStart, err := dan.TokenContract.BalanceOf()
 	exitIfError(err)
 
 	coin, err := trudy.RootChain.PlasmaCoin(depositSlot1)
 	exitIfError(err)
 
-    // Add empty block in between
-    exitIfError(authority.SubmitBlock())
+	// Add empty block in between
+	exitIfError(authority.SubmitBlock())
 	currentBlock, err = client.PollForBlockChange(authority, currentBlock, maxIteration, sleepPerIteration)
 	if err != nil {
 		panic(err)
 	}
-
 
 	// TODO: Trudy should start watching for exits of depositSlot1
 
@@ -89,7 +87,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
 
 	// TODO: Dan should start watching for exits of depositSlot1
 	// TODO: Dan should start watching for challenges of depositSlot1

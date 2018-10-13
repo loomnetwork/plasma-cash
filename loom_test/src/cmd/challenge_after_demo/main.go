@@ -56,7 +56,6 @@ func main() {
 	}
 	currentBlock, err := authority.GetBlockNumber()
 	exitIfError(err)
-	log.Printf("current block: %v", currentBlock)
 
 	_, err = ganache.HeaderByNumber(context.TODO(), nil)
 	exitIfError(err)
@@ -94,13 +93,11 @@ func main() {
 	exitIfError(err)
 	currentBlock, err = authority.GetBlockNumber()
 	exitIfError(err)
-	log.Printf("plasma block 1: %v\n", currentBlock)
 
 	err = authority.SubmitBlock()
 	exitIfError(err)
 	currentBlock, err = authority.GetBlockNumber()
 	exitIfError(err)
-	log.Printf("plasma block 2: %v\n", currentBlock)
 
 	// Mallory sends her coin to Dan
 	// Coin 6 was the first deposit of
@@ -111,7 +108,6 @@ func main() {
 
 	danAccount, err := dan.TokenContract.Account()
 	exitIfError(err)
-	log.Printf("account\n")
 
 	err = mallory.SendTransaction(depositSlot1, coin.DepositBlockNum, big.NewInt(1), danAccount.Address) //mallory_to_dan
 	exitIfError(err)
@@ -124,7 +120,6 @@ func main() {
 	exitIfError(err)
 	plasmaBlock3, err := authority.GetBlockNumber()
 	exitIfError(err)
-	log.Printf("plasma block 3: %v\n", plasmaBlock3)
 
 	// Mallory attempts to exit spent coin (the one sent to Dan)
 	log.Printf("Mallory trying an exit %d on block number %d\n", depositSlot1, coin.DepositBlockNum)
@@ -132,19 +127,15 @@ func main() {
 
 	// Dan's transaction depositSlot1 included in plasmaBlock3. He challenges!
 	dan.ChallengeAfter(depositSlot1, plasmaBlock3)
-	log.Printf("ChallengeAfter\n")
 	dan.StartExit(depositSlot1, coin.DepositBlockNum, plasmaBlock3)
-	log.Printf("StartExit\n")
 
 	// After 8 days pass,
 	_, err = ganache.IncreaseTime(context.TODO(), 8*24*3600)
 	exitIfError(err)
 
 	authority.FinalizeExits()
-	log.Printf("FinalizeExits\n")
 
 	dan.Withdraw(depositSlot1)
-	log.Printf("withdraw\n")
 
 	danBalanceBefore, err := ganache.BalanceAt(context.TODO(), common.HexToAddress(danAccount.Address), nil)
 	exitIfError(err)

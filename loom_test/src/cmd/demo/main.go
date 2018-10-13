@@ -4,7 +4,6 @@ import (
 	"client"
 	"context"
 	"flag"
-	"fmt"
 	"log"
 	"math/big"
 	"time"
@@ -68,7 +67,6 @@ func main() {
 
 	currentBlock, err := authority.GetBlockNumber()
 	exitIfError(err)
-	log.Printf("current block: %v", currentBlock)
 
 	_, err = ganache.HeaderByNumber(context.TODO(), nil)
 	exitIfError(err)
@@ -77,7 +75,6 @@ func main() {
 	// utxos in return
 	tokenID := big.NewInt(1)
 	txHash := alice.Deposit(tokenID)
-	//time.Sleep(1 * time.Second)
 	currentBlock, err = client.PollForBlockChange(authority, currentBlock, maxIteration, sleepPerIteration)
 	if err != nil {
 		panic(err)
@@ -88,10 +85,6 @@ func main() {
 	slots = append(slots, deposit1.Slot)
 	alice.DebugCoinMetaData(slots)
 
-	log.Printf("Checkpoint 1")
-	log.Println(deposit1.Slot)
-	log.Println(deposit1.BlockNum)
-
 	txHash = alice.Deposit(tokenID.Add(tokenID, big.NewInt(1)))
 
 	currentBlock, err = client.PollForBlockChange(authority, currentBlock, maxIteration, sleepPerIteration)
@@ -99,15 +92,10 @@ func main() {
 		panic(err)
 	}
 
-	//time.Sleep(1 * time.Second)
 	deposit2, err := alice.RootChain.DepositEventData(txHash)
 	exitIfError(err)
 	slots = append(slots, deposit2.Slot)
 	alice.DebugCoinMetaData(slots)
-
-	log.Printf("Checkpoint 2")
-	log.Println(deposit2.Slot)
-	log.Println(deposit2.BlockNum)
 
 	txHash = alice.Deposit(tokenID.Add(tokenID, big.NewInt(2)))
 
@@ -116,17 +104,10 @@ func main() {
 		panic(err)
 	}
 
-	//time.Sleep(1 * time.Second)
 	deposit3, err := alice.RootChain.DepositEventData(txHash)
 	exitIfError(err)
 	slots = append(slots, deposit3.Slot)
 	alice.DebugCoinMetaData(slots)
-
-	log.Printf("Checkpoint 3")
-	//time.Sleep(6 * time.Second)
-
-	log.Println(deposit3.Slot)
-	log.Println(deposit3.BlockNum)
 
 	//Alice to Bob, and Alice to Charlie. We care about the Alice to Bob
 	// transaction
@@ -151,7 +132,6 @@ func main() {
 		panic(err)
 	}
 
-	log.Println("Checkpoint 4")
 	plasmaBlock1, err := authority.GetBlockNumber()
 
 	// Bob to Charlie
@@ -167,21 +147,15 @@ func main() {
 	}
 
 	// TODO: verify coin history
-	log.Println("Checkpoint 5")
 
 	//exitIfError(authority.SubmitBlock())
-	//time.Sleep(4 * time.Second)
 	plasmaBlock2, err := authority.GetBlockNumber()
 	exitIfError(err)
-
-	fmt.Println(plasmaBlock1, plasmaBlock2)
-	//os.Exit(1)
 
 	// Charlie should be able to submit an exit by referencing blocks 0 and 1 which
 	// included his transaction.
 	charlie.DebugCoinMetaData(slots)
 	_, err = charlie.StartExit(deposit3.Slot, plasmaBlock1, plasmaBlock2)
-	log.Println("Checkpoint 6")
 	exitIfError(err)
 	charlie.DebugCoinMetaData(slots)
 
@@ -191,8 +165,6 @@ func main() {
 
 	err = authority.FinalizeExits()
 	exitIfError(err)
-
-	log.Println("Checkpoint 7")
 
 	// Charlie should now be able to withdraw the utxo which included token 2 to his
 	// wallet.

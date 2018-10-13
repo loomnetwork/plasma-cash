@@ -96,8 +96,6 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum *big.Int, txBlkNum *big.Int
 		return nil, err
 	}
 
-	fmt.Println("Checkpoint Client.go 8")
-
 	blkModInterval := new(big.Int)
 	blkModInterval = blkModInterval.Mod(txBlkNum, big.NewInt(c.childBlockInterval))
 	if blkModInterval.Cmp(big.NewInt(0)) != 0 {
@@ -120,32 +118,23 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum *big.Int, txBlkNum *big.Int
 			exitingTxSig,
 			big.NewInt(0), txBlkNum)
 		if err != nil {
-			fmt.Println("Error Checkpoint Client.go 9")
 			return nil, err
 		}
 		return txHash, nil
 	}
 
-	fmt.Println("Checkpoint Client.go 10")
-
 	// Otherwise, they should get the raw tx info from the block
 	// And the merkle proof and submit these
 	exitingTx, exitingTxProof, err := c.getTxAndProof(txBlkNum, slot)
 	if err != nil {
-		fmt.Println("Error Here 11")
 		return nil, err
 	}
 
-	fmt.Println("Error Here 12 time:", time.Now().UTC().String())
 	prevTx, prevTxProof, err := c.getTxAndProof(prevTxBlkNum, slot)
 	if err != nil {
-		fmt.Println("Error Here 13 time:", time.Now().UTC().String())
 		return nil, err
 	}
 	sig := exitingTx.Sig()
-
-	fmt.Println("Here 12")
-	fmt.Println(slot, prevTx, exitingTx, prevTxProof, exitingTxProof, sig, prevTxBlkNum, txBlkNum)
 
 	return c.RootChain.StartExit(
 		slot,
@@ -286,30 +275,6 @@ func (c *Client) DebugCoinMetaData(slots []uint64) {
 }
 
 // Child Chain Functions
-
-func (c *Client) SubmitBlock() error {
-	/**
-	if err := c.childChain.SubmitBlock(); err != nil {
-		return err
-	}
-
-	blockNum, err := c.childChain.BlockNumber()
-	if err != nil {
-		return err
-	}
-
-	block, err := c.childChain.Block(blockNum)
-	if err != nil {
-		return err
-	}
-
-	var root [32]byte
-	copy(root[:], block.MerkleHash())
-	fmt.Printf("********* #### Submitting plasmaBlockNum: %s with root: %v", blockNum.String(), root)
-	return c.RootChain.SubmitBlock(blockNum, root)
-	**/
-	return nil
-}
 
 func (c *Client) SendTransaction(slot uint64, prevBlock *big.Int, denomination *big.Int, newOwner string) error {
 	ethAddress := common.HexToAddress(newOwner)
