@@ -13,7 +13,7 @@ import (
 
 func main() {
 
-	maxIteration := 20
+	maxIteration := 30
 	sleepPerIteration := 500 * time.Millisecond
 
 	client.InitClients("http://localhost:8545")

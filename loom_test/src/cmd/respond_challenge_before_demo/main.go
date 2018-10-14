@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	maxIteration := 20
+	maxIteration := 50
 	sleepPerIteration := 500 * time.Millisecond
 
 	client.InitClients("http://localhost:8545")
@@ -61,7 +61,9 @@ func main() {
 	// TODO: Trudy should start watching for exits of depositSlot1
 
 	// Trudy sends her coin to Dan
-	exitIfError(trudy.SendTransaction(depositSlot1, coin.DepositBlockNum, big.NewInt(1), danAccount.Address))
+	err = trudy.SendTransaction(depositSlot1, coin.DepositBlockNum, big.NewInt(1), danAccount.Address)
+    exitIfError(err)
+
 	currentBlock, err = client.PollForBlockChange(authority, currentBlock, maxIteration, sleepPerIteration)
 	if err != nil {
 		panic(err)
@@ -76,10 +78,7 @@ func main() {
 	fmt.Println("Dan attempts to exit...")
 	_, err = dan.StartExit(depositSlot1, big.NewInt(0), coin.DepositBlockNum)
 	exitIfError(err)
-	currentBlock, err = client.PollForBlockChange(authority, currentBlock, maxIteration, sleepPerIteration)
-	if err != nil {
-		panic(err)
-	}
+	time.Sleep(2 * time.Second)
 
 	// TODO: Dan should start watching for exits of depositSlot1
 	// TODO: Dan should start watching for challenges of depositSlot1

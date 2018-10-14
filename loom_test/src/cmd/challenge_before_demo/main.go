@@ -13,7 +13,7 @@ import (
 
 func main() {
 
-	maxIteration := 20
+	maxIteration := 30
 	sleepPerIteration := 500 * time.Millisecond
 
 	client.InitClients("http://localhost:8545")
@@ -63,11 +63,6 @@ func main() {
 
 	coin, err := dan.RootChain.PlasmaCoin(depositSlot1)
 	exitIfError(err)
-
-	currentBlock, err = client.PollForBlockChange(authority, currentBlock, maxIteration, sleepPerIteration)
-	if err != nil {
-		panic(err)
-	}
 
 	// TODO: Dan should start watching for exits of depositSlot1
 

@@ -315,7 +315,7 @@ func (c *HostileOperator) GetPlasmaTxRequest(ctx contract.StaticContext, req *Ge
 		return nil, err
 	}
 
-	tx.Proof = smt.CreateMerkleProof(tx.Slot)
+	tx.Proof = smt.CreateMerkleProof(req.Slot)
 
 	res := &GetPlasmaTxResponse{
 		Plasmatx: tx,
