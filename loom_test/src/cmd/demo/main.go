@@ -10,6 +10,10 @@ import (
 )
 
 func main() {
+
+	maxIteration := 20
+	sleepPerIteration := 500 * time.Millisecond
+
 	var hostile bool
 	flag.BoolVar(&hostile, "hostile", false, "run the demo with a hostile Plasma Cash operator")
 	flag.Parse()
@@ -63,7 +67,6 @@ func main() {
 
 	currentBlock, err := authority.GetBlockNumber()
 	exitIfError(err)
-	log.Printf("current block: %v", currentBlock)
 
 	_, err = ganache.HeaderByNumber(context.TODO(), nil)
 	exitIfError(err)
@@ -72,55 +75,64 @@ func main() {
 	// utxos in return
 	tokenID := big.NewInt(1)
 	txHash := alice.Deposit(tokenID)
-	time.Sleep(1 * time.Second)
+	currentBlock, err = client.PollForBlockChange(authority, currentBlock, maxIteration, sleepPerIteration)
+	if err != nil {
+		panic(err)
+	}
+
 	deposit1, err := alice.RootChain.DepositEventData(txHash)
 	exitIfError(err)
 	slots = append(slots, deposit1.Slot)
 	alice.DebugCoinMetaData(slots)
 
-	log.Printf("Checkpoint 1")
-	log.Println(deposit1.Slot)
-
 	txHash = alice.Deposit(tokenID.Add(tokenID, big.NewInt(1)))
-	time.Sleep(1 * time.Second)
+
+	currentBlock, err = client.PollForBlockChange(authority, currentBlock, maxIteration, sleepPerIteration)
+	if err != nil {
+		panic(err)
+	}
+
 	deposit2, err := alice.RootChain.DepositEventData(txHash)
 	exitIfError(err)
 	slots = append(slots, deposit2.Slot)
 	alice.DebugCoinMetaData(slots)
 
-	log.Printf("Checkpoint 2")
-	log.Println(deposit2.Slot)
-
 	txHash = alice.Deposit(tokenID.Add(tokenID, big.NewInt(2)))
-	time.Sleep(1 * time.Second)
+
+	currentBlock, err = client.PollForBlockChange(authority, currentBlock, maxIteration, sleepPerIteration)
+	if err != nil {
+		panic(err)
+	}
+
 	deposit3, err := alice.RootChain.DepositEventData(txHash)
 	exitIfError(err)
 	slots = append(slots, deposit3.Slot)
 	alice.DebugCoinMetaData(slots)
 
-	log.Printf("Checkpoint 3")
-	log.Println(deposit3.Slot)
-	time.Sleep(6 * time.Second)
-
 	//Alice to Bob, and Alice to Charlie. We care about the Alice to Bob
 	// transaction
 
-	account, err := bob.TokenContract.Account()
-	exitIfError(err)
-	err = alice.SendTransaction(deposit3.Slot, deposit3.BlockNum, big.NewInt(1), account.Address) //aliceToBob
-	exitIfError(err)
-	account, err = charlie.TokenContract.Account()
+	account, err := charlie.TokenContract.Account()
 	exitIfError(err)
 	err = alice.SendTransaction(deposit2.Slot, deposit2.BlockNum, big.NewInt(1), account.Address) //randomTx
 	exitIfError(err)
-	exitIfError(authority.SubmitBlock())
-	plasmaBlock1, err := authority.GetBlockNumber()
+
+	currentBlock, err = client.PollForBlockChange(authority, currentBlock, maxIteration, sleepPerIteration)
+	if err != nil {
+		panic(err)
+	}
+
+	account, err = bob.TokenContract.Account()
+	exitIfError(err)
+	err = alice.SendTransaction(deposit3.Slot, deposit3.BlockNum, big.NewInt(1), account.Address) //aliceToBob
 	exitIfError(err)
 
-	// Add an empty block in betweeen (for proof of exclusion reasons)
-	exitIfError(authority.SubmitBlock())
+	currentBlock, err = client.PollForBlockChange(authority, currentBlock, maxIteration, sleepPerIteration)
+	if err != nil {
+		panic(err)
+	}
 
-	log.Println("Checkpoint 4")
+	plasmaBlock1, err := authority.GetBlockNumber()
 
 	// Bob to Charlie
 	blkNum := plasmaBlock1
@@ -129,10 +141,14 @@ func main() {
 	err = bob.SendTransaction(deposit3.Slot, blkNum, big.NewInt(1), account.Address) //bobToCharlie
 	exitIfError(err)
 
-	// TODO: verify coin history
-	log.Println("Checkpoint 5")
+	currentBlock, err = client.PollForBlockChange(authority, currentBlock, maxIteration, sleepPerIteration)
+	if err != nil {
+		panic(err)
+	}
 
-	exitIfError(authority.SubmitBlock())
+	// TODO: verify coin history
+
+	//exitIfError(authority.SubmitBlock())
 	plasmaBlock2, err := authority.GetBlockNumber()
 	exitIfError(err)
 
@@ -140,7 +156,6 @@ func main() {
 	// included his transaction.
 	charlie.DebugCoinMetaData(slots)
 	_, err = charlie.StartExit(deposit3.Slot, plasmaBlock1, plasmaBlock2)
-	log.Println("Checkpoint 6")
 	exitIfError(err)
 	charlie.DebugCoinMetaData(slots)
 

@@ -1,5 +1,7 @@
 import Web3 from 'web3'
 import { EthCardsContract } from './cards-contract'
+import { Entity } from 'loom-js'
+import BN from 'bn.js'
 
 export const DEFAULT_GAS = '3141592'
 export const CHILD_BLOCK_INTERVAL = 1000
@@ -34,6 +36,23 @@ export function getTestUrls() {
     httpWriteUrl: process.env.TEST_LOOM_DAPP_HTTP_WRITE_URL || 'http://127.0.0.1:46658/rpc',
     httpReadUrl: process.env.TEST_LOOM_DAPP_HTTP_READ_URL || 'http://127.0.0.1:46658/query'
   }
+}
+
+export async function pollForBlockChange(
+  user: Entity,
+  currentBlock: BN,
+  maxIters: number,
+  sleepTime: number
+): Promise<BN> {
+  let blk = await user.getCurrentBlockAsync()
+  for (let i = 0; i < maxIters; i++) {
+    blk = await user.getCurrentBlockAsync()
+    if (blk.gt(currentBlock)) {
+      break
+    }
+    await sleep(sleepTime)
+  }
+  return blk
 }
 
 // All the contracts are expected to have been deployed to Ganache when this function is called.

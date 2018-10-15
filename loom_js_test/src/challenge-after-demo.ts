@@ -4,7 +4,7 @@ import BN from 'bn.js'
 import { PlasmaUser } from 'loom-js'
 
 import { increaseTime, getEthBalanceAtAddress } from './ganache-helpers'
-import { sleep, ADDRESSES, ACCOUNTS, setupContracts } from './config'
+import { sleep, ADDRESSES, ACCOUNTS, setupContracts, pollForBlockChange } from './config'
 
 export async function runChallengeAfterDemo(t: test.Test) {
   const web3Endpoint = 'ws://127.0.0.1:8545'
@@ -40,8 +40,11 @@ export async function runChallengeAfterDemo(t: test.Test) {
   t.equal(malloryTokensStart.toNumber(), 5, 'START: Mallory has correct number of tokens')
 
   // Mallory deposits one of her coins to the plasma contract
+  let currentBlock = await authority.getCurrentBlockAsync()
   await cards.depositToPlasmaAsync({ tokenId: 6, from: mallory.ethAddress })
+  currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
   await cards.depositToPlasmaAsync({ tokenId: 7, from: mallory.ethAddress })
+  currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
 
   const deposits = await mallory.deposits()
   t.equal(deposits.length, 2, 'Mallory has correct number of deposits')
@@ -53,18 +56,14 @@ export async function runChallengeAfterDemo(t: test.Test) {
     'POST-DEPOSIT: Mallory has correct number of tokens'
   )
 
-  await sleep(8000)
-
-  await authority.submitPlasmaBlockAsync()
-  await authority.submitPlasmaBlockAsync()
-
   const deposit1Slot = deposits[0].slot
 
   // Mallory -> Dan
   const coin = await mallory.getPlasmaCoinAsync(deposit1Slot)
   await mallory.transferAsync(deposit1Slot, dan.ethAddress)
-  await authority.submitPlasmaBlockAsync()
-  t.equal(await dan.checkHistoryAsync(coin), true, 'Coin history verified')
+  currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
+  t.equal(await dan.receiveCoinAsync(deposit1Slot), true, 'Coin history verified')
+
   const danCoin = dan.watchExit(deposit1Slot, coin.depositBlockNum)
 
   // Mallory attempts to exit spent coin (the one sent to Dan)
