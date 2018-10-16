@@ -33,4 +33,3 @@ module.exports = async function(deployer, network, accounts) {
     //     await vmc.toggleToken(cards.address);
     // });
 };
-
