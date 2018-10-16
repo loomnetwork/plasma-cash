@@ -102,14 +102,15 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
 
     /**
      * Event to log the withdrawal of a coin
-     * @param from The address of the user who withdrew bonds
+     * @param owner The address of the user who withdrew bonds
+     * @param slot the slot of the coin that was exited
      * @param mode The type of coin that is being withdrawn (ERC20/ERC721/ETH)
      * @param contractAddress The contract address where the coin is being withdrawn from
               is same as `from` when withdrawing a ETH coin
      * @param uid The uid of the coin being withdrawn if ERC721, else 0
      * @param denomination The denomination of the coin which has been withdrawn (=1 for ERC721)
      */
-    event Withdrew(address indexed from, Mode mode, address contractAddress, uint uid, uint denomination);
+    event Withdrew(address indexed owner, uint64 indexed slot, Mode mode, address contractAddress, uint uid, uint denomination);
 
     using SafeMath for uint256;
     using Transaction for bytes;
@@ -469,6 +470,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
 
         emit Withdrew(
             msg.sender,
+            slot,
             c.mode,
             c.contractAddress,
             uid,
