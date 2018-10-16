@@ -95,6 +95,39 @@ contract("Plasma Cash - All In One", async function(accounts) {
             const depositEvent = plasma.Deposit({}, {fromBlock: 0, toBlock: 'latest'});
             events = await txlib.Promisify(cb => depositEvent.get(cb));
         });
+        erc20 = await LoomToken.new(plasma.address, {from: authority});
+        erc721 = await CryptoCards.new(plasma.address, {from: authority});
+
+        await vmc.toggleToken(erc20.address, {from: authority});
+        await vmc.toggleToken(erc721.address, {from: authority});
+
+        await erc20.transfer(alice, 10000 * DECIMALS, {from: authority});
+        await erc721.register({from: alice});
+
+        for (let i = 0; i < denominations.length - 1; i ++) {
+            await web3.eth.sendTransaction({from: alice, to: plasma.address, value: ethers[i], gas: 220000 });
+            await erc20.depositToPlasma(denominations[i], {from: alice});
+            await erc721.depositToPlasma(coins[i], {from: alice});
+        }
+
+        // Make the last transfer come from approve/deposit pattern
+        let ind = denominations.length - 1;
+        await web3.eth.sendTransaction({from: alice, to: plasma.address, value: ethers[ind], gas: 220000 });
+        await erc20.approve(plasma.address, denominations[ind], { 'from': alice })
+        await plasma.depositERC20(denominations[ind], erc20.address, { 'from': alice})
+
+        await erc721.approve(plasma.address, coins[ind], { 'from': alice })
+        await plasma.depositERC721(coins[ind], erc721.address, { 'from': alice})
+
+       assert.equal((await erc20.balanceOf.call(alice)).toNumber(), 1000 * DECIMALS);
+       assert.equal((await erc20.balanceOf.call(plasma.address)).toNumber(), 9000 * DECIMALS);
+       assert.equal(await erc721.balanceOf.call(plasma.address), 3);
+       assert.equal(await erc721.balanceOf.call(alice), 2);
+       assert.equal((await web3.eth.getBalance(plasma.address)).toNumber(), web3.toWei(10, 'ether'));
+
+        const depositEvent = plasma.Deposit({}, {fromBlock: 0, toBlock: 'latest'});
+        events = await txlib.Promisify(cb => depositEvent.get(cb));
+    });
 
         it('Cancel exits / getExit', async function() {
             let UTXO = [
