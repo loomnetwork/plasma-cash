@@ -459,7 +459,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         if (c.mode == Mode.ETH) {
             msg.sender.transfer(denomination);
         } else if (c.mode == Mode.ERC20) {
-            ERC20(c.contractAddress).transfer(msg.sender, denomination);
+            require(ERC20(c.contractAddress).transfer(msg.sender, denomination), "transfer failed");
         } else if (c.mode == Mode.ERC721) {
             ERC721(c.contractAddress).safeTransferFrom(address(this), msg.sender, uid);
         } else {
@@ -750,7 +750,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         }
     }
 
-    /******************** ERC721 ********************/
+    /******************** DEPOSIT FUNCTIONS ********************/
 
     function() payable public {
         deposit(msg.sender, 0, msg.value, Mode.ETH);
@@ -773,6 +773,20 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
     {
         deposit(_from, _uid, 1, Mode.ERC721);
         return ERC721_RECEIVED;
+    }
+
+    // Approve and Deposit function for 2-step deposits without having to approve the token by the validators
+    // Requires first to have called `approve` on the specified ERC20 contract
+    function depositERC20(uint256 amount, address contractAddress) external {
+        require(ERC20(contractAddress).transferFrom(msg.sender, address(this), amount), "Transfer failed");
+        deposit(msg.sender, 0, amount, Mode.ERC20);
+    }
+
+    // Approve and Deposit function for 2-step deposits without having to approve the token by the validators
+    // Requires first to have called `approve` on the specified ERC721 contract
+    function depositERC721(uint256 uid, address contractAddress) external {
+        ERC721(contractAddress).safeTransferFrom(msg.sender, address(this), uid);
+        deposit(msg.sender, uid, 1, Mode.ERC721);
     }
 
     /******************** HELPERS ********************/
