@@ -13,6 +13,9 @@ import (
 
 func main() {
 
+	maxIteration := 30
+	sleepPerIteration := 500 * time.Millisecond
+
 	client.InitClients("http://localhost:8545")
 	client.InitTokenClient("http://localhost:8545")
 	ganache, err := client.ConnectToGanache("http://localhost:8545")
@@ -42,10 +45,15 @@ func main() {
 
 	// Eve deposits a coin
 	txHash := eve.Deposit(big.NewInt(11))
+
+	currentBlock, err := authority.GetBlockNumber()
+	exitIfError(err)
+	currentBlock, err = client.PollForBlockChange(authority, currentBlock, maxIteration, sleepPerIteration)
+	if err != nil {
+		panic(err)
+	}
 	deposit1, err := eve.RootChain.DepositEventData(txHash)
 	exitIfError(err)
-
-	time.Sleep(6 * time.Second)
 
 	// Eve sends her plasma coin to Bob
 	coin, err := eve.PlasmaCoin(deposit1.Slot)
@@ -53,8 +61,11 @@ func main() {
 	err = eve.SendTransaction(deposit1.Slot, coin.DepositBlockNum, big.NewInt(1), bobAccount.Address)
 	exitIfError(err)
 
-	err = authority.SubmitBlock()
-	exitIfError(err)
+	currentBlock, err = client.PollForBlockChange(authority, currentBlock, maxIteration, sleepPerIteration)
+	if err != nil {
+		panic(err)
+	}
+
 	eveToBobBlockNum, err := authority.GetBlockNumber()
 	exitIfError(err)
 
@@ -64,8 +75,11 @@ func main() {
 	err = eve.SendTransaction(deposit1.Slot, coin.DepositBlockNum, big.NewInt(1), aliceAccount.Address)
 	exitIfError(err)
 
-	err = authority.SubmitBlock()
-	exitIfError(err)
+	currentBlock, err = client.PollForBlockChange(authority, currentBlock, maxIteration, sleepPerIteration)
+	if err != nil {
+		panic(err)
+	}
+
 	eveToAliceBlock, err := authority.GetBlockNumber()
 	exitIfError(err)
 

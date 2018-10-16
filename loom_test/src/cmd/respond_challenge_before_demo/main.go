@@ -12,6 +12,9 @@ import (
 )
 
 func main() {
+	maxIteration := 50
+	sleepPerIteration := 500 * time.Millisecond
+
 	client.InitClients("http://localhost:8545")
 	client.InitTokenClient("http://localhost:8545")
 	ganache, err := client.ConnectToGanache("http://localhost:8545")
@@ -37,12 +40,17 @@ func main() {
 	exitIfError(err)
 
 	// Trudy deposits a coin
+	currentBlock, err := authority.GetBlockNumber()
+	exitIfError(err)
 	txHash := trudy.Deposit(big.NewInt(21))
+	currentBlock, err = client.PollForBlockChange(authority, currentBlock, maxIteration, sleepPerIteration)
+	if err != nil {
+		panic(err)
+	}
+
 	depEvent, err := trudy.RootChain.DepositEventData(txHash)
 	exitIfError(err)
 	depositSlot1 := depEvent.Slot
-
-	time.Sleep(6 * time.Second)
 
 	danTokenStart, err := dan.TokenContract.BalanceOf()
 	exitIfError(err)
@@ -50,13 +58,16 @@ func main() {
 	coin, err := trudy.RootChain.PlasmaCoin(depositSlot1)
 	exitIfError(err)
 
-	exitIfError(authority.SubmitBlock())
-
 	// TODO: Trudy should start watching for exits of depositSlot1
 
 	// Trudy sends her coin to Dan
-	exitIfError(trudy.SendTransaction(depositSlot1, coin.DepositBlockNum, big.NewInt(1), danAccount.Address))
-	exitIfError(authority.SubmitBlock())
+	err = trudy.SendTransaction(depositSlot1, coin.DepositBlockNum, big.NewInt(1), danAccount.Address)
+    exitIfError(err)
+
+	currentBlock, err = client.PollForBlockChange(authority, currentBlock, maxIteration, sleepPerIteration)
+	if err != nil {
+		panic(err)
+	}
 	trudyToDanBlockNum, err := authority.GetBlockNumber()
 	exitIfError(err)
 
@@ -67,7 +78,7 @@ func main() {
 	fmt.Println("Dan attempts to exit...")
 	_, err = dan.StartExit(depositSlot1, big.NewInt(0), coin.DepositBlockNum)
 	exitIfError(err)
-	exitIfError(authority.SubmitBlock())
+	time.Sleep(2 * time.Second)
 
 	// TODO: Dan should start watching for exits of depositSlot1
 	// TODO: Dan should start watching for challenges of depositSlot1

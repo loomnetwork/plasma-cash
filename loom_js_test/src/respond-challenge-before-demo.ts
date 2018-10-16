@@ -4,7 +4,7 @@ import Web3 from 'web3'
 import { PlasmaUser } from 'loom-js'
 
 import { increaseTime, getEthBalanceAtAddress } from './ganache-helpers'
-import { sleep, ADDRESSES, ACCOUNTS, setupContracts } from './config'
+import { sleep, ADDRESSES, ACCOUNTS, setupContracts, pollForBlockChange } from './config'
 
 export async function runRespondChallengeBeforeDemo(t: test.Test) {
   const web3Endpoint = 'ws://127.0.0.1:8545'
@@ -38,23 +38,20 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
 
   const startBlockNum = await web3.eth.getBlockNumber()
   // Trudy deposits a coin
+  let currentBlock = await authority.getCurrentBlockAsync()
   await cards.depositToPlasmaAsync({ tokenId: 21, from: trudy.ethAddress })
+  currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
 
   const deposits = await trudy.deposits()
   t.equal(deposits.length, 1, 'All deposit events accounted for')
 
-  await sleep(8000)
-
-  const plasmaBlock1 = await authority.submitPlasmaBlockAsync()
-  const plasmaBlock2 = await authority.submitPlasmaBlockAsync()
   const deposit1Slot = deposits[0].slot
 
   // Trudy sends her coin to Dan
   const coin = await trudy.getPlasmaCoinAsync(deposit1Slot)
   await trudy.transferAsync(deposit1Slot, dan.ethAddress)
+  currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
 
-  // Operator includes it
-  await authority.submitPlasmaBlockAsync()
 
   // Dan exits the coin received by Trudy
   await dan.exitAsync(deposit1Slot)
