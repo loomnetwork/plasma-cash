@@ -42,6 +42,9 @@ type (
 	GetPlasmaTxResponse          = pctypes.GetPlasmaTxResponse
 	GetUserSlotsRequest          = pctypes.GetUserSlotsRequest
 	GetUserSlotsResponse         = pctypes.GetUserSlotsResponse
+
+	ExitCoinRequest     = pctypes.PlasmaCashExitCoinRequest
+	WithdrawCoinRequest = pctypes.PlasmaCashWithdrawCoinRequest
 )
 
 // HostileOperator is a DAppChain Go Contract that handles Plasma Cash txs in a way that allows
@@ -115,14 +118,14 @@ func (c *HostileOperator) SubmitBlockToMainnet(ctx contract.Context, req *Submit
 	pending := &Pending{}
 	ctx.Get(pendingTXsKey, pending)
 
-    leaves := make(map[uint64][]byte)
-    if len(pending.Transactions) == 0 {
-        ctx.Logger().Warn("No pending transaction, returning")
-        return &SubmitBlockToMainnetResponse{}, nil
-    } else {
-        ctx.Logger().Warn("Pending transactions, raising blockheight")
-        ctx.Set(blockHeightKey, pbk)
-    }
+	leaves := make(map[uint64][]byte)
+	if len(pending.Transactions) == 0 {
+		ctx.Logger().Warn("No pending transaction, returning")
+		return &SubmitBlockToMainnetResponse{}, nil
+	} else {
+		ctx.Logger().Warn("Pending transactions, raising blockheight")
+		ctx.Set(blockHeightKey, pbk)
+	}
 
 	for _, v := range pending.Transactions {
 		if v.PreviousBlock == nil || v.PreviousBlock.Value.Int64() == int64(0) {
@@ -284,6 +287,15 @@ func (c *HostileOperator) GetUserSlotsRequest(ctx contract.StaticContext, req *G
 	res.Slots = reqAcct.Slots
 
 	return res, nil
+}
+
+// Dummy method
+func (c *HostileOperator) ExitCoin(ctc contract.Context, req *ExitCoinRequest) error {
+	return nil
+}
+
+func (c *HostileOperator) WithdrawCoin(ctx contract.Context, req *WithdrawCoinRequest) error {
+	return nil
 }
 
 func (c *HostileOperator) GetPlasmaTxRequest(ctx contract.StaticContext, req *GetPlasmaTxRequest) (*GetPlasmaTxResponse, error) {
