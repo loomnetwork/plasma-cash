@@ -46,11 +46,11 @@ export async function pollForBlockChange(
 ): Promise<BN> {
   let blk = await user.getCurrentBlockAsync()
   for (let i = 0; i < maxIters; i++) {
+    await sleep(sleepTime)
     blk = await user.getCurrentBlockAsync()
     if (blk.gt(currentBlock)) {
       break
     }
-    await sleep(sleepTime)
   }
   return blk
 }
