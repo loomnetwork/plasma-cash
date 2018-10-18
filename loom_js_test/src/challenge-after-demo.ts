@@ -60,7 +60,7 @@ export async function runChallengeAfterDemo(t: test.Test) {
 
   // Mallory -> Dan
   const coin = await mallory.getPlasmaCoinAsync(deposit1Slot)
-  await mallory.transferAsync(deposit1Slot, dan.ethAddress)
+  await mallory.transferAndVerifyAsync(deposit1Slot, dan.ethAddress, 6)
   currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
   t.equal(await dan.receiveCoinAsync(deposit1Slot), true, 'Coin history verified')
 
