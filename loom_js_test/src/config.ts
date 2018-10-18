@@ -49,10 +49,10 @@ export async function pollForBlockChange(
     await sleep(sleepTime)
     blk = await user.getCurrentBlockAsync()
     if (blk.gt(currentBlock)) {
-      break
+      return blk
     }
   }
-  return blk
+  throw new Error("EXCEEDED LOOP")
 }
 
 // All the contracts are expected to have been deployed to Ganache when this function is called.
