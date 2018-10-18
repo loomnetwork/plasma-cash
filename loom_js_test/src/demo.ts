@@ -89,18 +89,24 @@ export async function runDemo(t: test.Test) {
 
   // Alice -> Bob
   await alice.transferAsync(deposit3.slot, bob.ethAddress)
+  currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
+  t.equal(
+    await alice.verifyInclusionAsync(deposit3.slot, currentBlock),
+    true,
+    'alice verified tx is not in limbo'
+  )
+  t.equal(
+    await bob.receiveCoinAsync(deposit3.slot),
+    true,
+    'bob received coin'
+  )
+
   // Alice -> Charlie
   await alice.transferAsync(deposit2.slot, charlie.ethAddress)
   currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
-  await alice.refreshAsync()
-
-  let aliceCoins = await alice.getUserCoinsAsync()
-  t.ok(aliceCoins[0].slot.eq(deposits[0].slot), 'Alice has correct coin')
-
   // For alice's piece of mind, when transacting, she has to verify that her transaction was included and is not withheld _in limbo_.
-  let inclusionBlock = currentBlock
   t.equal(
-    await alice.verifyInclusionAsync(deposit2.slot, inclusionBlock),
+    await alice.verifyInclusionAsync(deposit2.slot, currentBlock),
     true,
     'alice verified tx is not in limbo'
   )
@@ -110,16 +116,12 @@ export async function runDemo(t: test.Test) {
     'charlie received coin'
   )
 
-  t.equal(
-    await alice.verifyInclusionAsync(deposit3.slot, inclusionBlock),
-    true,
-    'alice verified tx is not in limbo'
-  )
-  t.equal(
-    await bob.receiveCoinAsync(deposit3.slot),
-    true,
-    'bob received coin'
-  )
+  
+  await alice.refreshAsync()
+
+  let aliceCoins = await alice.getUserCoinsAsync()
+  t.ok(aliceCoins[0].slot.eq(deposits[0].slot), 'Alice has correct coin')
+
 
   // Multiple refreshes don't break it
   await bob.refreshAsync()
