@@ -143,10 +143,10 @@ export async function runDemo(t: test.Test) {
 
   const coin = await charlie.getPlasmaCoinAsync(deposit3.slot)
   t.equal(await charlie.receiveCoinAsync(deposit3.slot), true, 'Coin history verified')
-  let charlieCoin = charlie.watchExit(deposit3.slot, coin.depositBlockNum)
+  charlie.watchExit(deposit3.slot, coin.depositBlockNum)
 
   await charlie.exitAsync(deposit3.slot)
-  charlie.stopWatching(charlieCoin)
+  charlie.stopWatching(deposit3.slot)
 
   // Jump forward in time by 8 days
   await increaseTime(web3, 8 * 24 * 3600)
