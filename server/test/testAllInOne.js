@@ -52,14 +52,14 @@ contract("Plasma Cash - All In One", async function(accounts) {
         await erc721.register({from: alice});
 
         for (let i = 0; i < denominations.length - 1; i ++) {
-            await web3.eth.sendTransaction({from: alice, to: plasma.address, value: ethers[i], gas: 200000 });
+            await web3.eth.sendTransaction({from: alice, to: plasma.address, value: ethers[i], gas: 220000 });
             await erc20.depositToPlasma(denominations[i], {from: alice});
             await erc721.depositToPlasma(coins[i], {from: alice});
         }
 
         // Make the last transfer come from approve/deposit pattern
         let ind = denominations.length - 1;
-        await web3.eth.sendTransaction({from: alice, to: plasma.address, value: ethers[ind], gas: 200000 });
+        await web3.eth.sendTransaction({from: alice, to: plasma.address, value: ethers[ind], gas: 220000 });
         await erc20.approve(plasma.address, denominations[ind], { 'from': alice })
         await plasma.depositERC20(denominations[ind], erc20.address, { 'from': alice})
 
