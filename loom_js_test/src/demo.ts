@@ -4,7 +4,7 @@ import { PlasmaUser } from 'loom-js'
 
 import { increaseTime } from './ganache-helpers'
 import { pollForBlockChange, sleep, ADDRESSES, ACCOUNTS, setupContracts } from './config'
-import BN from 'bn.js';
+import BN from 'bn.js'
 
 // Alice registers and has 5 coins, and she deposits 3 of them.
 const ALICE_INITIAL_COINS = 5
@@ -76,7 +76,6 @@ export async function runDemo(t: test.Test) {
     'plasma contract should have 3 tokens in cards contract'
   )
 
-
   const coins = await alice.getUserCoinsAsync()
   t.ok(coins[0].slot.eq(deposits[0].slot), 'got correct deposit coins 1')
   t.ok(coins[1].slot.eq(deposits[1].slot), 'got correct deposit coins 2')
@@ -88,40 +87,36 @@ export async function runDemo(t: test.Test) {
   const deposit3 = deposits[2]
 
   // Alice -> Bob
+  let blockPreTx = await authority.getCurrentBlockAsync()
   await alice.transferAsync(deposit3.slot, bob.ethAddress)
-  currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
-  t.equal(
-    await alice.verifyInclusionAsync(deposit3.slot, currentBlock),
-    true,
-    'alice verified tx is not in limbo'
-  )
-  t.equal(
-    await bob.receiveCoinAsync(deposit3.slot),
-    true,
-    'bob received coin'
-  )
-
   // Alice -> Charlie
   await alice.transferAsync(deposit2.slot, charlie.ethAddress)
   currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
-  // For alice's piece of mind, when transacting, she has to verify that her transaction was included and is not withheld _in limbo_.
-  t.equal(
-    await alice.verifyInclusionAsync(deposit2.slot, currentBlock),
-    true,
-    'alice verified tx is not in limbo'
-  )
-  t.equal(
-    await charlie.receiveCoinAsync(deposit2.slot),
-    true,
-    'charlie received coin'
-  )
-
-  
   await alice.refreshAsync()
 
   let aliceCoins = await alice.getUserCoinsAsync()
   t.ok(aliceCoins[0].slot.eq(deposits[0].slot), 'Alice has correct coin')
 
+  // For alice's piece of mind, when transacting, she has to verify that her transaction was included and is not withheld _in limbo_.
+  let count = 0
+  let blocks = await authority.getBlockNumbersAsync(new BN(1000))
+  for (let i in blocks) {
+    if (await alice.verifyInclusionAsync(deposit2.slot, blocks[i])) {
+      count += 1
+    }
+  }
+  t.equal(count, 1, 'alice verified tx to charlie is not in limbo') // tx must be included in a tx block after 1000
+  t.equal(await charlie.receiveCoinAsync(deposit2.slot), true, 'charlie received coin')
+
+  count = 0
+  for (let i in blocks) {
+    if (await alice.verifyInclusionAsync(deposit3.slot, blocks[i])) {
+      count += 1
+    }
+  }
+  t.equal(count, 1, 'alice verified tx to bob is not in limbo') // tx must be included in a tx block after 1000
+
+  t.equal(await bob.receiveCoinAsync(deposit3.slot), true, 'bob received coin')
 
   // Multiple refreshes don't break it
   await bob.refreshAsync()
