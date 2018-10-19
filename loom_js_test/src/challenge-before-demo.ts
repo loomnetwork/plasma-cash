@@ -57,7 +57,7 @@ export async function runChallengeBeforeDemo(t: test.Test) {
 
   // Dan starts watching
   const coin = await dan.getPlasmaCoinAsync(deposit1Slot)
-  const danCoin = dan.watchExit(deposit1Slot, coin.depositBlockNum)
+  dan.watchExit(deposit1Slot, coin.depositBlockNum)
 
   // Trudy creates an invalid spend of the coin to Mallory
   // Low level call since trudy doesn't actually have the data for this transfer in her state
@@ -102,7 +102,7 @@ export async function runChallengeBeforeDemo(t: test.Test) {
     prevBlockNum: new BN(0),
     exitBlockNum: coin.depositBlockNum
   })
-  dan.stopWatching(danCoin)
+  dan.stopWatching(deposit1Slot)
 
   // Jump forward in time by 8 days
   await increaseTime(web3, 8 * 24 * 3600)
