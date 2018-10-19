@@ -16,6 +16,8 @@ export async function runDemo(t: test.Test) {
   const dappchainEndpoint = 'http://localhost:46658'
   const web3 = new Web3(new Web3.providers.WebsocketProvider(web3Endpoint))
   const { cards } = setupContracts(web3)
+  const cardsAddress = ADDRESSES.token_contract
+  const loomAddress = ADDRESSES.loom_token
 
   const authority = PlasmaUser.createUser(
     web3Endpoint,
@@ -43,17 +45,18 @@ export async function runDemo(t: test.Test) {
   )
 
   await cards.registerAsync(alice.ethAddress)
+
   let balance = await cards.balanceOfAsync(alice.ethAddress)
   t.equal(balance.toNumber(), 5)
   let currentBlock = await authority.getCurrentBlockAsync()
 
   for (let i = 0; i < ALICE_DEPOSITED_COINS; i++) {
-    await cards.depositToPlasmaAsync({ tokenId: COINS[i], from: alice.ethAddress })
+    await alice.depositERC721(new BN(COINS[i]), cardsAddress)
     currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
   }
 
   // Get deposit events for all
-  const deposits = await authority.allDeposits()
+  const deposits = await alice.deposits()
   t.equal(deposits.length, ALICE_DEPOSITED_COINS, 'All deposit events accounted for')
 
   // for (let i = 0; i < deposits.length; i++) {
@@ -76,6 +79,8 @@ export async function runDemo(t: test.Test) {
     'plasma contract should have 3 tokens in cards contract'
   )
 
+  await authority.depositERC20(new BN(1000), loomAddress)
+  await bob.depositETH(new BN(1000))
   const coins = await alice.getUserCoinsAsync()
   t.ok(coins[0].slot.eq(deposits[0].slot), 'got correct deposit coins 1')
   t.ok(coins[1].slot.eq(deposits[1].slot), 'got correct deposit coins 2')
@@ -92,7 +97,6 @@ export async function runDemo(t: test.Test) {
   await alice.transferAndVerifyAsync(deposit2.slot, charlie.ethAddress, 6)
   currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
   await alice.refreshAsync()
-
 
   let aliceCoins = await alice.getUserCoinsAsync()
   t.ok(aliceCoins[0].slot.eq(deposits[0].slot), 'Alice has correct coin')

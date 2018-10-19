@@ -1,5 +1,6 @@
 import test from 'tape'
 import Web3 from 'web3'
+import BN from 'bn.js'
 import { PlasmaUser } from 'loom-js'
 
 import { increaseTime, getEthBalanceAtAddress } from './ganache-helpers'
@@ -10,6 +11,7 @@ export async function runChallengeBetweenDemo(t: test.Test) {
   const dappchainEndpoint = 'http://localhost:46658'
   const web3 = new Web3(new Web3.providers.WebsocketProvider(web3Endpoint))
   const { cards } = setupContracts(web3)
+  const cardsAddress = ADDRESSES.token_contract
 
   const authority = PlasmaUser.createUser(
     web3Endpoint,
@@ -43,7 +45,7 @@ export async function runChallengeBetweenDemo(t: test.Test) {
 
   // Eve deposits a coin
   let currentBlock = await authority.getCurrentBlockAsync()
-  await cards.depositToPlasmaAsync({ tokenId: 11, from: eve.ethAddress })
+  await eve.depositERC721(new BN(11), cardsAddress)
   currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
   const deposits = await eve.deposits()
   t.equal(deposits.length, 1, 'Eve has correct number of deposits')

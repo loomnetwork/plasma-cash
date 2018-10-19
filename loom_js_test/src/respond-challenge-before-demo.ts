@@ -11,6 +11,7 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
   const dappchainEndpoint = 'http://localhost:46658'
   const web3 = new Web3(new Web3.providers.WebsocketProvider(web3Endpoint))
   const { cards } = setupContracts(web3)
+  const cardsAddress = ADDRESSES.token_contract
 
   const authority = PlasmaUser.createUser(
     web3Endpoint,
@@ -39,7 +40,7 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
   const startBlockNum = await web3.eth.getBlockNumber()
   // Trudy deposits a coin
   let currentBlock = await authority.getCurrentBlockAsync()
-  await cards.depositToPlasmaAsync({ tokenId: 21, from: trudy.ethAddress })
+  await trudy.depositERC721(new BN(21), cardsAddress)
   currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
 
   const deposits = await trudy.deposits()
@@ -51,7 +52,6 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
   const coin = await trudy.getPlasmaCoinAsync(deposit1Slot)
   await trudy.transferAndVerifyAsync(deposit1Slot, dan.ethAddress, 6)
   currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
-
 
   // Dan exits the coin received by Trudy
   await dan.exitAsync(deposit1Slot)
