@@ -66,6 +66,7 @@ function init_honest_dappchain {
     cp $REPO_ROOT/loom_test/test.key $LOOM_DIR/test.key
     cp $REPO_ROOT/loom_test/oracle.key $LOOM_DIR/oracle.key
     $LOOM_BIN init -f
+    cp $REPO_ROOT/loom_test/honest.genesis.json $LOOM_DIR/genesis.json
     echo 'Loom DAppChain initialized in ' $LOOM_DIR
 }
 

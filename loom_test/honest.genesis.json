@@ -20,7 +20,7 @@
                 },
                 "validators": [
                     {
-                        "pubKey": "cU3bPuzFWsI1N3I9p7iGJUJoCMoJIu9si3MA2I68pfg=",
+                        "pubKey": "FGSLl4Gzw38QglRAv9jOGF/cIJuQ0EpXaAGQJ1v2c1g=",
                         "power": "10"
                     }
                 ]
@@ -32,18 +32,12 @@
             "name": "plasmacash",
             "location": "plasmacash:1.0.0",
             "init": {
-                "oracle": {
-                     "chain_id": "default",
-                     "local": "XL7GoIlPLetSJSwht53TanLM2lc="
-                }
-            }
-        },
-        {
-            "vm": "plugin",
-            "format": "plugin",
-            "name": "hostileoperator",
-            "location": "hostileoperator:1.0.0",
-            "init": null
+               "oracle": {
+                   "chain_id": "default",
+                   "local": "XL7GoIlPLetSJSwht53TanLM2lc="
+               }
+               
+             }
         }
     ]
 }
