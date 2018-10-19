@@ -55,7 +55,6 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
 
   // Dan exits the coin received by Trudy
   await dan.exitAsync(deposit1Slot)
-  dan.watchChallenge(deposit1Slot, coin.depositBlockNum)
 
   // Trudy tries to challengeBefore Dan's exit
   await trudy.challengeBeforeAsync({
@@ -69,9 +68,6 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
   await increaseTime(web3, 8 * 24 * 3600)
 
   await authority.finalizeExitsAsync()
-  // Now that the exit has been finalized, stop watching challenges
-  dan.stopWatching(deposit1Slot)
-
   await dan.withdrawAsync(deposit1Slot)
 
   const danBalanceBefore = await getEthBalanceAtAddress(web3, dan.ethAddress)

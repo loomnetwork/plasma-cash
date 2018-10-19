@@ -56,7 +56,7 @@ export async function runChallengeBeforeDemo(t: test.Test) {
 
   // Dan starts watching
   const coin = await dan.getPlasmaCoinAsync(deposit1Slot)
-  dan.watchExit(deposit1Slot, coin.depositBlockNum)
+  t.equal(await dan.receiveAndWatchCoinAsync(deposit1Slot), true, 'dan received coin')
 
   // Trudy creates an invalid spend of the coin to Mallory
   await trudy.transferAndVerifyAsync(deposit1Slot, mallory.ethAddress, 6)
@@ -85,7 +85,6 @@ export async function runChallengeBeforeDemo(t: test.Test) {
     prevBlockNum: new BN(0),
     exitBlockNum: coin.depositBlockNum
   })
-  dan.stopWatching(deposit1Slot)
 
   // Jump forward in time by 8 days
   await increaseTime(web3, 8 * 24 * 3600)

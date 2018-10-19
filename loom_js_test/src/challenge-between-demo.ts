@@ -57,8 +57,7 @@ export async function runChallengeBetweenDemo(t: test.Test) {
   await eve.transferAndVerifyAsync(deposit1Slot, bob.ethAddress, 6)
   currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
 
-  t.equal(await bob.receiveCoinAsync(deposit1Slot), true, 'Coin history verified')
-  bob.watchExit(deposit1Slot, coin.depositBlockNum)
+  t.equal(await bob.receiveAndWatchCoinAsync(deposit1Slot), true, 'Coin history verified')
 
   // Eve sends this same plasma coin to Alice
   await eve.transferAndVerifyAsync(deposit1Slot, alice.ethAddress, 6)
@@ -76,7 +75,6 @@ export async function runChallengeBetweenDemo(t: test.Test) {
   await sleep(2000)
 
   await bob.exitAsync(deposit1Slot)
-  bob.stopWatching(deposit1Slot)
 
   // Jump forward in time by 8 days
   await increaseTime(web3, 8 * 24 * 3600)

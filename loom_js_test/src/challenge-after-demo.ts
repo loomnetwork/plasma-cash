@@ -63,9 +63,7 @@ export async function runChallengeAfterDemo(t: test.Test) {
   const coin = await mallory.getPlasmaCoinAsync(deposit1Slot)
   await mallory.transferAndVerifyAsync(deposit1Slot, dan.ethAddress, 6)
   currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
-  t.equal(await dan.receiveCoinAsync(deposit1Slot), true, 'Coin history verified')
-
-  dan.watchExit(deposit1Slot, coin.depositBlockNum)
+  t.equal(await dan.receiveAndWatchCoinAsync(deposit1Slot), true, 'Coin history verified')
 
   // Mallory attempts to exit spent coin (the one sent to Dan)
   // Needs to use the low level API to make an invalid tx
@@ -78,8 +76,6 @@ export async function runChallengeAfterDemo(t: test.Test) {
   // Having successufly challenged Mallory's exit Dan should be able to exit the coin
   await sleep(2000)
   await dan.exitAsync(deposit1Slot)
-
-  dan.stopWatching(deposit1Slot)
 
   // Jump forward in time by 8 days
   await increaseTime(web3, 8 * 24 * 3600)

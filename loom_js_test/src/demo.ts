@@ -100,8 +100,8 @@ export async function runDemo(t: test.Test) {
 
   let aliceCoins = await alice.getUserCoinsAsync()
   t.ok(aliceCoins[0].slot.eq(deposits[0].slot), 'Alice has correct coin')
-  t.equal(await charlie.receiveCoinAsync(deposit2.slot), true, 'charlie received coin')
-  t.equal(await bob.receiveCoinAsync(deposit3.slot), true, 'bob received coin')
+  t.equal(await charlie.receiveAndWatchCoinAsync(deposit2.slot), true, 'charlie received coin')
+  t.equal(await bob.receiveAndWatchCoinAsync(deposit3.slot), true, 'bob received coin')
 
   // Multiple refreshes don't break it
   await bob.refreshAsync()
@@ -126,11 +126,9 @@ export async function runDemo(t: test.Test) {
   await charlie.refreshAsync()
 
   const coin = await charlie.getPlasmaCoinAsync(deposit3.slot)
-  t.equal(await charlie.receiveCoinAsync(deposit3.slot), true, 'Coin history verified')
-  charlie.watchExit(deposit3.slot, coin.depositBlockNum)
+  t.equal(await charlie.receiveAndWatchCoinAsync(deposit3.slot), true, 'Coin history verified')
 
   await charlie.exitAsync(deposit3.slot)
-  charlie.stopWatching(deposit3.slot)
 
   // Jump forward in time by 8 days
   await increaseTime(web3, 8 * 24 * 3600)
