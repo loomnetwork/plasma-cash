@@ -4,7 +4,7 @@ import { PlasmaUser } from 'loom-js'
 
 import { increaseTime } from './ganache-helpers'
 import { pollForBlockChange, sleep, ADDRESSES, ACCOUNTS, setupContracts } from './config'
-import BN from 'bn.js';
+import BN from 'bn.js'
 
 // Alice registers and has 5 coins, and she deposits 3 of them.
 const ALICE_INITIAL_COINS = 5
@@ -76,7 +76,6 @@ export async function runDemo(t: test.Test) {
     'plasma contract should have 3 tokens in cards contract'
   )
 
-
   const coins = await alice.getUserCoinsAsync()
   t.ok(coins[0].slot.eq(deposits[0].slot), 'got correct deposit coins 1')
   t.ok(coins[1].slot.eq(deposits[1].slot), 'got correct deposit coins 2')
@@ -88,38 +87,17 @@ export async function runDemo(t: test.Test) {
   const deposit3 = deposits[2]
 
   // Alice -> Bob
-  await alice.transferAsync(deposit3.slot, bob.ethAddress)
+  await alice.transferAndVerifyAsync(deposit3.slot, bob.ethAddress, 6)
   // Alice -> Charlie
-  await alice.transferAsync(deposit2.slot, charlie.ethAddress)
+  await alice.transferAndVerifyAsync(deposit2.slot, charlie.ethAddress, 6)
   currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
   await alice.refreshAsync()
 
+
   let aliceCoins = await alice.getUserCoinsAsync()
   t.ok(aliceCoins[0].slot.eq(deposits[0].slot), 'Alice has correct coin')
-
-  // For alice's piece of mind, when transacting, she has to verify that her transaction was included and is not withheld _in limbo_.
-  let inclusionBlock = currentBlock
-  t.equal(
-    await alice.verifyInclusionAsync(deposit2.slot, inclusionBlock),
-    true,
-    'alice verified tx is not in limbo'
-  )
-  t.equal(
-    await charlie.receiveCoinAsync(deposit2.slot),
-    true,
-    'charlie received coin'
-  )
-
-  t.equal(
-    await alice.verifyInclusionAsync(deposit3.slot, inclusionBlock),
-    true,
-    'alice verified tx is not in limbo'
-  )
-  t.equal(
-    await bob.receiveCoinAsync(deposit3.slot),
-    true,
-    'bob received coin'
-  )
+  t.equal(await charlie.receiveCoinAsync(deposit2.slot), true, 'charlie received coin')
+  t.equal(await bob.receiveCoinAsync(deposit3.slot), true, 'bob received coin')
 
   // Multiple refreshes don't break it
   await bob.refreshAsync()
@@ -136,9 +114,8 @@ export async function runDemo(t: test.Test) {
   await bob.refreshAsync()
   await bob.refreshAsync()
 
-  // Bob -> Charlie
-  await bob.transferAsync(deposit3.slot, charlie.ethAddress)
-  // await bob.transferTokenAsync({slot: deposit3.slot, prevBlockNum: new BN(1000), denomination: 1, newOwner: charlie.ethAddress})
+  // // Bob -> Charlie
+  await bob.transferAndVerifyAsync(deposit3.slot, charlie.ethAddress, 6)
   currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
 
   await charlie.refreshAsync()
@@ -146,10 +123,10 @@ export async function runDemo(t: test.Test) {
 
   const coin = await charlie.getPlasmaCoinAsync(deposit3.slot)
   t.equal(await charlie.receiveCoinAsync(deposit3.slot), true, 'Coin history verified')
-  let charlieCoin = charlie.watchExit(deposit3.slot, coin.depositBlockNum)
+  charlie.watchExit(deposit3.slot, coin.depositBlockNum)
 
   await charlie.exitAsync(deposit3.slot)
-  charlie.stopWatching(charlieCoin)
+  charlie.stopWatching(deposit3.slot)
 
   // Jump forward in time by 8 days
   await increaseTime(web3, 8 * 24 * 3600)

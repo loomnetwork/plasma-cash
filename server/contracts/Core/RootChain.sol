@@ -102,14 +102,15 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
 
     /**
      * Event to log the withdrawal of a coin
-     * @param from The address of the user who withdrew bonds
+     * @param owner The address of the user who withdrew bonds
+     * @param slot the slot of the coin that was exited
      * @param mode The type of coin that is being withdrawn (ERC20/ERC721/ETH)
      * @param contractAddress The contract address where the coin is being withdrawn from
               is same as `from` when withdrawing a ETH coin
      * @param uid The uid of the coin being withdrawn if ERC721, else 0
      * @param denomination The denomination of the coin which has been withdrawn (=1 for ERC721)
      */
-    event Withdrew(address indexed from, Mode mode, address contractAddress, uint uid, uint denomination);
+    event Withdrew(address indexed owner, uint64 indexed slot, Mode mode, address contractAddress, uint uid, uint denomination);
 
     using SafeMath for uint256;
     using Transaction for bytes;
@@ -255,6 +256,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
     /// @param mode The type of coin that is being deposited (ETH/ERC721/ERC20)
     function deposit(
         address from, 
+        address contractAddress,
         uint256 uid, 
         uint256 denomination, 
         Mode mode
@@ -267,7 +269,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         // Update state. Leave `exit` empty
         Coin storage coin = coins[slot];
         coin.uid = uid;
-        coin.contractAddress = msg.sender;
+        coin.contractAddress = contractAddress;
         coin.denomination = denomination;
         coin.depositBlock = currentBlock;
         coin.owner = from;
@@ -468,6 +470,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
 
         emit Withdrew(
             msg.sender,
+            slot,
             c.mode,
             c.contractAddress,
             uid,
@@ -753,7 +756,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
     /******************** DEPOSIT FUNCTIONS ********************/
 
     function() payable public {
-        deposit(msg.sender, 0, msg.value, Mode.ETH);
+        deposit(msg.sender, msg.sender, 0, msg.value, Mode.ETH);
     }
 
     function onERC20Received(address _from, uint256 _amount, bytes)
@@ -761,7 +764,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         isTokenApproved(msg.sender)
         returns(bytes4)
     {
-        deposit(_from, 0, _amount, Mode.ERC20);
+        deposit(_from, msg.sender, 0, _amount, Mode.ERC20);
         return ERC20_RECEIVED;
     }
 
@@ -771,7 +774,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         isTokenApproved(msg.sender)
         returns(bytes4)
     {
-        deposit(_from, _uid, 1, Mode.ERC721);
+        deposit(_from, msg.sender, _uid, 1, Mode.ERC721);
         return ERC721_RECEIVED;
     }
 
@@ -779,14 +782,14 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
     // Requires first to have called `approve` on the specified ERC20 contract
     function depositERC20(uint256 amount, address contractAddress) external {
         require(ERC20(contractAddress).transferFrom(msg.sender, address(this), amount), "Transfer failed");
-        deposit(msg.sender, 0, amount, Mode.ERC20);
+        deposit(msg.sender, contractAddress, 0, amount, Mode.ERC20);
     }
 
     // Approve and Deposit function for 2-step deposits without having to approve the token by the validators
     // Requires first to have called `approve` on the specified ERC721 contract
     function depositERC721(uint256 uid, address contractAddress) external {
         ERC721(contractAddress).safeTransferFrom(msg.sender, address(this), uid);
-        deposit(msg.sender, uid, 1, Mode.ERC721);
+        deposit(msg.sender, contractAddress, uid, 1, Mode.ERC721);
     }
 
     /******************** HELPERS ********************/

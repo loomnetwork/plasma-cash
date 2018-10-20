@@ -60,11 +60,11 @@ export async function runChallengeAfterDemo(t: test.Test) {
 
   // Mallory -> Dan
   const coin = await mallory.getPlasmaCoinAsync(deposit1Slot)
-  await mallory.transferAsync(deposit1Slot, dan.ethAddress)
+  await mallory.transferAndVerifyAsync(deposit1Slot, dan.ethAddress, 6)
   currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
   t.equal(await dan.receiveCoinAsync(deposit1Slot), true, 'Coin history verified')
 
-  const danCoin = dan.watchExit(deposit1Slot, coin.depositBlockNum)
+  dan.watchExit(deposit1Slot, coin.depositBlockNum)
 
   // Mallory attempts to exit spent coin (the one sent to Dan)
   // Needs to use the low level API to make an invalid tx
@@ -78,7 +78,7 @@ export async function runChallengeAfterDemo(t: test.Test) {
   await sleep(2000)
   await dan.exitAsync(deposit1Slot)
 
-  dan.stopWatching(danCoin)
+  dan.stopWatching(deposit1Slot)
 
   // Jump forward in time by 8 days
   await increaseTime(web3, 8 * 24 * 3600)

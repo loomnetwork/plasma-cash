@@ -52,14 +52,14 @@ export async function runChallengeBetweenDemo(t: test.Test) {
 
   // Eve sends her plasma coin to Bob
   const coin = await eve.getPlasmaCoinAsync(deposit1Slot)
-  await eve.transferAsync(deposit1Slot, bob.ethAddress)
+  await eve.transferAndVerifyAsync(deposit1Slot, bob.ethAddress, 6)
   currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
 
   t.equal(await bob.receiveCoinAsync(deposit1Slot), true, 'Coin history verified')
-  const bobCoin = bob.watchExit(deposit1Slot, coin.depositBlockNum)
+  bob.watchExit(deposit1Slot, coin.depositBlockNum)
 
   // Eve sends this same plasma coin to Alice
-  await eve.transferAsync(deposit1Slot, alice.ethAddress)
+  await eve.transferAndVerifyAsync(deposit1Slot, alice.ethAddress, 6)
   currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
 
   // Alice attempts to exit her double-spent coin
@@ -74,7 +74,7 @@ export async function runChallengeBetweenDemo(t: test.Test) {
   await sleep(2000)
 
   await bob.exitAsync(deposit1Slot)
-  bob.stopWatching(bobCoin)
+  bob.stopWatching(deposit1Slot)
 
   // Jump forward in time by 8 days
   await increaseTime(web3, 8 * 24 * 3600)
