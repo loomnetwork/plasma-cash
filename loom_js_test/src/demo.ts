@@ -59,12 +59,12 @@ export async function runDemo(t: test.Test) {
   const deposits = await alice.deposits()
   t.equal(deposits.length, ALICE_DEPOSITED_COINS, 'All deposit events accounted for')
 
-  // for (let i = 0; i < deposits.length; i++) {
-  //   const deposit = deposits[i]
-  //   t.equal(deposit.blockNumber.toNumber(), blk.toNumber() + i + 1, `Deposit ${i + 1} block number is correct`)
-  //   t.equal(deposit.denomination.toNumber(), 1, `Deposit ${i + 1} denomination is correct`)
-  //   t.equal(deposit.from, alice.ethAddress, `Deposit ${i + 1} sender is correct`)
-  // }
+  for (let i = 0; i < deposits.length; i++) {
+    const deposit = deposits[i]
+    t.equal(deposit.depositBlockNum.toNumber(), i + 1, `Deposit ${i + 1} block number is correct`)
+    t.equal(deposit.denomination.toNumber(), 1, `Deposit ${i + 1} denomination is correct`)
+    t.equal(deposit.owner, alice.ethAddress, `Deposit ${i + 1} sender is correct`)
+  }
 
   balance = await cards.balanceOfAsync(alice.ethAddress)
   t.equal(
