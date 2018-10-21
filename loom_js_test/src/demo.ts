@@ -80,7 +80,8 @@ export async function runDemo(t: test.Test) {
   )
 
   await authority.depositERC20(new BN(1000), loomAddress)
-  await bob.depositETH(new BN(1000))
+  await authority.depositETH(new BN(1000))
+
   const coins = await alice.getUserCoinsAsync()
   t.ok(coins[0].slot.eq(deposits[0].slot), 'got correct deposit coins 1')
   t.ok(coins[1].slot.eq(deposits[1].slot), 'got correct deposit coins 2')
@@ -96,16 +97,11 @@ export async function runDemo(t: test.Test) {
   // Alice -> Charlie
   await alice.transferAndVerifyAsync(deposit2.slot, charlie.ethAddress, 6)
   currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
-  await alice.refreshAsync()
 
   let aliceCoins = await alice.getUserCoinsAsync()
   t.ok(aliceCoins[0].slot.eq(deposits[0].slot), 'Alice has correct coin')
   t.equal(await charlie.receiveAndWatchCoinAsync(deposit2.slot), true, 'charlie received coin')
   t.equal(await bob.receiveAndWatchCoinAsync(deposit3.slot), true, 'bob received coin')
-
-  // Multiple refreshes don't break it
-  await bob.refreshAsync()
-  await charlie.refreshAsync()
 
   // The legit operator will allow access to these variables as usual. The non-legit operator won't and as a result `getUserCoinsAsync` is empty
   if (bob.contractName !== 'hostileoperator') {
@@ -115,15 +111,9 @@ export async function runDemo(t: test.Test) {
     t.ok(charlieCoins[0].slot.eq(deposit2.slot), 'Charlie has correct coin')
   }
 
-  await bob.refreshAsync()
-  await bob.refreshAsync()
-
   // // Bob -> Charlie
   await bob.transferAndVerifyAsync(deposit3.slot, charlie.ethAddress, 6)
   currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
-
-  await charlie.refreshAsync()
-  await charlie.refreshAsync()
 
   const coin = await charlie.getPlasmaCoinAsync(deposit3.slot)
   t.equal(await charlie.receiveAndWatchCoinAsync(deposit3.slot), true, 'Coin history verified')

@@ -54,9 +54,7 @@ export async function runChallengeBeforeDemo(t: test.Test) {
 
   const deposit1Slot = deposits[0].slot
 
-  // Dan starts watching
   const coin = await dan.getPlasmaCoinAsync(deposit1Slot)
-  t.equal(await dan.receiveAndWatchCoinAsync(deposit1Slot), true, 'dan received coin')
 
   // Trudy creates an invalid spend of the coin to Mallory
   await trudy.transferAndVerifyAsync(deposit1Slot, mallory.ethAddress, 6)
