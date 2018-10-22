@@ -48,11 +48,9 @@ export async function runDemo(t: test.Test) {
 
   let balance = await cards.balanceOfAsync(alice.ethAddress)
   t.equal(balance.toNumber(), 5)
-  let currentBlock = await authority.getCurrentBlockAsync()
 
   for (let i = 0; i < ALICE_DEPOSITED_COINS; i++) {
-    await alice.depositERC721(new BN(COINS[i]), cardsAddress)
-    currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
+    await alice.depositERC721Async(new BN(COINS[i]), cardsAddress)
   }
 
   // Get deposit events for all
@@ -79,8 +77,8 @@ export async function runDemo(t: test.Test) {
     'plasma contract should have 3 tokens in cards contract'
   )
 
-  await authority.depositERC20(new BN(1000), loomAddress)
-  await authority.depositETH(new BN(1000))
+  await authority.depositERC20Async(new BN(1000), loomAddress)
+  await authority.depositETHAsync(new BN(1000))
 
   const coins = await alice.getUserCoinsAsync()
   t.ok(coins[0].slot.eq(deposits[0].slot), 'got correct deposit coins 1')
@@ -92,6 +90,7 @@ export async function runDemo(t: test.Test) {
   const deposit2 = deposits[1]
   const deposit3 = deposits[2]
 
+  let currentBlock = await authority.getCurrentBlockAsync()
   // Alice -> Bob
   await alice.transferAndVerifyAsync(deposit3.slot, bob.ethAddress, 6)
   // Alice -> Charlie

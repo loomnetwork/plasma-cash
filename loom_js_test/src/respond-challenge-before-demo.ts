@@ -39,9 +39,7 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
 
   const startBlockNum = await web3.eth.getBlockNumber()
   // Trudy deposits a coin
-  let currentBlock = await authority.getCurrentBlockAsync()
-  await trudy.depositERC721(new BN(21), cardsAddress)
-  currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
+  await trudy.depositERC721Async(new BN(21), cardsAddress)
 
   const deposits = await trudy.deposits()
   t.equal(deposits.length, 1, 'All deposit events accounted for')
@@ -50,6 +48,7 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
 
   // Trudy sends her coin to Dan
   const coin = await trudy.getPlasmaCoinAsync(deposit1Slot)
+  let currentBlock = await authority.getCurrentBlockAsync()
   await trudy.transferAndVerifyAsync(deposit1Slot, dan.ethAddress, 6)
   currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
 

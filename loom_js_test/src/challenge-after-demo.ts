@@ -41,11 +41,8 @@ export async function runChallengeAfterDemo(t: test.Test) {
   t.equal(malloryTokensStart.toNumber(), 5, 'START: Mallory has correct number of tokens')
 
   // Mallory deposits one of her coins to the plasma contract
-  let currentBlock = await authority.getCurrentBlockAsync()
-  await mallory.depositERC721(new BN(6), cardsAddress)
-  currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
-  await mallory.depositERC721(new BN(7), cardsAddress)
-  currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
+  await mallory.depositERC721Async(new BN(6), cardsAddress)
+  await mallory.depositERC721Async(new BN(7), cardsAddress)
 
   const deposits = await mallory.deposits()
   t.equal(deposits.length, 2, 'Mallory has correct number of deposits')
@@ -61,6 +58,7 @@ export async function runChallengeAfterDemo(t: test.Test) {
 
   // Mallory -> Dan
   const coin = await mallory.getPlasmaCoinAsync(deposit1Slot)
+  let currentBlock = await authority.getCurrentBlockAsync()
   await mallory.transferAndVerifyAsync(deposit1Slot, dan.ethAddress, 6)
   currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
   t.equal(await dan.receiveAndWatchCoinAsync(deposit1Slot), true, 'Coin history verified')

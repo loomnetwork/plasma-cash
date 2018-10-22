@@ -44,9 +44,7 @@ export async function runChallengeBetweenDemo(t: test.Test) {
   await cards.registerAsync(eve.ethAddress)
 
   // Eve deposits a coin
-  let currentBlock = await authority.getCurrentBlockAsync()
-  await eve.depositERC721(new BN(11), cardsAddress)
-  currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
+  await eve.depositERC721Async(new BN(11), cardsAddress)
   const deposits = await eve.deposits()
   t.equal(deposits.length, 1, 'Eve has correct number of deposits')
 
@@ -54,6 +52,7 @@ export async function runChallengeBetweenDemo(t: test.Test) {
 
   // Eve sends her plasma coin to Bob
   const coin = await eve.getPlasmaCoinAsync(deposit1Slot)
+  let currentBlock = await authority.getCurrentBlockAsync()
   await eve.transferAndVerifyAsync(deposit1Slot, bob.ethAddress, 6)
   currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
 
