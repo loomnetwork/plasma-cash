@@ -293,7 +293,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
             currentBlock,
             denomination,
             from,
-            msg.sender
+            contractAddress
         );
 
         numCoins += 1;
