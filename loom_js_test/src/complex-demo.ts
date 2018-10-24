@@ -1,0 +1,296 @@
+import test from 'tape'
+import Web3 from 'web3'
+import { PlasmaUser } from 'loom-js'
+
+import { increaseTime } from './ganache-helpers'
+import { pollForBlockChange, sleep, ADDRESSES, ACCOUNTS, setupContracts } from './config'
+import BN from 'bn.js'
+
+// Complex demo where we try to break the system _lol_
+// A whatever interaction between fred and greg (& harry who joins late to the party)
+// All interactions happen in ETH
+export async function complexDemo(t: test.Test) {
+  const web3Endpoint = 'ws://127.0.0.1:8545'
+  const dappchainEndpoint = 'http://localhost:46658'
+  const web3 = new Web3(new Web3.providers.WebsocketProvider(web3Endpoint))
+
+  const fred = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.fred
+  )
+  const greg = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.greg
+  )
+
+  // Fred deposits 5000 Wei split across 3 coins
+  // Greg deposits 1000 Wei split across 3 coins
+  await fred.depositETHAsync(new BN(1000))
+  await fred.depositETHAsync(new BN(2000))
+  await fred.depositETHAsync(new BN(3000))
+  await greg.depositETHAsync(new BN(4000))
+  await greg.depositETHAsync(new BN(6000))
+
+  // Get deposit events for all
+  const fred_deposits = await fred.deposits()
+  const greg_deposits = await greg.deposits()
+
+  t.equal(fred_deposits.length, 3, 'Fred deposits correct')
+  t.equal(greg_deposits.length, 2, 'Greg deposits correct')
+
+  let coins = await fred.getUserCoinsAsync()
+  t.ok(coins[0].slot.eq(fred_deposits[0].slot), 'fred: got correct deposit coins 1')
+  t.ok(coins[1].slot.eq(fred_deposits[1].slot), 'fred: got correct deposit coins 2')
+  t.ok(coins[2].slot.eq(fred_deposits[2].slot), 'fred: got correct deposit coins 3')
+
+  coins = await greg.getUserCoinsAsync()
+  t.ok(coins[0].slot.eq(greg_deposits[0].slot), 'greg: got correct deposit coins 1')
+  t.ok(coins[1].slot.eq(greg_deposits[1].slot), 'greg: got correct deposit coins 2')
+
+  const coin1 = fred_deposits[0].slot
+  const coin3 = fred_deposits[1].slot
+  const coin5 = fred_deposits[2].slot
+  const coin2 = greg_deposits[0].slot
+  const coin4 = greg_deposits[1].slot
+
+  await fred.watchBlocks()
+  await greg.watchBlocks()
+
+  let currentBlock = await fred.getCurrentBlockAsync()
+  fred.transferAndVerifyAsync(coin1, greg.ethAddress)
+  greg.transferAndVerifyAsync(coin2, fred.ethAddress)
+  currentBlock = await pollForBlockChange(fred, currentBlock, 20, 2000)
+
+  // They both try to exit and defraud each other
+  await fred.exitAsync(coin1)
+  await sleep(1000)
+  // Add a sleep in between given that Greg will challenge and we'll get a nonce-too-low error if we
+  await greg.exitAsync(coin2)
+
+  // Wait a bit until the challenges are complete
+  await sleep(3000)
+
+  // Greg owns coin 1,4. Need to sort slot values since
+  let slots = (await greg.getUserCoinsAsync()).map(c => c.slot).sort()
+  t.equal((await greg.getUserCoinsAsync()).length, 2, 'Greg owns 2 coins')
+  t.deepEqual(slots, [coin4, coin1].sort(), "Greg owns the correct coins")
+
+  // Fred owns coin 2,3,5
+  slots = (await fred.getUserCoinsAsync()).map(c => c.slot).sort()
+  t.equal((await fred.getUserCoinsAsync()).length, 3, 'fred owns 3 coins')
+  t.deepEqual(slots, [coin5, coin2, coin3].sort(), "Greg owns the correct coins")
+
+  t.equal((await greg.getPlasmaCoinAsync(coin1)).state, 0, 'Greg succesfully challenged Fred')
+  t.equal((await fred.getPlasmaCoinAsync(coin2)).state, 0, 'Fred succesfully challenged Greg')
+
+  // Harry joins in the fun
+  const harry = PlasmaUser.createUser(
+    web3Endpoint,
+    ADDRESSES.root_chain,
+    dappchainEndpoint,
+    ACCOUNTS.harry
+  )
+
+  await harry.watchBlocks()
+
+  // Previously, coin1 went from DEPOSITED -> EXITING and now is back to DEPOSITED. This should be reflected on the dappchain state as well. Build521 does not reset a coin to DEPOSITED after it is in EXITING and is challenged.
+  greg.transferAndVerifyAsync(coin1, harry.ethAddress).then(() => {
+    greg.transferAndVerifyAsync(coin4, harry.ethAddress)
+  })
+  fred.transferAndVerifyAsync(coin3, harry.ethAddress)
+
+  // BUG: PR137 build gets stuck here, a new block never gets submitted. Gets stuck submitting some exit event.
+  currentBlock = await pollForBlockChange(fred, currentBlock, 20, 2000)
+
+  // Harry owns coin 1,3,4
+  slots = (await harry.getUserCoinsAsync()).map(c => c.slot).sort()
+  t.equal((await harry.getUserCoinsAsync()).length, 3, 'Harry owns 3 coins')
+  t.deepEqual(slots, [coin1,coin3,coin4].sort(), "Harry owns the correct coins")
+
+  t.equal((await greg.getUserCoinsAsync()).length, 0, 'greg has no coins')
+
+  // Fred owns coins 2,5
+  slots = (await fred.getUserCoinsAsync()).map(c => c.slot).sort()
+  t.equal((await fred.getUserCoinsAsync()).length, 2, 'Fred owns 2 coins')
+  t.deepEqual(slots, [coin2,coin5].sort(), "Fred owns the correct coins")
+
+  try {
+    // Let's try stealing some money
+    await greg.transferAndVerifyAsync(coin4, harry.ethAddress)
+  } catch (e) {
+    t.ok(
+      e.message.includes(
+        `Failed to commit Tx: [PlasmaCash] failed to process transfer: can't transfer coin ${coin4.toString(
+          10
+        )}`
+      ),
+      'Tx1 should fail'
+    )
+  }
+
+  try {
+    // Let's try stealing some money
+    await greg.transferAndVerifyAsync(coin3, harry.ethAddress)
+  } catch (e) {
+    t.ok(
+      e.message.includes(
+        `Failed to commit Tx: [PlasmaCash] failed to process transfer: can't transfer coin ${coin3.toString(
+          10
+        )}`
+      ),
+      'Tx2 should fail'
+    )
+  }
+
+  try {
+    // Let's try stealing some money
+    await greg.transferAndVerifyAsync(coin1, harry.ethAddress)
+  } catch (e) {
+    t.ok(
+      e.message.includes(
+        `Failed to commit Tx: [PlasmaCash] failed to process transfer: can't transfer coin ${coin1.toString(
+          10
+        )}`
+      ),
+      'Tx3 should fail'
+    )
+  }
+
+  t.equal((await fred.getUserCoinsAsync()).length, 2, 'Fred still owns 2 coins')
+  // spam a bit
+  await fred.depositETHAsync(new BN(10000))
+  await sleep(1000)
+  t.equal((await fred.getUserCoinsAsync()).length, 3, 'Fred owns 3 coins')
+  currentBlock = await harry.getCurrentBlockAsync()
+  await harry.transferAndVerifyAsync(coin4, greg.ethAddress)
+  currentBlock = await pollForBlockChange(harry, currentBlock, 20, 2000)
+  await fred.depositETHAsync(new BN(10000))
+  await sleep(1000)
+  t.equal((await fred.getUserCoinsAsync()).length, 4, 'Fred owns 4 coins')
+  await fred.depositETHAsync(new BN(10000))
+  await sleep(1000)
+  t.equal((await fred.getUserCoinsAsync()).length, 5, 'Fred owns 5 coins')
+
+  // BUG AFTER THIS: Internal error not found :/ This happens because a client tries to fetch a transaction which is not found in a block. However, the test still passes.
+
+  // spam a bit
+  await fred.depositETHAsync(new BN(10000))
+  await sleep(1000)
+  t.equal((await fred.getUserCoinsAsync()).length, 6, 'Fred owns 6 coins')
+  currentBlock = await greg.getCurrentBlockAsync()
+  await greg.transferAndVerifyAsync(coin4, harry.ethAddress)
+  currentBlock = await pollForBlockChange(greg, currentBlock, 20, 2000)
+  await fred.depositETHAsync(new BN(10000))
+  await sleep(1000)
+  t.equal((await fred.getUserCoinsAsync()).length, 7, 'Fred owns 7 coins')
+  await fred.depositETHAsync(new BN(10000))
+  await sleep(1000)
+  t.equal((await fred.getUserCoinsAsync()).length, 8, 'Fred owns 8 coins')
+
+  t.equal((await harry.getUserCoinsAsync()).length, 3, 'Harry still owns 3 coins')
+  await harry.exitAsync(coin4)
+  await harry.exitAsync(coin1)
+  await harry.exitAsync(coin3)
+
+  // Wait until the dappchain oracle gets the event and transitions the coin to EXITING
+  await sleep(3000)
+  t.equal((await fred.getUserCoinsAsync()).length, 8, 'Fred still owns 8 coins')
+
+  await fred.exitAsync(coin2)
+  await fred.exitAsync(coin5)
+  t.equal((await fred.getUserCoinsAsync()).length, 8, 'Fred still owns 8 coins')
+
+  await sleep(2000)
+  t.equal(
+    (await fred.getPlasmaCoinAsync(coin2)).state,
+    1,
+    'Fred succesfully started an exit for coin 2'
+  )
+  t.equal(
+    (await fred.getPlasmaCoinAsync(coin5)).state,
+    1,
+    'Fred succesfully started an exit for coin 5'
+  )
+  t.equal(
+    (await harry.getPlasmaCoinAsync(coin3)).state,
+    1,
+    'Harry succesfully started an exit for coin 3'
+  )
+  t.equal(
+    (await harry.getPlasmaCoinAsync(coin4)).state,
+    1,
+    'Harry succesfully started an exit for coin 4'
+  )
+  t.equal(
+    (await harry.getPlasmaCoinAsync(coin1)).state,
+    1,
+    'Harry succesfully started an exit for coin 1'
+  )
+
+  t.equal((await fred.getUserCoinsAsync()).length, 8, 'Fred still owns 8 coins')
+
+  // Greg for some whatever reason decides to finalize all exits
+  await increaseTime(web3, 8 * 24 * 3600)
+  await greg.finalizeExitsAsync()
+
+  t.equal(
+    (await fred.getPlasmaCoinAsync(coin2)).state,
+    2,
+    'Fred succesfully finalized the exit for coin 2'
+  )
+  t.equal(
+    (await fred.getPlasmaCoinAsync(coin5)).state,
+    2,
+    'Fred succesfully finalized the exit for coin 5'
+  )
+  t.equal(
+    (await harry.getPlasmaCoinAsync(coin3)).state,
+    2,
+    'Harry succesfully finalized the exit for coin 3'
+  )
+  t.equal(
+    (await harry.getPlasmaCoinAsync(coin4)).state,
+    2,
+    'Harry succesfully finalized the exit for coin 4'
+  )
+  t.equal(
+    (await harry.getPlasmaCoinAsync(coin1)).state,
+    2,
+    'Harry succesfully finalized the exit for coin 1'
+  )
+
+  t.equal((await fred.getUserCoinsAsync()).length, 8, 'Fred still owns 8 coins')
+
+  await fred.withdrawAsync(coin2)
+  await fred.withdrawAsync(coin5)
+  await harry.withdrawAsync(coin3)
+  await harry.withdrawAsync(coin1)
+  await harry.withdrawAsync(coin4)
+
+  t.equal((await fred.getUserCoinsAsync()).length, 8, 'Fred 6 coins')
+
+  t.equal((await fred.getPlasmaCoinAsync(coin2)).state, 0, 'Fred succesfully withdrew coin 2')
+  t.equal((await fred.getPlasmaCoinAsync(coin5)).state, 0, 'Fred succesfully withdrew coin 5')
+  t.equal((await harry.getPlasmaCoinAsync(coin3)).state, 0, 'Harry succesfully withdrew coin 3')
+  t.equal((await harry.getPlasmaCoinAsync(coin4)).state, 0, 'Harry succesfully withdrew coin 4')
+  t.equal((await harry.getPlasmaCoinAsync(coin1)).state, 0, 'Harry succesfully withdrew coin 1')
+
+  await sleep(8000)
+
+  // Check that the withdraw oracle worked
+  t.equal((await fred.getUserCoinsAsync()).length, 6, 'Withdraw oracle for fred OK')
+  t.equal((await harry.getUserCoinsAsync()).length, 0, 'Withdraw oracle for harry OK')
+
+  // Close the websocket, hacky :/
+  fred.disconnect()
+  greg.disconnect()
+  harry.disconnect()
+  // @ts-ignore
+  web3.currentProvider.connection.close()
+
+  t.end()
+}
