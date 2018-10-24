@@ -6,7 +6,7 @@
 set -exo pipefail
 
 # Loom build to use for tests when running on Jenkins, this build will be automatically downloaded.
-BUILD_NUMBER=521
+BUILD_NUMBER=536
 
 # These can be toggled via the options below, only useful when running the script locally.
 LOOM_INIT_ONLY=false
@@ -174,6 +174,7 @@ mkdir -p db
 rm -rf db/*.json # remove all previously stored db related files
 
 yarn jenkins:test:honest
+
 
 stop_chains
 # Wait for Ganache & Loom to stop

@@ -55,9 +55,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
 
     /**
      * Event for exit challenge logging
-     * @notice This event only fires if `challengeBefore` is called. Other
-     *         types of challenges cannot be responded to and thus do not
-     *         require an event.
+     * @notice This event only fires if `challengeBefore` is called.
      * @param slot The slot of the coin whose exit was challenged
      * @param txHash The hash of the tx used for the challenge
      */
@@ -65,11 +63,17 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
 
     /**
      * Event for exit response logging
-     * @notice This only logs responses to `challengeBefore`, other challenges
-     *         do not require responses.
+     * @notice This only logs responses to `challengeBefore`
      * @param slot The slot of the coin whose challenge was responded to
      */
     event RespondedExitChallenge(uint64 indexed slot);
+
+    /**
+     * Event for logging when an exit was successfully challenged
+     * @param slot The slot of the coin being reset to DEPOSITED
+     * @param owner The owner of the coin
+     */
+    event CoinReset(uint64 indexed slot, address indexed owner);
 
     /**
      * Event for exit finalization logging
@@ -413,6 +417,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         } else {
             // Reset coin state since it was challenged
             coin.state = State.DEPOSITED;
+            emit CoinReset(slot, coin.owner);
         }
 
         delete coins[slot].exit;
@@ -635,6 +640,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         // Apply penalties and change state
         slashBond(coins[slot].exit.owner, msg.sender);
         coins[slot].state = State.DEPOSITED;
+        emit CoinReset(slot, coins[slot].owner);
     }
 
     /// @param slot The slot of the coin being challenged

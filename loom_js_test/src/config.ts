@@ -23,7 +23,10 @@ export const ACCOUNTS = {
   dan: '0x6aecd44fcb79d4b68f1ee2b2c706f8e9a0cd06b0de4729fe98cfed8886315256',
   mallory: '0x686e245584fdf696abd739c0e66ac6e01fc4c68babee20c7124566e118b2a634',
   eve: '0x9fd4ab25e1699bb252f4d5c4510a135db34b3adca8baa03194ad5cd6faa13a1d',
-  trudy: '0xe8445efa4e3349c3c74fd6689553f93b55aca723115fb777e1e6f4db2a0a82ca'
+  trudy: '0xe8445efa4e3349c3c74fd6689553f93b55aca723115fb777e1e6f4db2a0a82ca',
+  fred: '0x56901d80abc6953d1dc01de2f077b75260f49a3304f665b57ed13514a7e2a2bc',
+  greg: '0xedc63d0e14b29aaa26c7585e962f93abb59bd7d8b01b585e073dc03d052a000b',
+  harry: '0x6b9e9cc46d205668eff6eaa0c4ec6375d475e8ebd821bc79cc4239571560df15'
 }
 
 export function sleep(ms: any) {

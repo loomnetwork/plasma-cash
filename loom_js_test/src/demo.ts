@@ -49,6 +49,7 @@ export async function runDemo(t: test.Test) {
   let balance = await cards.balanceOfAsync(alice.ethAddress)
   t.equal(balance.toNumber(), 5)
 
+  const depositsStartBlock = await alice.getCurrentBlockAsync()
   for (let i = 0; i < ALICE_DEPOSITED_COINS; i++) {
     await alice.depositERC721Async(new BN(COINS[i]), cardsAddress)
   }
@@ -59,7 +60,7 @@ export async function runDemo(t: test.Test) {
 
   for (let i = 0; i < deposits.length; i++) {
     const deposit = deposits[i]
-    t.equal(deposit.depositBlockNum.toNumber(), i + 1, `Deposit ${i + 1} block number is correct`)
+    t.equal(deposit.depositBlockNum.toNumber(), depositsStartBlock.toNumber() + i + 1, `Deposit ${i + 1} block number is correct`)
     t.equal(deposit.denomination.toNumber(), 1, `Deposit ${i + 1} denomination is correct`)
     t.equal(deposit.owner, alice.ethAddress, `Deposit ${i + 1} sender is correct`)
   }
@@ -92,9 +93,10 @@ export async function runDemo(t: test.Test) {
 
   let currentBlock = await authority.getCurrentBlockAsync()
   // Alice -> Bob
-  await alice.transferAndVerifyAsync(deposit3.slot, bob.ethAddress, 6)
-  // Alice -> Charlie
-  await alice.transferAndVerifyAsync(deposit2.slot, charlie.ethAddress, 6)
+  alice.transferAndVerifyAsync(deposit3.slot, bob.ethAddress, 6).then(() =>
+    // Alice -> Charlie
+    alice.transferAndVerifyAsync(deposit2.slot, charlie.ethAddress, 6)
+  )
   currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
 
   let aliceCoins = await alice.getUserCoinsAsync()
