@@ -43,6 +43,7 @@ type (
 	GetUserSlotsRequest          = pctypes.GetUserSlotsRequest
 	GetUserSlotsResponse         = pctypes.GetUserSlotsResponse
 
+	CoinResetRequest    = pctypes.PlasmaCashCoinResetRequest
 	ExitCoinRequest     = pctypes.PlasmaCashExitCoinRequest
 	WithdrawCoinRequest = pctypes.PlasmaCashWithdrawCoinRequest
 )
@@ -290,6 +291,10 @@ func (c *HostileOperator) GetUserSlotsRequest(ctx contract.StaticContext, req *G
 }
 
 // Dummy method
+func (c *HostileOperator) CoinReset(ctc contract.Context, req *CoinResetRequest) error {
+	return nil
+}
+
 func (c *HostileOperator) ExitCoin(ctc contract.Context, req *ExitCoinRequest) error {
 	return nil
 }

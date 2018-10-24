@@ -6,7 +6,7 @@
 set -exo pipefail
 
 # Loom build to use for tests when running on Jenkins, this build will be automatically downloaded.
-BUILD_NUMBER=512
+BUILD_NUMBER=536
 
 # These can be toggled via the options below, only useful when running the script locally.
 LOOM_INIT_ONLY=false
@@ -66,6 +66,7 @@ function init_honest_dappchain {
     cp $REPO_ROOT/loom_test/test.key $LOOM_DIR/test.key
     cp $REPO_ROOT/loom_test/oracle.key $LOOM_DIR/oracle.key
     $LOOM_BIN init -f
+    cp $REPO_ROOT/loom_test/honest.genesis.json $LOOM_DIR/genesis.json
     echo 'Loom DAppChain initialized in ' $LOOM_DIR
 }
 
@@ -173,6 +174,7 @@ mkdir -p db
 rm -rf db/*.json # remove all previously stored db related files
 
 yarn jenkins:test:honest
+
 
 stop_chains
 # Wait for Ganache & Loom to stop
