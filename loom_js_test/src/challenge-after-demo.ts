@@ -11,6 +11,7 @@ export async function runChallengeAfterDemo(t: test.Test) {
   const dappchainEndpoint = 'http://localhost:46658'
   const web3 = new Web3(new Web3.providers.WebsocketProvider(web3Endpoint))
   const { cards } = setupContracts(web3)
+  const cardsAddress = ADDRESSES.token_contract
 
   const authority = PlasmaUser.createUser(
     web3Endpoint,
@@ -40,11 +41,8 @@ export async function runChallengeAfterDemo(t: test.Test) {
   t.equal(malloryTokensStart.toNumber(), 5, 'START: Mallory has correct number of tokens')
 
   // Mallory deposits one of her coins to the plasma contract
-  let currentBlock = await authority.getCurrentBlockAsync()
-  await cards.depositToPlasmaAsync({ tokenId: 6, from: mallory.ethAddress })
-  currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
-  await cards.depositToPlasmaAsync({ tokenId: 7, from: mallory.ethAddress })
-  currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
+  await mallory.depositERC721Async(new BN(6), cardsAddress)
+  await mallory.depositERC721Async(new BN(7), cardsAddress)
 
   const deposits = await mallory.deposits()
   t.equal(deposits.length, 2, 'Mallory has correct number of deposits')
@@ -60,11 +58,10 @@ export async function runChallengeAfterDemo(t: test.Test) {
 
   // Mallory -> Dan
   const coin = await mallory.getPlasmaCoinAsync(deposit1Slot)
+  let currentBlock = await authority.getCurrentBlockAsync()
   await mallory.transferAndVerifyAsync(deposit1Slot, dan.ethAddress, 6)
   currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
-  t.equal(await dan.receiveCoinAsync(deposit1Slot), true, 'Coin history verified')
-
-  dan.watchExit(deposit1Slot, coin.depositBlockNum)
+  t.equal(await dan.receiveAndWatchCoinAsync(deposit1Slot), true, 'Coin history verified')
 
   // Mallory attempts to exit spent coin (the one sent to Dan)
   // Needs to use the low level API to make an invalid tx
@@ -77,8 +74,6 @@ export async function runChallengeAfterDemo(t: test.Test) {
   // Having successufly challenged Mallory's exit Dan should be able to exit the coin
   await sleep(2000)
   await dan.exitAsync(deposit1Slot)
-
-  dan.stopWatching(deposit1Slot)
 
   // Jump forward in time by 8 days
   await increaseTime(web3, 8 * 24 * 3600)

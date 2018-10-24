@@ -1,5 +1,6 @@
 import test from 'tape'
 import Web3 from 'web3'
+import BN from 'bn.js'
 import { PlasmaUser } from 'loom-js'
 
 import { increaseTime, getEthBalanceAtAddress } from './ganache-helpers'
@@ -10,6 +11,7 @@ export async function runChallengeBetweenDemo(t: test.Test) {
   const dappchainEndpoint = 'http://localhost:46658'
   const web3 = new Web3(new Web3.providers.WebsocketProvider(web3Endpoint))
   const { cards } = setupContracts(web3)
+  const cardsAddress = ADDRESSES.token_contract
 
   const authority = PlasmaUser.createUser(
     web3Endpoint,
@@ -42,9 +44,7 @@ export async function runChallengeBetweenDemo(t: test.Test) {
   await cards.registerAsync(eve.ethAddress)
 
   // Eve deposits a coin
-  let currentBlock = await authority.getCurrentBlockAsync()
-  await cards.depositToPlasmaAsync({ tokenId: 11, from: eve.ethAddress })
-  currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
+  await eve.depositERC721Async(new BN(11), cardsAddress)
   const deposits = await eve.deposits()
   t.equal(deposits.length, 1, 'Eve has correct number of deposits')
 
@@ -52,11 +52,11 @@ export async function runChallengeBetweenDemo(t: test.Test) {
 
   // Eve sends her plasma coin to Bob
   const coin = await eve.getPlasmaCoinAsync(deposit1Slot)
+  let currentBlock = await authority.getCurrentBlockAsync()
   await eve.transferAndVerifyAsync(deposit1Slot, bob.ethAddress, 6)
   currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
 
-  t.equal(await bob.receiveCoinAsync(deposit1Slot), true, 'Coin history verified')
-  bob.watchExit(deposit1Slot, coin.depositBlockNum)
+  t.equal(await bob.receiveAndWatchCoinAsync(deposit1Slot), true, 'Coin history verified')
 
   // Eve sends this same plasma coin to Alice
   await eve.transferAndVerifyAsync(deposit1Slot, alice.ethAddress, 6)
@@ -74,7 +74,6 @@ export async function runChallengeBetweenDemo(t: test.Test) {
   await sleep(2000)
 
   await bob.exitAsync(deposit1Slot)
-  bob.stopWatching(deposit1Slot)
 
   // Jump forward in time by 8 days
   await increaseTime(web3, 8 * 24 * 3600)

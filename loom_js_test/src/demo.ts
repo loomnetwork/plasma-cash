@@ -16,6 +16,8 @@ export async function runDemo(t: test.Test) {
   const dappchainEndpoint = 'http://localhost:46658'
   const web3 = new Web3(new Web3.providers.WebsocketProvider(web3Endpoint))
   const { cards } = setupContracts(web3)
+  const cardsAddress = ADDRESSES.token_contract
+  const loomAddress = ADDRESSES.loom_token
 
   const authority = PlasmaUser.createUser(
     web3Endpoint,
@@ -43,25 +45,24 @@ export async function runDemo(t: test.Test) {
   )
 
   await cards.registerAsync(alice.ethAddress)
+
   let balance = await cards.balanceOfAsync(alice.ethAddress)
   t.equal(balance.toNumber(), 5)
-  let currentBlock = await authority.getCurrentBlockAsync()
 
   for (let i = 0; i < ALICE_DEPOSITED_COINS; i++) {
-    await cards.depositToPlasmaAsync({ tokenId: COINS[i], from: alice.ethAddress })
-    currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
+    await alice.depositERC721Async(new BN(COINS[i]), cardsAddress)
   }
 
   // Get deposit events for all
-  const deposits = await authority.allDeposits()
+  const deposits = await alice.deposits()
   t.equal(deposits.length, ALICE_DEPOSITED_COINS, 'All deposit events accounted for')
 
-  // for (let i = 0; i < deposits.length; i++) {
-  //   const deposit = deposits[i]
-  //   t.equal(deposit.blockNumber.toNumber(), blk.toNumber() + i + 1, `Deposit ${i + 1} block number is correct`)
-  //   t.equal(deposit.denomination.toNumber(), 1, `Deposit ${i + 1} denomination is correct`)
-  //   t.equal(deposit.from, alice.ethAddress, `Deposit ${i + 1} sender is correct`)
-  // }
+  for (let i = 0; i < deposits.length; i++) {
+    const deposit = deposits[i]
+    t.equal(deposit.depositBlockNum.toNumber(), i + 1, `Deposit ${i + 1} block number is correct`)
+    t.equal(deposit.denomination.toNumber(), 1, `Deposit ${i + 1} denomination is correct`)
+    t.equal(deposit.owner, alice.ethAddress, `Deposit ${i + 1} sender is correct`)
+  }
 
   balance = await cards.balanceOfAsync(alice.ethAddress)
   t.equal(
@@ -76,6 +77,9 @@ export async function runDemo(t: test.Test) {
     'plasma contract should have 3 tokens in cards contract'
   )
 
+  await authority.depositERC20Async(new BN(1000), loomAddress)
+  await authority.depositETHAsync(new BN(1000))
+
   const coins = await alice.getUserCoinsAsync()
   t.ok(coins[0].slot.eq(deposits[0].slot), 'got correct deposit coins 1')
   t.ok(coins[1].slot.eq(deposits[1].slot), 'got correct deposit coins 2')
@@ -86,22 +90,17 @@ export async function runDemo(t: test.Test) {
   const deposit2 = deposits[1]
   const deposit3 = deposits[2]
 
+  let currentBlock = await authority.getCurrentBlockAsync()
   // Alice -> Bob
   await alice.transferAndVerifyAsync(deposit3.slot, bob.ethAddress, 6)
   // Alice -> Charlie
   await alice.transferAndVerifyAsync(deposit2.slot, charlie.ethAddress, 6)
   currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
-  await alice.refreshAsync()
-
 
   let aliceCoins = await alice.getUserCoinsAsync()
   t.ok(aliceCoins[0].slot.eq(deposits[0].slot), 'Alice has correct coin')
-  t.equal(await charlie.receiveCoinAsync(deposit2.slot), true, 'charlie received coin')
-  t.equal(await bob.receiveCoinAsync(deposit3.slot), true, 'bob received coin')
-
-  // Multiple refreshes don't break it
-  await bob.refreshAsync()
-  await charlie.refreshAsync()
+  t.equal(await charlie.receiveAndWatchCoinAsync(deposit2.slot), true, 'charlie received coin')
+  t.equal(await bob.receiveAndWatchCoinAsync(deposit3.slot), true, 'bob received coin')
 
   // The legit operator will allow access to these variables as usual. The non-legit operator won't and as a result `getUserCoinsAsync` is empty
   if (bob.contractName !== 'hostileoperator') {
@@ -111,22 +110,14 @@ export async function runDemo(t: test.Test) {
     t.ok(charlieCoins[0].slot.eq(deposit2.slot), 'Charlie has correct coin')
   }
 
-  await bob.refreshAsync()
-  await bob.refreshAsync()
-
   // // Bob -> Charlie
   await bob.transferAndVerifyAsync(deposit3.slot, charlie.ethAddress, 6)
   currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
 
-  await charlie.refreshAsync()
-  await charlie.refreshAsync()
-
   const coin = await charlie.getPlasmaCoinAsync(deposit3.slot)
-  t.equal(await charlie.receiveCoinAsync(deposit3.slot), true, 'Coin history verified')
-  charlie.watchExit(deposit3.slot, coin.depositBlockNum)
+  t.equal(await charlie.receiveAndWatchCoinAsync(deposit3.slot), true, 'Coin history verified')
 
   await charlie.exitAsync(deposit3.slot)
-  charlie.stopWatching(deposit3.slot)
 
   // Jump forward in time by 8 days
   await increaseTime(web3, 8 * 24 * 3600)

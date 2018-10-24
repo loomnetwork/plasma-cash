@@ -26,7 +26,7 @@
   "dependencies": {
     "bn.js": "^4.11.8",
     "ethereumjs-util": "^5.2.0",
-    "loom-js": "^1.28.1",
+    "loom-js": "^1.29.1",
     "rlp": "^2.1.0",
     "web3": "^1.0.0-beta.34"
   },

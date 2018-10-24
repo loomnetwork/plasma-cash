@@ -11,6 +11,7 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
   const dappchainEndpoint = 'http://localhost:46658'
   const web3 = new Web3(new Web3.providers.WebsocketProvider(web3Endpoint))
   const { cards } = setupContracts(web3)
+  const cardsAddress = ADDRESSES.token_contract
 
   const authority = PlasmaUser.createUser(
     web3Endpoint,
@@ -38,9 +39,7 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
 
   const startBlockNum = await web3.eth.getBlockNumber()
   // Trudy deposits a coin
-  let currentBlock = await authority.getCurrentBlockAsync()
-  await cards.depositToPlasmaAsync({ tokenId: 21, from: trudy.ethAddress })
-  currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
+  await trudy.depositERC721Async(new BN(21), cardsAddress)
 
   const deposits = await trudy.deposits()
   t.equal(deposits.length, 1, 'All deposit events accounted for')
@@ -49,13 +48,12 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
 
   // Trudy sends her coin to Dan
   const coin = await trudy.getPlasmaCoinAsync(deposit1Slot)
+  let currentBlock = await authority.getCurrentBlockAsync()
   await trudy.transferAndVerifyAsync(deposit1Slot, dan.ethAddress, 6)
   currentBlock = await pollForBlockChange(authority, currentBlock, 20, 2000)
 
-
   // Dan exits the coin received by Trudy
   await dan.exitAsync(deposit1Slot)
-  dan.watchChallenge(deposit1Slot, coin.depositBlockNum)
 
   // Trudy tries to challengeBefore Dan's exit
   await trudy.challengeBeforeAsync({
@@ -69,9 +67,6 @@ export async function runRespondChallengeBeforeDemo(t: test.Test) {
   await increaseTime(web3, 8 * 24 * 3600)
 
   await authority.finalizeExitsAsync()
-  // Now that the exit has been finalized, stop watching challenges
-  dan.stopWatching(deposit1Slot)
-
   await dan.withdrawAsync(deposit1Slot)
 
   const danBalanceBefore = await getEthBalanceAtAddress(web3, dan.ethAddress)
