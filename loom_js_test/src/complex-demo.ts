@@ -178,8 +178,9 @@ export async function complexDemo(t: test.Test) {
   await fred.depositETHAsync(new BN(10000))
   await sleep(3000)
   t.equal((await fred.getUserCoinsAsync()).length, 6, 'Fred owns 6 coins')
+
   currentBlock = await greg.getCurrentBlockAsync()
-  await greg.transferAndVerifyAsync(coin4, harry.ethAddress)
+  greg.transferAndVerifyAsync(coin4, harry.ethAddress)
   currentBlock = await pollForBlockChange(greg, currentBlock, 20, 2000)
   await fred.depositETHAsync(new BN(10000))
   await sleep(3000)
