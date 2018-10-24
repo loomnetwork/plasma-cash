@@ -67,12 +67,12 @@ export async function complexDemo(t: test.Test) {
 
   // They both try to exit and defraud each other
   await fred.exitAsync(coin1)
-  await sleep(1000)
+  await sleep(5000)
   // Add a sleep in between given that Greg will challenge and we'll get a nonce-too-low error if we
   await greg.exitAsync(coin2)
 
   // Wait a bit until the challenges are complete
-  await sleep(3000)
+  await sleep(5000)
 
   // Greg owns coin 1,4. Need to sort slot values since
   let slots = (await greg.getUserCoinsAsync()).map(c => c.slot).sort()
@@ -98,12 +98,11 @@ export async function complexDemo(t: test.Test) {
   await harry.watchBlocks()
 
   // Previously, coin1 went from DEPOSITED -> EXITING and now is back to DEPOSITED. This should be reflected on the dappchain state as well. Build521 does not reset a coin to DEPOSITED after it is in EXITING and is challenged.
+  currentBlock = await fred.getCurrentBlockAsync()
   greg.transferAndVerifyAsync(coin1, harry.ethAddress).then(() => {
     greg.transferAndVerifyAsync(coin4, harry.ethAddress)
   })
   fred.transferAndVerifyAsync(coin3, harry.ethAddress)
-
-  // BUG: PR137 build gets stuck here, a new block never gets submitted. Gets stuck submitting some exit event.
   currentBlock = await pollForBlockChange(fred, currentBlock, 20, 2000)
 
   // Harry owns coin 1,3,4
@@ -163,32 +162,30 @@ export async function complexDemo(t: test.Test) {
   t.equal((await fred.getUserCoinsAsync()).length, 2, 'Fred still owns 2 coins')
   // spam a bit
   await fred.depositETHAsync(new BN(10000))
-  await sleep(1000)
+  await sleep(3000)
   t.equal((await fred.getUserCoinsAsync()).length, 3, 'Fred owns 3 coins')
   currentBlock = await harry.getCurrentBlockAsync()
   await harry.transferAndVerifyAsync(coin4, greg.ethAddress)
   currentBlock = await pollForBlockChange(harry, currentBlock, 20, 2000)
   await fred.depositETHAsync(new BN(10000))
-  await sleep(1000)
+  await sleep(3000)
   t.equal((await fred.getUserCoinsAsync()).length, 4, 'Fred owns 4 coins')
   await fred.depositETHAsync(new BN(10000))
-  await sleep(1000)
+  await sleep(3000)
   t.equal((await fred.getUserCoinsAsync()).length, 5, 'Fred owns 5 coins')
-
-  // BUG AFTER THIS: Internal error not found :/ This happens because a client tries to fetch a transaction which is not found in a block. However, the test still passes.
 
   // spam a bit
   await fred.depositETHAsync(new BN(10000))
-  await sleep(1000)
+  await sleep(3000)
   t.equal((await fred.getUserCoinsAsync()).length, 6, 'Fred owns 6 coins')
   currentBlock = await greg.getCurrentBlockAsync()
   await greg.transferAndVerifyAsync(coin4, harry.ethAddress)
   currentBlock = await pollForBlockChange(greg, currentBlock, 20, 2000)
   await fred.depositETHAsync(new BN(10000))
-  await sleep(1000)
+  await sleep(3000)
   t.equal((await fred.getUserCoinsAsync()).length, 7, 'Fred owns 7 coins')
   await fred.depositETHAsync(new BN(10000))
-  await sleep(1000)
+  await sleep(3000)
   t.equal((await fred.getUserCoinsAsync()).length, 8, 'Fred owns 8 coins')
 
   t.equal((await harry.getUserCoinsAsync()).length, 3, 'Harry still owns 3 coins')
@@ -196,15 +193,14 @@ export async function complexDemo(t: test.Test) {
   await harry.exitAsync(coin1)
   await harry.exitAsync(coin3)
 
-  // Wait until the dappchain oracle gets the event and transitions the coin to EXITING
-  await sleep(3000)
+  await sleep(5000)
   t.equal((await fred.getUserCoinsAsync()).length, 8, 'Fred still owns 8 coins')
 
   await fred.exitAsync(coin2)
   await fred.exitAsync(coin5)
   t.equal((await fred.getUserCoinsAsync()).length, 8, 'Fred still owns 8 coins')
 
-  await sleep(2000)
+  await sleep(5000)
   t.equal(
     (await fred.getPlasmaCoinAsync(coin2)).state,
     1,
@@ -279,7 +275,7 @@ export async function complexDemo(t: test.Test) {
   t.equal((await harry.getPlasmaCoinAsync(coin4)).state, 0, 'Harry succesfully withdrew coin 4')
   t.equal((await harry.getPlasmaCoinAsync(coin1)).state, 0, 'Harry succesfully withdrew coin 1')
 
-  await sleep(8000)
+  await sleep(10000)
 
   // Check that the withdraw oracle worked
   t.equal((await fred.getUserCoinsAsync()).length, 6, 'Withdraw oracle for fred OK')
