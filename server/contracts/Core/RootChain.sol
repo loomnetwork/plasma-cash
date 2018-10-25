@@ -644,7 +644,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
     }
 
     /// @param slot The slot of the coin being challenged
-    /// @param owner The user claimed to be the true ower of the coin
+    /// @param owner The user claimed to be the true owner of the coin
     function setChallenged(uint64 slot, address owner, uint256 challengingBlockNumber, bytes32 txHash) private {
         // Require that the challenge is in the first half of the challenge window
         require(block.timestamp <= coins[slot].exit.createdAt + CHALLENGE_WINDOW);
