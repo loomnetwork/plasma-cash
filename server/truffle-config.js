@@ -50,22 +50,26 @@ module.exports = {
       network_id: '*',
       host: 'localhost',
       port: 8545,
+      skipDryRun: true
     },
     ropsten: {
       network_id: 3,
       provider: ropstenProvider,
       gas: 4700036,
+      skipDryRun: true
     },
     kovan: {
       network_id: 42,
       provider: kovanProvider,
       gas: 6.9e6,
+      skipDryRun: true
     },
     rinkeby: {
       network_id: 4,
       provider: rinkebyProvider,
       gas: 6.9e6,
-      gasPrice: 15000000001
+      gasPrice: 15000000001,
+      skipDryRun: true
     },
     mainnet: {
       network_id: 1,
