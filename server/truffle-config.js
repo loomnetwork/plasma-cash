@@ -1,12 +1,26 @@
 const HDWalletProvider = require('truffle-hdwallet-provider')
 const PrivateKeyProvider = require('truffle-privatekey-provider')
+const fs = require("fs")
+
 require('babel-register');
 require('babel-polyfill');
 
 const mnemonic = 'stumble story behind hurt patient ball whisper art swift tongue ice alien';
 
+let mainnetMnemonic = '';
+let infuraKey = process.env.INFURA_KEY; //TODO put into env var before merge
 
-let ropstenProvider, kovanProvider, rinkebyProvider = {}
+let filename = process.env.SECRET_FILE
+if (filename == "") {
+  filename = "secrets.json"
+}
+if(fs.existsSync(filename)) {
+  secrets = JSON.parse(fs.readFileSync(filename, "utf8"))
+  mainnetMnemonic = secrets.mnemonic
+  console.log("Found mainnet mnemonic")
+} 
+
+let ropstenProvider, kovanProvider, rinkebyProvider, mainnetProvider = {}
 
 if (process.env.LIVE_NETWORKS) {
   ropstenProvider = new HDWalletProvider(mnemonic, 'https://ropsten.infura.io/')
@@ -53,6 +67,15 @@ module.exports = {
       gas: 6.9e6,
       gasPrice: 15000000001
     },
+    mainnet: {
+      network_id: 1,
+      provider:  function() {
+        return new HDWalletProvider(mainnetMnemonic, 'https://mainnet.infura.io/' + infuraKey)
+      },
+      gas: 6.9e6,
+      gasPrice: 15000000001,
+      skipDryRun: true
+    },    
     coverage: {
       host: "localhost",
       network_id: "*",
