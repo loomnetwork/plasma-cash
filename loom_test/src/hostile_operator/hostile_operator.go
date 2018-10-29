@@ -46,6 +46,8 @@ type (
 	CoinResetRequest    = pctypes.PlasmaCashCoinResetRequest
 	ExitCoinRequest     = pctypes.PlasmaCashExitCoinRequest
 	WithdrawCoinRequest = pctypes.PlasmaCashWithdrawCoinRequest
+
+	GetPendingTxsRequest = pctypes.GetPendingTxsRequest
 )
 
 // HostileOperator is a DAppChain Go Contract that handles Plasma Cash txs in a way that allows
@@ -106,6 +108,16 @@ func round(num, near int64) int64 {
 		return num + near
 	}
 	return ((num + (near - 1)) / near) * near
+}
+
+func (c *HostileOperator) GetPendingTxs(ctx contract.StaticContext, req *GetPendingTxsRequest) (*Pending, error) {
+	pending := &Pending{}
+	err := ctx.Get(pendingTXsKey, pending)
+	if err != nil {
+		return nil, err
+	}
+
+	return pending, nil
 }
 
 func (c *HostileOperator) SubmitBlockToMainnet(ctx contract.Context, req *SubmitBlockToMainnetRequest) (*SubmitBlockToMainnetResponse, error) {
