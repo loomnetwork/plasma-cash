@@ -63,7 +63,7 @@ contract("Plasma ERC721 - Multiple Deposits in various blocks", async function(a
             let UTXO = {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()};
             let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, alice, bob);
             let txs = [alice_to_bob.leaf];
-            let tree_1000 = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_1000 = await txlib.submitTransactions(authority, plasma, 1000, txs);
 
             // Bob deposits Coin 7, which generates a new UTXO in the Plasma chain.
             await cards.depositToPlasma(7, {from: bob});
@@ -76,7 +76,7 @@ contract("Plasma ERC721 - Multiple Deposits in various blocks", async function(a
 
             let bob_to_alice = txlib.createUTXO(slot, block, bob, alice);
             txs = [bob_to_alice.leaf];
-            let tree_2000 = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_2000 = await txlib.submitTransactions(authority, plasma, 2000, txs);
 
             // Bob exits his coin as usual, referencing block `UTXO.block` and 1000
             let sig = alice_to_bob.sig;

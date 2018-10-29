@@ -232,14 +232,13 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
 
     /// @dev called by a Validator to append a Plasma block to the Plasma chain
     /// @param root The transaction root hash of the Plasma block being added
-    function submitBlock(bytes32 root)
+    function submitBlock(uint256 blockNumber, bytes32 root)
         public
         isValidator
     {
         // rounding to next whole `childBlockInterval`
-        currentBlock = currentBlock.add(childBlockInterval)
-            .div(childBlockInterval)
-            .mul(childBlockInterval);
+        require(blockNumber >= currentBlock);
+        currentBlock = blockNumber;
 
         childChain[currentBlock] = ChildBlock({
             root: root,

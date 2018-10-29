@@ -131,7 +131,7 @@ contract("Plasma Cash - All In One", async function(accounts) {
                 leaves.push(tx.leaf)
                 txs.push(tx)
             }
-            let tree_1000 = await txlib.submitTransactions(authority, plasma, leaves);
+            let tree_1000 = await txlib.submitTransactions(authority, plasma, 1000, leaves);
 
             let exitingBlock = 1000;
             for (let i in UTXO) {
@@ -183,7 +183,7 @@ contract("Plasma Cash - All In One", async function(accounts) {
                 leaves.push(tx.leaf)
                 prev_txs.push(tx)
             }
-            let tree_1000 = await txlib.submitTransactions(authority, plasma, leaves);
+            let tree_1000 = await txlib.submitTransactions(authority, plasma, 1000, leaves);
 
             prevBlock = 1000;
             leaves = [];
@@ -194,7 +194,7 @@ contract("Plasma Cash - All In One", async function(accounts) {
                 leaves.push(tx.leaf)
                 txs.push(tx)
             }
-            let tree_2000 = await txlib.submitTransactions(authority, plasma, leaves);
+            let tree_2000 = await txlib.submitTransactions(authority, plasma, 2000, leaves);
 
 
             for (let i in UTXO) {
