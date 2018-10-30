@@ -14,7 +14,7 @@ import (
 func main() {
 
 	maxIteration := 30
-	sleepPerIteration := 500 * time.Millisecond
+	sleepPerIteration := 2000 * time.Millisecond
 
 	client.InitClients("http://localhost:8545")
 	client.InitTokenClient("http://localhost:8545")

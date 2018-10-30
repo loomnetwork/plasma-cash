@@ -167,7 +167,7 @@ func (d *RootChainService) WithdrawBonds() error {
 }
 
 func (d *RootChainService) SubmitBlock(blockNum *big.Int, merkleRoot [32]byte) error {
-	_, err := d.plasmaContract.SubmitBlock(d.transactOpts, merkleRoot)
+	_, err := d.plasmaContract.SubmitBlock(d.transactOpts, blockNum, merkleRoot)
 	return err
 }
 

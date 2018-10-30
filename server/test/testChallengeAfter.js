@@ -151,14 +151,14 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
             let UTXO = {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()};
             let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, alice, bob);
             let txs = [alice_to_bob.leaf];
-            let tree_1000 = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_1000 = await txlib.submitTransactions(authority, plasma, 1000, txs);
 
             // Nevertheless, Charlie pretends he received the coin, and by
             // colluding with the chain operator he is able to include his
             // invalid transaction in a block.
             let charlie_to_dylan = txlib.createUTXO(UTXO.slot, 1000, charlie, dylan);
             txs = [charlie_to_dylan.leaf]
-            let invalid_tree = await txlib.submitTransactions(authority, plasma, txs);
+            let invalid_tree = await txlib.submitTransactions(authority, plasma, 2000, txs);
 
             // Bob tries to exit his coin
             let sig = alice_to_bob.sig;
@@ -203,17 +203,17 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
 
             let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, alice, bob);
             let txs = [alice_to_bob.leaf]
-            let tree_bob = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_bob = await txlib.submitTransactions(authority, plasma, 1000, txs);
 
             // Tx to Charlie from Bob referencing Bob's UTXO at block 1000
             let bob_to_charlie = txlib.createUTXO(UTXO.slot, 1000, bob, charlie);
             txs = [bob_to_charlie.leaf]
-            let tree_charlie = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_charlie = await txlib.submitTransactions(authority, plasma, 2000, txs);
 
             // Tx to Dylan from Charlie referencing Charlie's UTXO at block 2000
             let charlie_to_dylan = txlib.createUTXO(UTXO.slot, 2000, charlie, dylan);
             txs = [charlie_to_dylan.leaf]
-            let tree_dylan = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_dylan = await txlib.submitTransactions(authority, plasma, 3000, txs);
 
             // Concatenate the 2 signatures
             let sig = bob_to_charlie.sig;
@@ -249,7 +249,7 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
             let alice_to_bob = txlib.createUTXO(UTXO[0].slot, UTXO[0].block, alice, bob);
             let alice_to_charlie = txlib.createUTXO(UTXO[1].slot, UTXO[1].block, alice, charlie);
             let txs = [alice_to_bob.leaf, alice_to_charlie.leaf]
-            let tree = await txlib.submitTransactions(authority, plasma, txs);
+            let tree = await txlib.submitTransactions(authority, plasma, 1000, txs);
 
             let slot = UTXO[0].slot;
             let ret = txlib.createUTXO(slot, 0, alice, alice);
@@ -289,11 +289,11 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
             let alice_to_bob = txlib.createUTXO(UTXO[0].slot, UTXO[0].block, alice, bob);
             let alice_to_charlie = txlib.createUTXO(UTXO[1].slot, UTXO[1].block, alice, charlie);
             let txs = [alice_to_bob.leaf, alice_to_charlie.leaf]
-            let tree1 = await txlib.submitTransactions(authority, plasma, txs);
+            let tree1 = await txlib.submitTransactions(authority, plasma, 1000, txs);
 
             let bob_to_charlie = txlib.createUTXO(UTXO[0].slot, 1000, bob, charlie);
             txs = [bob_to_charlie.leaf];
-            let tree2 = await txlib.submitTransactions(authority, plasma, txs);
+            let tree2 = await txlib.submitTransactions(authority, plasma, 2000, txs);
 
             let slot = UTXO[0].slot;
             let sig = alice_to_bob.sig;

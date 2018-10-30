@@ -62,19 +62,19 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
             let UTXO = {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()};
 
             // The authority submits a block, but there is no transaction from Alice to Bob
-            let tree_bob = await txlib.submitTransactions(authority, plasma);
+            let tree_bob = await txlib.submitTransactions(authority, plasma, 1000);
 
             // Nevertheless, Bob pretends he received the coin, and by
             // colluding with the chain operator he is able to include his
             // invalid transaction in a block.
             let bob_to_charlie = txlib.createUTXO(UTXO.slot, 1000, bob, charlie);
             let txs = [bob_to_charlie.leaf]
-            let tree_charlie = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_charlie = await txlib.submitTransactions(authority, plasma, 2000, txs);
 
             // Charlie having received the coin, gives it to Dylan.
             let charlie_to_dylan = txlib.createUTXO(UTXO.slot, 2000, charlie, dylan);
             txs = [charlie_to_dylan.leaf]
-            let tree_dylan = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_dylan = await txlib.submitTransactions(authority, plasma, 3000, txs);
 
             // Dylan normally should be always checking the coin's history and
             // not accepting the payment if it's invalid like in this case, but
@@ -134,22 +134,22 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
             // Alice gives her coin legitimately to Bob
             let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, alice, bob);
             let txs = [alice_to_bob.leaf]
-            let tree_bob = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_bob = await txlib.submitTransactions(authority, plasma, 1000, txs);
 
             // The authority submits a block, but there is no transaction from Bob to Charlie
-            let tree_charlie = await txlib.submitTransactions(authority, plasma);
+            let tree_charlie = await txlib.submitTransactions(authority, plasma, 2000);
 
             // Nevertheless, Charlie pretends he received the coin, and by
             // colluding with the chain operator he is able to include his
             // invalid transaction in a block.
             let charlie_to_dylan = txlib.createUTXO(UTXO.slot, 2000, charlie, dylan);
             txs = [charlie_to_dylan.leaf]
-            let tree_dylan = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_dylan = await txlib.submitTransactions(authority, plasma, 3000, txs);
 
             // Dylan having received the coin, gives it to Elliot.
             let dylan_to_elliot = txlib.createUTXO(UTXO.slot, 3000, dylan, elliot);
             txs = [dylan_to_elliot.leaf]
-            let tree_elliot = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_elliot = await txlib.submitTransactions(authority, plasma, 4000, txs);
 
             // Elliot normally should be always checking the coin's history and
             // not accepting the payment if it's invalid like in this case, but
@@ -210,27 +210,27 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
             // Alice gives her coin legitimately to Bob
             let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, alice, bob);
             let txs = [alice_to_bob.leaf]
-            let tree_bob = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_bob = await txlib.submitTransactions(authority, plasma, 1000, txs);
 
             // Bob gives his coin legitimately to Charlie
             let bob_to_charlie = txlib.createUTXO(UTXO.slot, UTXO.block, bob, charlie);
             txs = [bob_to_charlie.leaf]
-            let tree_charlie = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_charlie = await txlib.submitTransactions(authority, plasma, 2000, txs);
 
             // The authority submits a block, but there is no transaction from Charlie to Dylan
-            let tree_dylan = await txlib.submitTransactions(authority, plasma);
+            let tree_dylan = await txlib.submitTransactions(authority, plasma, 3000);
 
             // Nevertheless, Dylan pretends he received the coin, and by
             // colluding with the chain operator he is able to include his
             // invalid transaction in a block.
             let dylan_to_elliot = txlib.createUTXO(UTXO.slot, 4000, dylan, elliot);
             txs = [dylan_to_elliot.leaf]
-            let tree_elliot = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_elliot = await txlib.submitTransactions(authority, plasma, 4000, txs);
 
             // Elliot having received the coin, gives it to Fred.
             let elliot_to_fred = txlib.createUTXO(UTXO.slot, 5000, elliot, fred);
             txs = [elliot_to_fred.leaf]
-            let tree_fred = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_fred = await txlib.submitTransactions(authority, plasma, 5000, txs);
 
             // Fred normally should be always checking the coin's history and
             // not accepting the payment if it's invalid like in this case, but
@@ -294,27 +294,27 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
             // alice gives coin to bob
             let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, alice, bob);
             let txs = [alice_to_bob.leaf]
-            let tree_bob = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_bob = await txlib.submitTransactions(authority, plasma, 1000, txs);
 
             // bob gives it back to alice
             let bob_to_alice = txlib.createUTXO(UTXO.slot, 1000, bob, alice);
             txs = [bob_to_alice.leaf]
-            let tree_alice = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_alice = await txlib.submitTransactions(authority, plasma, 2000, txs);
 
             // The authority submits a block, but there is no transaction from Bob to Charlie
-            let tree_charlie = await txlib.submitTransactions(authority, plasma);
+            let tree_charlie = await txlib.submitTransactions(authority, plasma, 3000);
 
             // Nevertheless, Charlie pretends he received the coin, and by
             // colluding with the chain operator he is able to include his
             // invalid transaction in a block.
             let charlie_to_dylan = txlib.createUTXO(UTXO.slot, 2000, charlie, dylan);
             txs = [charlie_to_dylan.leaf]
-            let tree_dylan = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_dylan = await txlib.submitTransactions(authority, plasma, 4000, txs);
 
             // Dylan having received the coin, gives it to Elliot.
             let dylan_to_elliot = txlib.createUTXO(UTXO.slot, 3000, dylan, elliot);
             txs = [dylan_to_elliot.leaf]
-            let tree_elliot = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_elliot = await txlib.submitTransactions(authority, plasma, 5000, txs);
 
             // Elliot normally should be always checking the coin's history and
             // not accepting the payment if it's invalid like in this case, but
@@ -391,19 +391,19 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
 
             let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, alice, bob);
             let txs = [alice_to_bob.leaf]
-            let tree_bob = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_bob = await txlib.submitTransactions(authority, plasma, 1000, txs);
 
             let bob_to_charlie = txlib.createUTXO(UTXO.slot, 1000, bob, charlie);
             txs = [bob_to_charlie.leaf]
-            let tree_charlie = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_charlie = await txlib.submitTransactions(authority, plasma,2000, txs);
 
             let charlie_to_dylan = txlib.createUTXO(UTXO.slot, 2000, charlie, dylan);
             txs = [charlie_to_dylan.leaf]
-            let tree_dylan = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_dylan = await txlib.submitTransactions(authority, plasma, 3000, txs);
 
             let dylan_to_elliot = txlib.createUTXO(UTXO.slot, 3000, dylan, elliot);
             txs = [dylan_to_elliot.leaf]
-            let tree_elliot = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_elliot = await txlib.submitTransactions(authority, plasma, 4000, txs);
 
             // Elliot exits his coin
             let sig = dylan_to_elliot.sig;
@@ -479,29 +479,29 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
                 // Bob/Operator forges a transaction and gives the coin all the way to Elliot
                 // Elliot exits, Bob challenges,
                 // The authority submits a block, but there is no transaction from Alice to Bob
-                let tree_bob = await txlib.submitTransactions(authority, plasma);
+                let tree_bob = await txlib.submitTransactions(authority, plasma, 1000);
 
                 // Nevertheless, Bob pretends he received the coin, and by
                 // colluding with the chain operator he is able to include his
                 // invalid transaction in a block.
                 let bob_to_charlie = txlib.createUTXO(UTXO.slot, 1000, bob, charlie);
                 let txs = [bob_to_charlie.leaf]
-                let tree_charlie = await txlib.submitTransactions(authority, plasma, txs);
+                let tree_charlie = await txlib.submitTransactions(authority, plasma, 2000, txs);
 
                 // Charlie having received the coin, gives it to Dylan.
                 let charlie_to_dylan = txlib.createUTXO(UTXO.slot, 2000, charlie, dylan);
                 txs = [charlie_to_dylan.leaf]
-                let tree_dylan = await txlib.submitTransactions(authority, plasma, txs);
+                let tree_dylan = await txlib.submitTransactions(authority, plasma, 3000, txs);
 
                 // Dylan having received the coin, gives it to Elliot.
                 let dylan_to_elliot = txlib.createUTXO(UTXO.slot, 3000, dylan, elliot);
                 txs = [dylan_to_elliot.leaf]
-                let tree_elliot = await txlib.submitTransactions(authority, plasma, txs);
+                let tree_elliot = await txlib.submitTransactions(authority, plasma, 4000,txs);
                 //
                 // Dylan having received the coin, gives it to Elliot.
                 let elliot_to_fred = txlib.createUTXO(UTXO.slot, 4000, elliot, fred);
                 txs = [elliot_to_fred.leaf]
-                let tree_fred = await txlib.submitTransactions(authority, plasma, txs);
+                let tree_fred = await txlib.submitTransactions(authority, plasma, 5000, txs);
 
                 // Elliot normally should be always checking the coin's history and
                 // not accepting the payment if it's invalid like in this case, but
@@ -604,29 +604,29 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
                 // Bob/Operator forges a transaction and gives the coin all the way to Elliot
                 // Elliot exits, Bob challenges,
                 // The authority submits a block, but there is no transaction from Alice to Bob
-                let tree_bob = await txlib.submitTransactions(authority, plasma);
+                let tree_bob = await txlib.submitTransactions(authority, plasma, 1000);
 
                 // Nevertheless, Bob pretends he received the coin, and by
                 // colluding with the chain operator he is able to include his
                 // invalid transaction in a block.
                 let bob_to_charlie = txlib.createUTXO(UTXO.slot, 1000, bob, charlie);
                 let txs = [bob_to_charlie.leaf]
-                let tree_charlie = await txlib.submitTransactions(authority, plasma, txs);
+                let tree_charlie = await txlib.submitTransactions(authority, plasma, 2000, txs);
 
                 // Charlie having received the coin, gives it to Dylan.
                 let charlie_to_dylan = txlib.createUTXO(UTXO.slot, 2000, charlie, dylan);
                 txs = [charlie_to_dylan.leaf]
-                let tree_dylan = await txlib.submitTransactions(authority, plasma, txs);
+                let tree_dylan = await txlib.submitTransactions(authority, plasma, 3000, txs);
 
                 // Dylan having received the coin, gives it to Elliot.
                 let dylan_to_elliot = txlib.createUTXO(UTXO.slot, 3000, dylan, elliot);
                 txs = [dylan_to_elliot.leaf]
-                let tree_elliot = await txlib.submitTransactions(authority, plasma, txs);
+                let tree_elliot = await txlib.submitTransactions(authority, plasma, 4000, txs);
                 //
                 // Dylan having received the coin, gives it to Elliot.
                 let elliot_to_fred = txlib.createUTXO(UTXO.slot, 4000, elliot, fred);
                 txs = [elliot_to_fred.leaf]
-                let tree_fred = await txlib.submitTransactions(authority, plasma, txs);
+                let tree_fred = await txlib.submitTransactions(authority, plasma, 5000, txs);
 
                 // Elliot normally should be always checking the coin's history and
                 // not accepting the payment if it's invalid like in this case, but
@@ -729,29 +729,29 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
                 // Bob/Operator forges a transaction and gives the coin all the way to Elliot
                 // Elliot exits, Bob challenges,
                 // The authority submits a block, but there is no transaction from Alice to Bob
-                let tree_bob = await txlib.submitTransactions(authority, plasma);
+                let tree_bob = await txlib.submitTransactions(authority, plasma, 1000);
 
                 // Nevertheless, Bob pretends he received the coin, and by
                 // colluding with the chain operator he is able to include his
                 // invalid transaction in a block.
                 let bob_to_charlie = txlib.createUTXO(UTXO.slot, 1000, bob, charlie);
                 let txs = [bob_to_charlie.leaf]
-                let tree_charlie = await txlib.submitTransactions(authority, plasma, txs);
+                let tree_charlie = await txlib.submitTransactions(authority, plasma, 2000, txs);
 
                 // Charlie having received the coin, gives it to Dylan.
                 let charlie_to_dylan = txlib.createUTXO(UTXO.slot, 2000, charlie, dylan);
                 txs = [charlie_to_dylan.leaf]
-                let tree_dylan = await txlib.submitTransactions(authority, plasma, txs);
+                let tree_dylan = await txlib.submitTransactions(authority, plasma, 3000, txs);
 
                 // Dylan having received the coin, gives it to Elliot.
                 let dylan_to_elliot = txlib.createUTXO(UTXO.slot, 3000, dylan, elliot);
                 txs = [dylan_to_elliot.leaf]
-                let tree_elliot = await txlib.submitTransactions(authority, plasma, txs);
+                let tree_elliot = await txlib.submitTransactions(authority, plasma, 4000, txs);
                 //
                 // Dylan having received the coin, gives it to Elliot.
                 let elliot_to_fred = txlib.createUTXO(UTXO.slot, 4000, elliot, fred);
                 txs = [elliot_to_fred.leaf]
-                let tree_fred = await txlib.submitTransactions(authority, plasma, txs);
+                let tree_fred = await txlib.submitTransactions(authority, plasma, 5000, txs);
 
                 // Elliot normally should be always checking the coin's history and
                 // not accepting the payment if it's invalid like in this case, but

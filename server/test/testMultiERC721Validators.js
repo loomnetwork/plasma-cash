@@ -85,12 +85,12 @@ contract("Plasma ERC721 - Multiple Validators and ERC721 tokens", async function
             let alice_to_bob = txlib.createUTXO(UTXO[0].slot, UTXO[0].block, alice, bob);
             let alice_to_bob2 = txlib.createUTXO(UTXO[1].slot, UTXO[1].block, alice, bob);
             let txs = [alice_to_bob.leaf, alice_to_bob2.leaf];
-            let tree_1000 = await txlib.submitTransactions(validator1, plasma, txs);
+            let tree_1000 = await txlib.submitTransactions(validator1, plasma, 1000,txs);
 
             let bob_to_charlie = txlib.createUTXO(UTXO[0].slot, 1000, bob, charlie);
             let bob_to_charlie2 = txlib.createUTXO(UTXO[1].slot, 1000, bob, charlie);
             txs = [bob_to_charlie.leaf, bob_to_charlie2.leaf];
-            let tree_2000 = await txlib.submitTransactions(validator2, plasma, txs);
+            let tree_2000 = await txlib.submitTransactions(validator2, plasma, 2000, txs);
 
             // Charlie now exits both coins.
 

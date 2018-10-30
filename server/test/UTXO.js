@@ -46,14 +46,14 @@ function createUTXO(slot, block, from, to) {
     return {'tx': data, 'sig': sig, 'leaf': leaf};
 };
 
-async function submitTransactions(from, plasma, txs) {
+async function submitTransactions(from, plasma, blockNumber, txs) {
     let tree;
     let leaves = {}
     for (let l in txs) {
         leaves[txs[l].slot] = txs[l].hash;
     }
     tree = new SparseMerkleTree(64, leaves);
-    await plasma.submitBlock(tree.root, {'from': from});
+    await plasma.submitBlock(blockNumber, tree.root, {'from': from});
     return tree;
 }
 

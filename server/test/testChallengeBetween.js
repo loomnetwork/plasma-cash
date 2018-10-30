@@ -131,16 +131,16 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
 
             let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, alice, bob);
             let txs = [ alice_to_bob.leaf ];
-            let tree_bob = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_bob = await txlib.submitTransactions(authority, plasma, 1000, txs);
 
             // Invalid transaction-block which is not signed by Bob, however will be used to challenge
             let bob_to_charlie = txlib.createUTXO(UTXO.slot, 1000, challenger, charlie);
             txs = [ bob_to_charlie.leaf ];
-            let tree_charlie = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_charlie = await txlib.submitTransactions(authority, plasma, 2000, txs);
 
             let bob_to_dylan = txlib.createUTXO(UTXO.slot, 1000, bob, dylan);
             txs = [ bob_to_dylan.leaf ];
-            let tree_dylan = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_dylan = await txlib.submitTransactions(authority, plasma, 3000, txs);
 
             let exiting_tx = bob_to_dylan.tx;
             let sig = bob_to_dylan.sig;
@@ -181,18 +181,18 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
 
             let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, alice, bob);
             let txs = [ alice_to_bob.leaf ];
-            let tree_bob = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_bob = await txlib.submitTransactions(authority, plasma, 1000, txs);
 
             // Tx to Charlie from Bob referencing Bob's UTXO at block 1000
             let bob_to_charlie = txlib.createUTXO(UTXO.slot, 1000, bob, charlie);
             txs = [ bob_to_charlie.leaf ];
-            let tree_charlie = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_charlie = await txlib.submitTransactions(authority, plasma, 2000, txs);
 
             // Tx to Dylan from Bob referencing Charlie's UTXO at block 2000
             // Dylan is an address which is controlled by Bob or colludes by Bob to steal Charlie's coin
             let bob_to_dylan = txlib.createUTXO(UTXO.slot, 1000, bob, dylan);
             txs = [ bob_to_dylan.leaf ];
-            let tree_dylan = await txlib.submitTransactions(authority, plasma, txs);
+            let tree_dylan = await txlib.submitTransactions(authority, plasma, 3000, txs);
 
             // Dylan-Bob now tries to exit the coin.
             let sig = bob_to_dylan.sig;

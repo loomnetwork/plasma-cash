@@ -276,9 +276,15 @@ export async function complexDemo(t: test.Test) {
   t.equal((await harry.getPlasmaCoinAsync(coin4)).state, 0, 'Harry succesfully withdrew coin 4')
   t.equal((await harry.getPlasmaCoinAsync(coin1)).state, 0, 'Harry succesfully withdrew coin 1')
 
-  await sleep(10000)
+  // Wait until oracle operations are done
+  while ((await fred.getUserCoinsAsync()).length != 6) {
+    await sleep(2000)
+  }
 
-  // Check that the withdraw oracle worked
+  while ((await harry.getUserCoinsAsync()).length != 0) {
+    await sleep(2000)
+  }
+
   t.equal((await fred.getUserCoinsAsync()).length, 6, 'Withdraw oracle for fred OK')
   t.equal((await harry.getUserCoinsAsync()).length, 0, 'Withdraw oracle for harry OK')
 

@@ -14,8 +14,8 @@ import (
 
 func main() {
 
-	maxIteration := 20
-	sleepPerIteration := 500 * time.Millisecond
+	maxIteration := 30
+	sleepPerIteration := 2000 * time.Millisecond
 
 	var hostile bool
 	flag.BoolVar(&hostile, "hostile", false, "run the demo with a hostile Plasma Cash operator")

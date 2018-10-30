@@ -36,7 +36,7 @@ type (
 	GetCurrentBlockRequest       = pctypes.GetCurrentBlockRequest
 	PlasmaBookKeeping            = pctypes.PlasmaBookKeeping
 	PlasmaBlock                  = pctypes.PlasmaBlock
-	Pending                      = pctypes.Pending
+	PendingTxs                   = pctypes.PendingTxs
 	Account                      = pctypes.PlasmaCashAccount
 	GetPlasmaTxRequest           = pctypes.GetPlasmaTxRequest
 	GetPlasmaTxResponse          = pctypes.GetPlasmaTxResponse
@@ -46,6 +46,8 @@ type (
 	CoinResetRequest    = pctypes.PlasmaCashCoinResetRequest
 	ExitCoinRequest     = pctypes.PlasmaCashExitCoinRequest
 	WithdrawCoinRequest = pctypes.PlasmaCashWithdrawCoinRequest
+
+	GetPendingTxsRequest = pctypes.GetPendingTxsRequest
 )
 
 // HostileOperator is a DAppChain Go Contract that handles Plasma Cash txs in a way that allows
@@ -108,6 +110,23 @@ func round(num, near int64) int64 {
 	return ((num + (near - 1)) / near) * near
 }
 
+func (c *HostileOperator) GetPendingTxs(ctx contract.StaticContext, req *GetPendingTxsRequest) (*PendingTxs, error) {
+	pending := &PendingTxs{}
+
+	// If this key does not exists, that means contract hasnt executed
+	// any submit block request. We should return empty object in that
+	// case.
+	if !ctx.Has(pendingTXsKey) {
+		return pending, nil
+	}
+
+	if err := ctx.Get(pendingTXsKey, pending); err != nil {
+		return nil, err
+	}
+
+	return pending, nil
+}
+
 func (c *HostileOperator) SubmitBlockToMainnet(ctx contract.Context, req *SubmitBlockToMainnetRequest) (*SubmitBlockToMainnetResponse, error) {
 	pbk := &PlasmaBookKeeping{}
 	ctx.Get(blockHeightKey, pbk)
@@ -116,7 +135,7 @@ func (c *HostileOperator) SubmitBlockToMainnet(ctx contract.Context, req *Submit
 	roundedInt := round(pbk.CurrentHeight.Value.Int64(), 1000)
 	pbk.CurrentHeight.Value = *loom.NewBigUIntFromInt(roundedInt)
 
-	pending := &Pending{}
+	pending := &PendingTxs{}
 	ctx.Get(pendingTXsKey, pending)
 
 	leaves := make(map[uint64][]byte)
@@ -170,7 +189,7 @@ func (c *HostileOperator) SubmitBlockToMainnet(ctx contract.Context, req *Submit
 	ctx.EmitTopics(merkleHash, plasmaMerkleTopic)
 
 	// Clear out old pending transactions
-	err = ctx.Set(pendingTXsKey, &Pending{})
+	err = ctx.Set(pendingTXsKey, &PendingTxs{})
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +198,7 @@ func (c *HostileOperator) SubmitBlockToMainnet(ctx contract.Context, req *Submit
 }
 
 func (c *HostileOperator) PlasmaTxRequest(ctx contract.Context, req *PlasmaTxRequest) error {
-	pending := &Pending{}
+	pending := &PendingTxs{}
 	ctx.Get(pendingTXsKey, pending)
 	for _, v := range pending.Transactions {
 		if v.Slot == req.Plasmatx.Slot {
@@ -197,7 +216,7 @@ func (c *HostileOperator) DepositRequest(ctx contract.Context, req *DepositReque
 	pbk := &PlasmaBookKeeping{}
 	ctx.Get(blockHeightKey, pbk)
 
-	pending := &Pending{}
+	pending := &PendingTxs{}
 	ctx.Get(pendingTXsKey, pending)
 
 	// create a new deposit block for the deposit event
