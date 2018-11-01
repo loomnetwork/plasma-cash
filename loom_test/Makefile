@@ -49,6 +49,7 @@ deps:
 		github.com/loomnetwork/mamamerkle \
 		github.com/miguelmota/go-solidity-sha3 \
                 github.com/gorilla/websocket
+                github.com/phonkee/go-pubsub
 
 clean:
 	go clean
