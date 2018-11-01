@@ -48,7 +48,7 @@ deps:
 		github.com/prometheus/client_golang/prometheus \
 		github.com/loomnetwork/mamamerkle \
 		github.com/miguelmota/go-solidity-sha3 \
-		github.com/gorilla/websocket
+		github.com/gorilla/websocket \
 		github.com/phonkee/go-pubsub
 
 clean:
