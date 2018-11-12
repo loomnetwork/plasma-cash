@@ -112,7 +112,7 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
 
             // Go a litle after the maturity period
             await increaseTimeTo(t0 + MATURITY_PERIOD + e);
-            await plasma.finalizeExits({from: random_guy2});
+            await plasma.finalizeExit(UTXO.slot, {from: random_guy2});
 
             // Dylan shouldn't be able to withdraw the coin.
             assertRevert(plasma.withdraw(UTXO.slot, {from : dylan}));
@@ -188,7 +188,7 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
                 {'from': bob, 'value': web3.toWei(0.1, 'ether')}
             );
             await increaseTimeTo(t0 + MATURITY_PERIOD + e);
-            await plasma.finalizeExits({from: random_guy2});
+            await plasma.finalizeExit(UTXO.slot, {from: random_guy2});
 
             // Elliot shouldn't be able to withdraw the coin.
             assertRevert(plasma.withdraw(UTXO.slot, {from : elliot}));
@@ -270,7 +270,7 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
                 {'from': charlie, 'value': web3.toWei(0.1, 'ether')}
             );
             await increaseTimeTo(t0 + MATURITY_PERIOD + e);
-            await plasma.finalizeExits({from: random_guy2});
+            await plasma.finalizeExit(UTXO.slot, {from: random_guy2});
 
             // Fred shouldn't be able to withdraw the coin.
             assertRevert(plasma.withdraw(UTXO.slot, {from : fred}));
@@ -370,7 +370,7 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
             ));
 
             await increaseTimeTo(t0 + MATURITY_PERIOD + e);
-            await plasma.finalizeExits({from: random_guy2});
+            await plasma.finalizeExit(UTXO.slot, {from: random_guy2});
 
             // Elliot shouldn't be able to withdraw the coin.
             assertRevert(plasma.withdraw(UTXO.slot, {from : elliot}));
@@ -447,7 +447,7 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
             );
 
             await increaseTimeTo(t0 + MATURITY_PERIOD + e);
-            await plasma.finalizeExits({from: random_guy2});
+            await plasma.finalizeExit(UTXO.slot, {from: random_guy2});
             await plasma.withdraw(UTXO.slot, {from : elliot});
 
             assert.equal((await cards.balanceOf.call(alice)).toNumber(), 2);
@@ -567,7 +567,7 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
                 );
 
                 await increaseTimeTo(t0 + MATURITY_PERIOD + e);
-                await plasma.finalizeExits({from: random_guy2});
+                await plasma.finalizeExit(UTXO.slot, {from: random_guy2});
 
                 // Fred shouldn't be able to withdraw the coin.
                 assertRevert(plasma.withdraw(UTXO.slot, {from : fred}));
@@ -690,7 +690,7 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
                 );
 
                 await increaseTimeTo(t0 + MATURITY_PERIOD + e);
-                await plasma.finalizeExits({from: random_guy2});
+                await plasma.finalizeExit(UTXO.slot, {from: random_guy2});
 
                 // Fred withdraws the coin.
                 await plasma.withdraw(UTXO.slot, {from : fred});
@@ -805,7 +805,7 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
                 );
 
                 await increaseTimeTo(t0 + MATURITY_PERIOD + e);
-                await plasma.finalizeExits({from: random_guy2});
+                await plasma.finalizeExit(UTXO.slot, {from: random_guy2});
 
                 // Fred withdraws the coin.
                 assertRevert(plasma.withdraw(UTXO.slot, {from : fred}));

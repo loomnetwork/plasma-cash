@@ -91,7 +91,7 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
             );
             t0 = (await web3.eth.getBlock('latest')).timestamp;
             await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2});
+            await plasma.finalizeExit(UTXO.slot, {from: random_guy2});
 
             // Dylan shouldn't be able to withdraw the coin.
             assertRevert(plasma.withdraw(UTXO.slot, {from : dylan}));
@@ -112,7 +112,7 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
             await bobDoubleSpend(UTXO);
             t0 = (await web3.eth.getBlock('latest')).timestamp;
             await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2});
+            await plasma.finalizeExit(UTXO.slot, {from: random_guy2});
 
             // Dylan successfully stole Charlie's coin since noone challenged
             plasma.withdraw(UTXO.slot, {from : dylan});
@@ -169,7 +169,7 @@ contract("Plasma ERC721 - Double Spend Challenge / `challengeBetween`", async fu
 
             t0 = (await web3.eth.getBlock('latest')).timestamp;
             await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2});
+            await plasma.finalizeExit(UTXO.slot, {from: random_guy2});
             await plasma.withdraw(UTXO.slot, {from: dylan});
             await txlib.withdrawBonds(plasma, dylan, 0.1);
         });

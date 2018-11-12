@@ -83,6 +83,7 @@ contract("Plasma Cash - All In One", async function(accounts) {
                 {'slot': events[1]['args'].slot, 'block': events[1]['args'].blockNumber.toNumber()},
                 {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()},
             ]
+            const slots = UTXO.map(u => u.slot)
 
             let prevBlock = 0;
             for (let i in UTXO) {
@@ -102,10 +103,10 @@ contract("Plasma Cash - All In One", async function(accounts) {
             }
             t0 = (await web3.eth.getBlock('latest')).timestamp;
             await increaseTimeTo(t0 + t1);
-            await plasma.finalizeExits({from: random_guy2 });
+            await plasma.finalizeExits(slots, {from: random_guy2 });
 
             await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2 });
+            await plasma.finalizeExits(slots, {from: random_guy2 });
             for (let i in UTXO) {
                 let aUTXO = UTXO[i];
                 await plasma.withdraw(aUTXO.slot, {from : alice });
@@ -121,6 +122,7 @@ contract("Plasma Cash - All In One", async function(accounts) {
                 {'slot': events[1]['args'].slot, 'block': events[1]['args'].blockNumber.toNumber()},
                 {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()},
             ]
+            const slots = UTXO.map(u => u.slot)
 
             let prevBlock = 0;
             let leaves = [];
@@ -153,11 +155,11 @@ contract("Plasma Cash - All In One", async function(accounts) {
             }
             t0 = (await web3.eth.getBlock('latest')).timestamp;
             await increaseTimeTo(t0 + t1);
-            await plasma.finalizeExits({from: random_guy2 });
+            await plasma.finalizeExits(slots, {from: random_guy2 });
 
 
             await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2 });
+            await plasma.finalizeExits(slots, {from: random_guy2 });
             for (let i in UTXO) {
                 let aUTXO = UTXO[i];
                 await plasma.withdraw(aUTXO.slot, {from : bob });
@@ -173,6 +175,7 @@ contract("Plasma Cash - All In One", async function(accounts) {
                 {'slot': events[1]['args'].slot, 'block': events[1]['args'].blockNumber.toNumber()},
                 {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()},
             ]
+            const slots = UTXO.map(u => u.slot)
 
             let prevBlock = 0;
             let leaves = [];
@@ -216,10 +219,10 @@ contract("Plasma Cash - All In One", async function(accounts) {
 
             t0 = (await web3.eth.getBlock('latest')).timestamp;
             await increaseTimeTo(t0 + t1);
-            await plasma.finalizeExits({from: random_guy2 });
+            await plasma.finalizeExits(slots, {from: random_guy2 });
 
             await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2 });
+            await plasma.finalizeExits(slots, {from: random_guy2 });
             for (let i in UTXO) {
                 let aUTXO = UTXO[i];
                 await plasma.withdraw(aUTXO.slot, {from : charlie });

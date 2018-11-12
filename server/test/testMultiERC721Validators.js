@@ -81,6 +81,7 @@ contract("Plasma ERC721 - Multiple Validators and ERC721 tokens", async function
         it("Alice sends Bob UTXO 2 and 5, Bob sends these coins to Charlie, who then exits them. Charlie received 2 coins in 2 different contracts", async function() {
             let UTXO = [{'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()}, 
                         {'slot': events[5]['args'].slot, 'block': events[5]['args'].blockNumber.toNumber()}];
+            const slots = UTXO.map(u => u.slot)
 
             let alice_to_bob = txlib.createUTXO(UTXO[0].slot, UTXO[0].block, alice, bob);
             let alice_to_bob2 = txlib.createUTXO(UTXO[1].slot, UTXO[1].block, alice, bob);
@@ -127,7 +128,7 @@ contract("Plasma ERC721 - Multiple Validators and ERC721 tokens", async function
             t0 = (await web3.eth.getBlock('latest')).timestamp;
 
             await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy});
+            await plasma.finalizeExits(slots, {from: random_guy});
             await plasma.withdraw(UTXO[0].slot, {from: charlie});
             await plasma.withdraw(UTXO[1].slot, {from: charlie});
 

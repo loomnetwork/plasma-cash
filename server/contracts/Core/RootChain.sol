@@ -789,7 +789,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
     }
 
     function() payable public {
-        require(address(this).balance < MAX_VALUE, "Contract has reached capacity");
+        require(address(this).balance <= MAX_VALUE, "Contract has reached capacity");
         deposit(msg.sender, msg.sender, 0, msg.value, Mode.ETH);
     }
 

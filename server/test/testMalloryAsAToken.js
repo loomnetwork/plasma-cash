@@ -96,7 +96,7 @@ contract("Plasma ERC721 - Multiple Validators and ERC721 tokens", async function
             t0 = await web3.eth.getBlock('latest').timestamp;
 
             await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy});
+            await plasma.finalizeExit(UTXO.slot, {from: random_guy});
 
             // However mallory cannot withdraw the coins since `contractAddress` 
             // of the coin is actually mallory's address and NOT the actual token address

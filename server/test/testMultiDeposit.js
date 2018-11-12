@@ -113,7 +113,7 @@ contract("Plasma ERC721 - Multiple Deposits in various blocks", async function(a
             t0 = (await web3.eth.getBlock('latest')).timestamp;
 
             await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2});
+            await plasma.finalizeExits([UTXO.slot, slot], {from: random_guy2});
             await plasma.withdraw(UTXO.slot, {from: bob});
             await plasma.withdraw(slot, {from: alice});
 
