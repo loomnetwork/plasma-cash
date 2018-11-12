@@ -139,53 +139,31 @@ fi
 
 trap cleanup EXIT
 
-start_chains
-
-# Run first set of Go tests against the built-in Plasma Cash contract
-cd $REPO_ROOT/loom_test
-./plasmacash_tester
-./plasmacash_challenge_after_tester
-
-stop_chains
-# Wait for Ganache & Loom to stop
-sleep 10
-
-# Reset the DAppChain and deploy a hostile/dumb Plasma Cash contract for the Go challenge tests
-init_hostile_dappchain
-start_chains
-
-cd $REPO_ROOT/loom_test
-./plasmacash_tester -hostile
-./plasmacash_challenge_after_tester -hostile
-./plasmacash_challenge_between_tester -hostile
-./plasmacash_challenge_before_tester -hostile
-./plasmacash_respond_challenge_before_tester -hostile
-
-stop_chains
-# Wait for Ganache & Loom to stop
-sleep 10
-
-# Reset the DAppChain again for the JS tests
-init_honest_dappchain
-start_chains
-
-cd $REPO_ROOT/loom_js_test
-mkdir -p db
-rm -rf db/*.json # remove all previously stored db related files
-
-yarn jenkins:test:honest
-
-
-stop_chains
-# Wait for Ganache & Loom to stop
-sleep 10
-
-init_hostile_dappchain
-start_chains
-
-cd $REPO_ROOT/loom_js_test
-rm -rf db/*.json # remove all previously stored db related files
-yarn jenkins:test:hostile
+# start_chains
+# 
+# # Run first set of Go tests against the built-in Plasma Cash contract
+# cd $REPO_ROOT/loom_test
+# ./plasmacash_tester
+# ./plasmacash_challenge_after_tester
+# 
+# stop_chains
+# # Wait for Ganache & Loom to stop
+# sleep 10
+# 
+# # Reset the DAppChain and deploy a hostile/dumb Plasma Cash contract for the Go challenge tests
+# init_hostile_dappchain
+# start_chains
+# 
+# cd $REPO_ROOT/loom_test
+# ./plasmacash_tester -hostile
+# ./plasmacash_challenge_after_tester -hostile
+# ./plasmacash_challenge_between_tester -hostile
+# ./plasmacash_challenge_before_tester -hostile
+# ./plasmacash_respond_challenge_before_tester -hostile
+# 
+# stop_chains
+# # Wait for Ganache & Loom to stop
+# sleep 10
 
 # If the script gets this far then nothing failed and we can wipe out the working dir since we
 # probably wont't need the logs.
