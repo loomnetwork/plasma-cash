@@ -74,7 +74,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
 
     /**
      * Event for logging when an exit was successfully challenged
-     * @param slot The slot of the coin being reset to DEPOSITED
+     * @param slot The slot of the coin being reset to NOT_EXITING
      * @param owner The owner of the coin
      */
     event CoinReset(uint64 indexed slot, address indexed owner);
@@ -185,7 +185,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         uint256 exitBlock;
     }
     enum State {
-        DEPOSITED,
+        NOT_EXITING,
         EXITING,
         EXITED
     }
@@ -280,7 +280,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         coin.denomination = denomination;
         coin.depositBlock = currentBlock;
         coin.owner = from;
-        coin.state = State.DEPOSITED;
+        coin.state = State.NOT_EXITING;
         coin.mode = mode;
 
         childChain[currentBlock] = ChildBlock({
@@ -312,7 +312,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         uint256[2] blocks)
         external
         payable isBonded
-        isState(slot, State.DEPOSITED)
+        isState(slot, State.NOT_EXITING)
     {
         require(msg.sender == exitingTxBytes.getOwner());
         doInclusionChecks(
@@ -419,7 +419,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
             emit FinalizedExit(slot, coin.owner);
         } else {
             // Reset coin state since it was challenged
-            coin.state = State.DEPOSITED;
+            coin.state = State.NOT_EXITING;
             emit CoinReset(slot, coin.owner);
         }
 
@@ -642,7 +642,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
     function applyPenalties(uint64 slot) private {
         // Apply penalties and change state
         slashBond(coins[slot].exit.owner, msg.sender);
-        coins[slot].state = State.DEPOSITED;
+        coins[slot].state = State.NOT_EXITING;
         emit CoinReset(slot, coins[slot].owner);
     }
 
