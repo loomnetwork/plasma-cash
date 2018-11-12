@@ -120,12 +120,21 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
      */
     event Withdrew(address indexed owner, uint64 indexed slot, Mode mode, address contractAddress, uint uid, uint denomination);
 
+    /**
+     * Event to pause deposits in the contract.
+     * Temporarily added while the contract is being battle tested
+     * @param status Boolean value of the contract's status
+     */
+    event Paused(bool status);
+
     using SafeMath for uint256;
     using Transaction for bytes;
     using ECVerify for bytes32;
     using ChallengeLib for ChallengeLib.Challenge[];
 
     uint256 constant BOND_AMOUNT = 0.1 ether;
+    // The contract does not accept more than that amount
+    uint256 constant MAX_VALUE = 10 ether;
     // An exit can be finalized after it has matured,
     // after T2 = T0 + MATURITY_PERIOD
     // An exit can be challenged in the first window
@@ -134,6 +143,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
     // between T1 and T2
     uint256 constant MATURITY_PERIOD = 7 days;
     uint256 constant CHALLENGE_WINDOW = 3 days + 12 hours;
+    bool paused;
 
     /*
      * Modifiers
@@ -270,6 +280,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
     )
         private
     {
+        require(!paused, "Contract is not accepting more deposits!");
         currentBlock = currentBlock.add(1);
         uint64 slot = uint64(bytes8(keccak256(abi.encodePacked(numCoins, msg.sender, from))));
 
@@ -764,7 +775,18 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
 
     /******************** DEPOSIT FUNCTIONS ********************/
 
+    function pause() external isValidator {
+        paused = true;
+        emit Paused(true);
+    }
+
+    function unpause() external isValidator {
+        paused = false;
+        emit Paused(false);
+    }
+
     function() payable public {
+        require(address(this).balance < MAX_VALUE, "Contract has reached capacity");
         deposit(msg.sender, msg.sender, 0, msg.value, Mode.ETH);
     }
 
