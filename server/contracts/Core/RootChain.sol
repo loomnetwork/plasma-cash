@@ -171,20 +171,12 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         _;
     }
 
-    modifier cleanupExit(uint64 slot) {
-        _;
-        delete coins[slot].exit;
-        delete exitSlots[getExitIndex(slot)];
-    }
-
     struct Balance {
         uint256 bonded;
         uint256 withdrawable;
     }
     mapping (address => Balance) public balances;
 
-    // exits
-    uint64[] public exitSlots;
     // Each exit can only be challenged by a single challenger at a time
     struct Exit {
         address prevOwner; // previous owner of coin
@@ -381,9 +373,6 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         uint256[2] blocks)
         private
     {
-        // Push exit to list
-        exitSlots.push(slot);
-
         // Create exit
         Coin storage c = coins[slot];
         c.exit = Exit({
@@ -435,7 +424,6 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         }
 
         delete coins[slot].exit;
-        delete exitSlots[getExitIndex(slot)];
     }
 
     function checkPendingChallenges(uint64 slot) private returns (bool hasChallenges) {
@@ -460,12 +448,27 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
 
     /// @dev Iterates through all of the initiated exits and finalizes those
     ///      which have matured without being successfully challenged
-    function finalizeExits() external {
-        uint256 exitSlotsLength = exitSlots.length;
-        for (uint256 i = 0; i < exitSlotsLength; i++) {
-            finalizeExit(exitSlots[i]);
+    function finalizeExits(uint64[] slots) external {
+        uint256 slotsLength = slots.length;
+        for (uint256 i = 0; i < slotsLength; i++) {
+            finalizeExit(slots[i]);
         }
     }
+
+    function cancelExit(uint64 slot) public {
+        require(coins[slot].exit.owner == msg.sender, "Unauthorized user");
+        delete coins[slot].exit;
+        freeBond(msg.sender);
+    }
+
+    function cancelExits(uint64[] slots) external {
+        uint256 slotsLength = slots.length;
+        for (uint256 i = 0; i < slotsLength; i++) {
+            cancelExit(slots[i]);
+        }
+    }
+
+
 
     /// @dev Withdraw a UTXO that has been exited
     /// @param slot The slot of the coin being withdrawn
@@ -595,7 +598,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         bytes challengingTransaction,
         bytes proof,
         bytes signature)
-        external isState(slot, State.EXITING) cleanupExit(slot)
+        external isState(slot, State.EXITING)
     {
         checkBetween(slot, challengingTransaction, challengingBlockNumber, signature, proof);
         applyPenalties(slot);
@@ -609,7 +612,6 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         bytes signature)
         external
         isState(slot, State.EXITING)
-        cleanupExit(slot)
     {
         checkAfter(slot, challengingTransaction, challengingBlockNumber, signature, proof);
         applyPenalties(slot);
@@ -654,6 +656,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         // Apply penalties and change state
         slashBond(coins[slot].exit.owner, msg.sender);
         coins[slot].state = State.NOT_EXITING;
+        delete coins[slot].exit;
         emit CoinReset(slot, coins[slot].owner);
     }
 
@@ -825,20 +828,6 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
 
     /******************** HELPERS ********************/
 
-    /// @notice If the slot's exit is not found, a large number is returned to
-    ///         ensure the exit array access fails
-    /// @param slot The slot being exited
-    /// @return The index of the slot's exit in the exitSlots array
-    function getExitIndex(uint64 slot) private view returns (uint256) {
-        uint256 len = exitSlots.length;
-        for (uint256 i = 0; i < len; i++) {
-            if (exitSlots[i] == slot)
-                return i;
-        }
-        // a default value to return larger than the possible number of coins
-        return 2**65;
-    }
-
     function checkMembership(
         bytes32 txHash,
         bytes32 root,
@@ -867,9 +856,9 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         return (c.owner, c.challenger, c.txHash, c.challengingBlockNumber);
     }
 
-    function getExit(uint64 slot) external view returns(address, uint256, uint256, State) {
+    function getExit(uint64 slot) external view returns(address, uint256, uint256, State, uint256) {
         Exit memory e = coins[slot].exit;
-        return (e.owner, e.prevBlock, e.exitBlock, coins[slot].state);
+        return (e.owner, e.prevBlock, e.exitBlock, coins[slot].state, e.createdAt);
     }
 
     function getBlockRoot(uint256 blockNumber) public view returns (bytes32 root) {
