@@ -39,199 +39,220 @@ contract("Plasma Cash - All In One", async function(accounts) {
         web3.toWei(5, 'ether')
     ];
 
-    beforeEach(async function() {
+    it('Does not accept more than MAX_VALUE = 10 Ether', async function() {
         vmc = await ValidatorManagerContract.new({from: authority});
         plasma = await RootChain.new(vmc.address, {from: authority});
-        erc20 = await LoomToken.new(plasma.address, {from: authority});
-        erc721 = await CryptoCards.new(plasma.address, {from: authority});
+        await plasma.sendTransaction({from: alice, value: ethers[2], gas: 220000 });
+        await plasma.sendTransaction({from: alice, value: ethers[2], gas: 220000 });
+        await assertRevert(plasma.sendTransaction({from: alice, value: ethers[2], gas: 220000 }))
+        assert.equal((await web3.eth.getBalance(plasma.address)).toNumber(), web3.toWei(10, 'ether'));
+    })
 
-        await vmc.toggleToken(erc20.address, {from: authority});
-        await vmc.toggleToken(erc721.address, {from: authority});
+    it('Does not accept ether when paused', async function() {
+        vmc = await ValidatorManagerContract.new({from: authority});
+        plasma = await RootChain.new(vmc.address, {from: authority});
+        await plasma.sendTransaction({from: alice,  value: web3.toWei(1, 'ether'), gas: 220000 });
+        await plasma.pause({from: authority})
+        await assertRevert(plasma.sendTransaction({from: alice, value: web3.toWei(1, 'ether'), gas: 220000 }))
+        await plasma.unpause({from: authority})
+        await plasma.sendTransaction({from: alice, value: ethers[2], gas: 220000 })
+    })
 
-        await erc20.transfer(alice, 10000 * DECIMALS, {from: authority});
-        await erc721.register({from: alice});
+    describe('Multideposit tests', function() {
+        beforeEach(async function() {
+            vmc = await ValidatorManagerContract.new({from: authority});
+            plasma = await RootChain.new(vmc.address, {from: authority});
+            erc20 = await LoomToken.new(plasma.address, {from: authority});
+            erc721 = await CryptoCards.new(plasma.address, {from: authority});
 
-        for (let i = 0; i < denominations.length - 1; i ++) {
-            await web3.eth.sendTransaction({from: alice, to: plasma.address, value: ethers[i], gas: 220000 });
-            await erc20.depositToPlasma(denominations[i], {from: alice});
-            await erc721.depositToPlasma(coins[i], {from: alice});
-        }
+            await vmc.toggleToken(erc20.address, {from: authority});
+            await vmc.toggleToken(erc721.address, {from: authority});
 
-        // Make the last transfer come from approve/deposit pattern
-        let ind = denominations.length - 1;
-        await web3.eth.sendTransaction({from: alice, to: plasma.address, value: ethers[ind], gas: 220000 });
-        await erc20.approve(plasma.address, denominations[ind], { 'from': alice })
-        await plasma.depositERC20(denominations[ind], erc20.address, { 'from': alice})
+            await erc20.transfer(alice, 10000 * DECIMALS, {from: authority});
+            await erc721.register({from: alice});
 
-        await erc721.approve(plasma.address, coins[ind], { 'from': alice })
-        await plasma.depositERC721(coins[ind], erc721.address, { 'from': alice})
-
-       assert.equal((await erc20.balanceOf.call(alice)).toNumber(), 1000 * DECIMALS);
-       assert.equal((await erc20.balanceOf.call(plasma.address)).toNumber(), 9000 * DECIMALS);
-       assert.equal(await erc721.balanceOf.call(plasma.address), 3);
-       assert.equal(await erc721.balanceOf.call(alice), 2);
-       assert.equal((await web3.eth.getBalance(plasma.address)).toNumber(), web3.toWei(10, 'ether'));
-
-        const depositEvent = plasma.Deposit({}, {fromBlock: 0, toBlock: 'latest'});
-        events = await txlib.Promisify(cb => depositEvent.get(cb));
-    });
-
-    describe('Exit of an ERC20, an ERC721 and an ETH coin', function() {
-		it('Directly after their deposit', async function() {
-			let UTXO = [
-                {'slot': events[0]['args'].slot, 'block': events[0]['args'].blockNumber.toNumber()},
-                {'slot': events[1]['args'].slot, 'block': events[1]['args'].blockNumber.toNumber()},
-                {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()},
-            ]
-            const slots = UTXO.map(u => u.slot)
-
-            let prevBlock = 0;
-            for (let i in UTXO) {
-                let aUTXO = UTXO[i];
-                let ret = txlib.createUTXO(aUTXO.slot, prevBlock, alice, alice);
-                let utxo = ret.tx;
-                let sig = ret.sig;
-
-                await plasma.startExit(
-                    aUTXO.slot,
-                    '0x', utxo,
-                    '0x0', '0x0',
-                    sig,
-                    [prevBlock, aUTXO.block],
-                    {'from': alice, 'value': web3.toWei(0.1, 'ether')}
-                );
-            }
-            t0 = (await web3.eth.getBlock('latest')).timestamp;
-            await increaseTimeTo(t0 + t1);
-            await plasma.finalizeExits(slots, {from: random_guy2 });
-
-            await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits(slots, {from: random_guy2 });
-            for (let i in UTXO) {
-                let aUTXO = UTXO[i];
-                await plasma.withdraw(aUTXO.slot, {from : alice });
+            for (let i = 0; i < denominations.length - 1; i ++) {
+                await web3.eth.sendTransaction({from: alice, to: plasma.address, value: ethers[i], gas: 220000 });
+                await erc20.depositToPlasma(denominations[i], {from: alice});
+                await erc721.depositToPlasma(coins[i], {from: alice});
             }
 
-            // Alice has her coins back.
-            await txlib.withdrawBonds(plasma, alice, 0.3);
+            // Make the last transfer come from approve/deposit pattern
+            let ind = denominations.length - 1;
+            await web3.eth.sendTransaction({from: alice, to: plasma.address, value: ethers[ind], gas: 220000 });
+            await erc20.approve(plasma.address, denominations[ind], { 'from': alice })
+            await plasma.depositERC20(denominations[ind], erc20.address, { 'from': alice})
+
+            await erc721.approve(plasma.address, coins[ind], { 'from': alice })
+            await plasma.depositERC721(coins[ind], erc721.address, { 'from': alice})
+
+            assert.equal((await erc20.balanceOf.call(alice)).toNumber(), 1000 * DECIMALS);
+            assert.equal((await erc20.balanceOf.call(plasma.address)).toNumber(), 9000 * DECIMALS);
+            assert.equal(await erc721.balanceOf.call(plasma.address), 3);
+            assert.equal(await erc721.balanceOf.call(alice), 2);
+            assert.equal((await web3.eth.getBalance(plasma.address)).toNumber(), web3.toWei(10, 'ether'));
+
+            const depositEvent = plasma.Deposit({}, {fromBlock: 0, toBlock: 'latest'});
+            events = await txlib.Promisify(cb => depositEvent.get(cb));
         });
 
-		it('After 1 on chain transaction', async function() {
-			let UTXO = [
-                {'slot': events[0]['args'].slot, 'block': events[0]['args'].blockNumber.toNumber()},
-                {'slot': events[1]['args'].slot, 'block': events[1]['args'].blockNumber.toNumber()},
-                {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()},
-            ]
-            const slots = UTXO.map(u => u.slot)
+        describe('Exit of an ERC20, an ERC721 and an ETH coin', function() {
+            it('Directly after their deposit', async function() {
+                let UTXO = [
+                    {'slot': events[0]['args'].slot, 'block': events[0]['args'].blockNumber.toNumber()},
+                    {'slot': events[1]['args'].slot, 'block': events[1]['args'].blockNumber.toNumber()},
+                    {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()},
+                ]
+                const slots = UTXO.map(u => u.slot)
 
-            let prevBlock = 0;
-            let leaves = [];
-            let txs = [];
-            for (let i in UTXO) {
-                let aUTXO = UTXO[i];
-                let tx = txlib.createUTXO(aUTXO.slot, prevBlock, alice, bob);
-                leaves.push(tx.leaf)
-                txs.push(tx)
-            }
-            let tree_1000 = await txlib.submitTransactions(authority, plasma, 1000, leaves);
+                let prevBlock = 0;
+                for (let i in UTXO) {
+                    let aUTXO = UTXO[i];
+                    let ret = txlib.createUTXO(aUTXO.slot, prevBlock, alice, alice);
+                    let utxo = ret.tx;
+                    let sig = ret.sig;
 
-            let exitingBlock = 1000;
-            for (let i in UTXO) {
-                let aUTXO = UTXO[i];
-                let prev_tx = txlib.createUTXO(aUTXO.slot, 0, alice, alice).tx;
-                let exiting_tx = txs[i];
-                let utxo = exiting_tx.tx;
-                let sig = exiting_tx.sig;
-                let proof = tree_1000.createMerkleProof(aUTXO.slot);
+                    await plasma.startExit(
+                        aUTXO.slot,
+                        '0x', utxo,
+                        '0x0', '0x0',
+                        sig,
+                        [prevBlock, aUTXO.block],
+                        {'from': alice, 'value': web3.toWei(0.1, 'ether')}
+                    );
+                }
+                t0 = (await web3.eth.getBlock('latest')).timestamp;
+                await increaseTimeTo(t0 + t1);
+                await plasma.finalizeExits(slots, {from: random_guy2 });
 
-                await plasma.startExit(
-                    aUTXO.slot,
-                    prev_tx, utxo,
-                    '0x0', proof,
-                    sig,
-                    [aUTXO.block, exitingBlock],
-                    {'from': bob, 'value': web3.toWei(0.1, 'ether')}
-                );
-            }
-            t0 = (await web3.eth.getBlock('latest')).timestamp;
-            await increaseTimeTo(t0 + t1);
-            await plasma.finalizeExits(slots, {from: random_guy2 });
+                await increaseTimeTo(t0 + t1 + t2);
+                await plasma.finalizeExits(slots, {from: random_guy2 });
+                for (let i in UTXO) {
+                    let aUTXO = UTXO[i];
+                    await plasma.withdraw(aUTXO.slot, {from : alice });
+                }
+
+                // Alice has her coins back.
+                await txlib.withdrawBonds(plasma, alice, 0.3);
+            });
+
+            it('After 1 on chain transaction', async function() {
+                let UTXO = [
+                    {'slot': events[0]['args'].slot, 'block': events[0]['args'].blockNumber.toNumber()},
+                    {'slot': events[1]['args'].slot, 'block': events[1]['args'].blockNumber.toNumber()},
+                    {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()},
+                ]
+                const slots = UTXO.map(u => u.slot)
+
+                let prevBlock = 0;
+                let leaves = [];
+                let txs = [];
+                for (let i in UTXO) {
+                    let aUTXO = UTXO[i];
+                    let tx = txlib.createUTXO(aUTXO.slot, prevBlock, alice, bob);
+                    leaves.push(tx.leaf)
+                    txs.push(tx)
+                }
+                let tree_1000 = await txlib.submitTransactions(authority, plasma, 1000, leaves);
+
+                let exitingBlock = 1000;
+                for (let i in UTXO) {
+                    let aUTXO = UTXO[i];
+                    let prev_tx = txlib.createUTXO(aUTXO.slot, 0, alice, alice).tx;
+                    let exiting_tx = txs[i];
+                    let utxo = exiting_tx.tx;
+                    let sig = exiting_tx.sig;
+                    let proof = tree_1000.createMerkleProof(aUTXO.slot);
+
+                    await plasma.startExit(
+                        aUTXO.slot,
+                        prev_tx, utxo,
+                        '0x0', proof,
+                        sig,
+                        [aUTXO.block, exitingBlock],
+                        {'from': bob, 'value': web3.toWei(0.1, 'ether')}
+                    );
+                }
+                t0 = (await web3.eth.getBlock('latest')).timestamp;
+                await increaseTimeTo(t0 + t1);
+                await plasma.finalizeExits(slots, {from: random_guy2 });
 
 
-            await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits(slots, {from: random_guy2 });
-            for (let i in UTXO) {
-                let aUTXO = UTXO[i];
-                await plasma.withdraw(aUTXO.slot, {from : bob });
-            }
+                await increaseTimeTo(t0 + t1 + t2);
+                await plasma.finalizeExits(slots, {from: random_guy2 });
+                for (let i in UTXO) {
+                    let aUTXO = UTXO[i];
+                    await plasma.withdraw(aUTXO.slot, {from : bob });
+                }
 
-            // Alice has her coins back.
-            await txlib.withdrawBonds(plasma, bob, 0.3);
+                // Alice has her coins back.
+                await txlib.withdrawBonds(plasma, bob, 0.3);
+            });
+
+            it('After 2 on chain transaction', async function() {
+                let UTXO = [
+                    {'slot': events[0]['args'].slot, 'block': events[0]['args'].blockNumber.toNumber()},
+                    {'slot': events[1]['args'].slot, 'block': events[1]['args'].blockNumber.toNumber()},
+                    {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()},
+                ]
+                const slots = UTXO.map(u => u.slot)
+
+                let prevBlock = 0;
+                let leaves = [];
+                let prev_txs = [];
+                for (let i in UTXO) {
+                    let aUTXO = UTXO[i];
+                    let tx = txlib.createUTXO(aUTXO.slot, prevBlock, alice, bob);
+                    leaves.push(tx.leaf)
+                    prev_txs.push(tx)
+                }
+                let tree_1000 = await txlib.submitTransactions(authority, plasma, 1000, leaves);
+
+                prevBlock = 1000;
+                leaves = [];
+                let txs = [];
+                for (let i in UTXO) {
+                    let aUTXO = UTXO[i];
+                    let tx = txlib.createUTXO(aUTXO.slot, prevBlock, bob, charlie);
+                    leaves.push(tx.leaf)
+                    txs.push(tx)
+                }
+                let tree_2000 = await txlib.submitTransactions(authority, plasma, 2000, leaves);
+
+
+                for (let i in UTXO) {
+                    let aUTXO = UTXO[i];
+                    let prev_tx = prev_txs[i];
+                    let exiting_tx = txs[i];
+                    let prev_tx_proof = tree_1000.createMerkleProof(aUTXO.slot);
+                    let exiting_tx_proof = tree_2000.createMerkleProof(aUTXO.slot);
+
+                    await plasma.startExit(
+                        aUTXO.slot,
+                        prev_tx.tx, exiting_tx.tx,
+                        prev_tx_proof, exiting_tx_proof,
+                        exiting_tx.sig,
+                        [1000, 2000],
+                        {'from': charlie, 'value': web3.toWei(0.1, 'ether')}
+                    );
+                }
+
+                t0 = (await web3.eth.getBlock('latest')).timestamp;
+                await increaseTimeTo(t0 + t1);
+                await plasma.finalizeExits(slots, {from: random_guy2 });
+
+                await increaseTimeTo(t0 + t1 + t2);
+                await plasma.finalizeExits(slots, {from: random_guy2 });
+                for (let i in UTXO) {
+                    let aUTXO = UTXO[i];
+                    await plasma.withdraw(aUTXO.slot, {from : charlie });
+                }
+
+                // Alice has her coins back.
+                await txlib.withdrawBonds(plasma, charlie, 0.3);
+            });
+
         });
-
-		it('After 2 on chain transaction', async function() {
-			let UTXO = [
-                {'slot': events[0]['args'].slot, 'block': events[0]['args'].blockNumber.toNumber()},
-                {'slot': events[1]['args'].slot, 'block': events[1]['args'].blockNumber.toNumber()},
-                {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()},
-            ]
-            const slots = UTXO.map(u => u.slot)
-
-            let prevBlock = 0;
-            let leaves = [];
-            let prev_txs = [];
-            for (let i in UTXO) {
-                let aUTXO = UTXO[i];
-                let tx = txlib.createUTXO(aUTXO.slot, prevBlock, alice, bob);
-                leaves.push(tx.leaf)
-                prev_txs.push(tx)
-            }
-            let tree_1000 = await txlib.submitTransactions(authority, plasma, 1000, leaves);
-
-            prevBlock = 1000;
-            leaves = [];
-            let txs = [];
-            for (let i in UTXO) {
-                let aUTXO = UTXO[i];
-                let tx = txlib.createUTXO(aUTXO.slot, prevBlock, bob, charlie);
-                leaves.push(tx.leaf)
-                txs.push(tx)
-            }
-            let tree_2000 = await txlib.submitTransactions(authority, plasma, 2000, leaves);
-
-
-            for (let i in UTXO) {
-                let aUTXO = UTXO[i];
-                let prev_tx = prev_txs[i];
-                let exiting_tx = txs[i];
-                let prev_tx_proof = tree_1000.createMerkleProof(aUTXO.slot);
-                let exiting_tx_proof = tree_2000.createMerkleProof(aUTXO.slot);
-
-                await plasma.startExit(
-                    aUTXO.slot,
-                    prev_tx.tx, exiting_tx.tx,
-                    prev_tx_proof, exiting_tx_proof,
-                    exiting_tx.sig,
-                    [1000, 2000],
-                    {'from': charlie, 'value': web3.toWei(0.1, 'ether')}
-                );
-            }
-
-            t0 = (await web3.eth.getBlock('latest')).timestamp;
-            await increaseTimeTo(t0 + t1);
-            await plasma.finalizeExits(slots, {from: random_guy2 });
-
-            await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits(slots, {from: random_guy2 });
-            for (let i in UTXO) {
-                let aUTXO = UTXO[i];
-                await plasma.withdraw(aUTXO.slot, {from : charlie });
-            }
-
-            // Alice has her coins back.
-            await txlib.withdrawBonds(plasma, charlie, 0.3);
-        });
-
     });
 
 });
