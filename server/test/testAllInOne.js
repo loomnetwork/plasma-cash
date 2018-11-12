@@ -96,6 +96,49 @@ contract("Plasma Cash - All In One", async function(accounts) {
             events = await txlib.Promisify(cb => depositEvent.get(cb));
         });
 
+        it('Cancel exits / getExit', async function() {
+            let UTXO = [
+                {'slot': events[0]['args'].slot, 'block': events[0]['args'].blockNumber.toNumber()},
+                {'slot': events[1]['args'].slot, 'block': events[1]['args'].blockNumber.toNumber()},
+            ]
+            const slots = UTXO.map(u => u.slot)
+
+            let prevBlock = 0;
+            for (let i in UTXO) {
+                let aUTXO = UTXO[i];
+                let ret = txlib.createUTXO(aUTXO.slot, prevBlock, alice, alice);
+                let utxo = ret.tx;
+                let sig = ret.sig;
+
+                await plasma.startExit(
+                    aUTXO.slot,
+                    '0x', utxo,
+                    '0x0', '0x0',
+                    sig,
+                    [prevBlock, aUTXO.block],
+                    {'from': alice, 'value': web3.toWei(0.1, 'ether')}
+                );
+            }
+            t0 = (await web3.eth.getBlock('latest')).timestamp;
+            await increaseTimeTo(t0 + t1);
+
+            // Fails to cancel exit from anyone other than the exitor
+            assertRevert(plasma.cancelExits(slots, {from: random_guy2}))
+            await plasma.cancelExits(slots, {from: alice})
+
+            // Nothing should happen
+            await plasma.finalizeExits(slots, {from: random_guy2 });
+
+            // State of both coins should be 0 since their exits got cancelled
+            let coin = await plasma.getPlasmaCoin(slots[0])
+            assert.equal(coin[4].toNumber(), 0, "Coin state must be 0")
+            coin = await plasma.getPlasmaCoin(slots[1])
+            assert.equal(coin[4].toNumber(), 0, "Coin state must be 0")
+
+            // Alice has her coins back.
+            await txlib.withdrawBonds(plasma, alice, 0.2);
+        });
+
         describe('Exit of an ERC20, an ERC721 and an ETH coin', function() {
             it('Directly after their deposit', async function() {
                 let UTXO = [

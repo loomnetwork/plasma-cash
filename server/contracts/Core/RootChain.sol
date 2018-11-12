@@ -458,7 +458,9 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
     function cancelExit(uint64 slot) public {
         require(coins[slot].exit.owner == msg.sender, "Unauthorized user");
         delete coins[slot].exit;
+        coins[slot].state = State.NOT_EXITING;
         freeBond(msg.sender);
+        emit CoinReset(slot, coins[slot].owner);
     }
 
     function cancelExits(uint64[] slots) external {
