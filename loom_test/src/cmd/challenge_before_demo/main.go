@@ -3,6 +3,7 @@ package main
 import (
 	"client"
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"math/big"
@@ -16,19 +17,27 @@ func main() {
 	maxIteration := 30
 	sleepPerIteration := 2000 * time.Millisecond
 
+	var hostile bool
+	flag.BoolVar(&hostile, "hostile", false, "run the demo with a hostile Plasma Cash operator")
+	flag.Parse()
+
+	if hostile {
+		log.Println("Testing with a hostile Plasma Cash operator")
+	}
+
 	client.InitClients("http://localhost:8545")
 	client.InitTokenClient("http://localhost:8545")
 	ganache, err := client.ConnectToGanache("http://localhost:8545")
 	exitIfError(err)
 
-	svc, err := client.NewLoomChildChainService(true, "http://localhost:46658/rpc", "http://localhost:46658/query")
+	testCtx, err := client.SetupTest(hostile, "http://localhost:46658/query", "http://localhost:46658/rpc")
 	exitIfError(err)
 
-	dan := client.NewClient(svc, client.GetRootChain("dan"), client.GetTokenContract("dan"))
-	trudy := client.NewClient(svc, client.GetRootChain("trudy"), client.GetTokenContract("trudy"))
-	mallory := client.NewClient(svc, client.GetRootChain("mallory"), client.GetTokenContract("mallory"))
-	authority := client.NewClient(svc, client.GetRootChain("authority"),
-		client.GetTokenContract("authority"))
+	dan := testCtx.Dan
+	trudy := testCtx.Trudy
+	mallory := testCtx.Mallory
+	authority := testCtx.Authority
+
 	danAccount, err := dan.TokenContract.Account()
 	exitIfError(err)
 	trudyAccount, err := trudy.TokenContract.Account()
