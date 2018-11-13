@@ -161,7 +161,7 @@ func main() {
 	_, err = ganache.IncreaseTime(context.TODO(), 8*24*3600)
 	exitIfError(err)
 
-	err = authority.FinalizeExits()
+	err = authority.FinalizeExit(deposit3.Slot)
 	exitIfError(err)
 
 	// Charlie should now be able to withdraw the utxo which included token 2 to his
