@@ -84,6 +84,7 @@ func parseConfig() (*viper.Viper, error) {
 	cfgDir := filepath.Join(filepath.Dir(filename), "../..")
 
 	v := viper.New()
+
 	v.SetConfigName("plasma-config")
 	v.AddConfigPath(cfgDir)
 
