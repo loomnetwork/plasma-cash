@@ -27,6 +27,12 @@
             }
         },
         {
+			"vm": "plugin",
+			"format": "plugin",
+			"name": "addressmapper",
+			"location": "addressmapper:0.1.0"
+        },
+        {
             "vm": "plugin",
             "format": "plugin",
             "name": "plasmacash",
