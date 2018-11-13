@@ -18,11 +18,5 @@ make demos
 make contracts
 make test
 
-# build the JS e2e tests
-cd $REPO_ROOT/loom_js_test
-yarn install
-yarn build
-yarn copy-contracts
-
 cd $REPO_ROOT
 REPO_ROOT=`pwd` IS_JENKINS_ENV=true bash loom_integration_test.sh

@@ -165,28 +165,6 @@ stop_chains
 # Wait for Ganache & Loom to stop
 sleep 10
 
-# Reset the DAppChain again for the JS tests
-init_honest_dappchain
-start_chains
-
-cd $REPO_ROOT/loom_js_test
-mkdir -p db
-rm -rf db/*.json # remove all previously stored db related files
-
-yarn jenkins:test:honest
-
-
-stop_chains
-# Wait for Ganache & Loom to stop
-sleep 10
-
-init_hostile_dappchain
-start_chains
-
-cd $REPO_ROOT/loom_js_test
-rm -rf db/*.json # remove all previously stored db related files
-yarn jenkins:test:hostile
-
 # If the script gets this far then nothing failed and we can wipe out the working dir since we
 # probably wont't need the logs.
 if [[ $LOOM_DIR ]]; then 
