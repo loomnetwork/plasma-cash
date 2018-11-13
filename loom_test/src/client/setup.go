@@ -3,7 +3,6 @@ package client
 import (
 	"encoding/base64"
 	"io/ioutil"
-	"log"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -15,6 +14,7 @@ import (
 	"github.com/loomnetwork/go-loom/auth"
 	"github.com/loomnetwork/go-loom/client"
 	"github.com/loomnetwork/go-loom/client/plasma_cash"
+	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 
 	loom "github.com/loomnetwork/go-loom"
@@ -53,27 +53,27 @@ func getDAppchainTxSigner(name string) (auth.Signer, error) {
 	return signer, nil
 }
 
-func getTokenContract(cfg *viper.Viper, name string, privKey *ecdsa.PrivateKey) plasma_cash.TokenContract {
+func getTokenContract(cfg *viper.Viper, name string, privKey *ecdsa.PrivateKey) (plasma_cash.TokenContract, error) {
 	tokenAddr := common.HexToAddress(cfg.GetString("token_contract"))
 	tokenContract, err := ethcontract.NewCards(tokenAddr, conn)
 	if err != nil {
-		log.Fatalf("Failed to instantiate a Token contract: %v", err)
+		return nil, errors.Wrapf(err, "Failed to instantiate a Token contract")
 	}
-	return NewTokenContract(name, privKey, tokenContract)
+	return NewTokenContract(name, privKey, tokenContract), nil
 }
 
-func getRootChain(cfg *viper.Viper, name string) plasma_cash.RootChainClient {
+func getRootChain(cfg *viper.Viper, name string) (plasma_cash.RootChainClient, error) {
 	contractAddr := common.HexToAddress(cfg.GetString("root_chain"))
 	privKeyHexStr := cfg.GetString(name)
 	privKey, err := crypto.HexToECDSA(strings.TrimPrefix(privKeyHexStr, "0x"))
 	if err != nil {
-		log.Fatalf("failed to load private key for %s: %v", name, err)
+		return nil, errors.Wrapf(err, "failed to load private key for %s", name)
 	}
 	plasmaContract, err := loom_ethcontract.NewRootChain(contractAddr, conn)
 	if err != nil {
-		log.Fatalf("Failed to instantiate a Token contract: %v", err)
+		return nil, errors.Wrapf(err, "Failed to instantiate a Token contract")
 	}
-	return NewRootChainService(name, privKey, plasmaContract)
+	return NewRootChainService(name, privKey, plasmaContract), nil
 }
 
 // Loads plasma-config.yml or equivalent from the cwd
@@ -126,7 +126,17 @@ func setupClient(cfg *viper.Viper, addressMapper *AddressMapperClient, hostile b
 		return nil, err
 	}
 
-	return NewClient(cfg, chainServiceClient, getRootChain(cfg, entityName), getTokenContract(cfg, entityName, privKey)), nil
+	rootChainClient, err := getRootChain(cfg, entityName)
+	if err != nil {
+		return nil, err
+	}
+
+	tokenContract, err := getTokenContract(cfg, entityName, privKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewClient(cfg, chainServiceClient, rootChainClient, tokenContract), nil
 
 }
 
