@@ -126,7 +126,7 @@ func setupClient(cfg *viper.Viper, addressMapper *AddressMapperClient, hostile b
 		Local:   deriveAddressFromECPubKey(&privKey.PublicKey),
 	}
 
-	err = addressMapper.RegisterAddressMapping(from, to, signer, privKey)
+	err = addressMapper.AddIdentityMapping(from, to, signer, privKey)
 	if err != nil {
 		return nil, err
 	}

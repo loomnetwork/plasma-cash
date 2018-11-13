@@ -14,11 +14,15 @@ import (
 	"github.com/loomnetwork/go-loom/common/evmcompat"
 )
 
+const (
+	AddressMapperContractName = "addressmapper"
+)
+
 type AddressMapperClient struct {
 	contract *client.Contract
 }
 
-func (a *AddressMapperClient) RegisterAddressMapping(from, to loom.Address, dappchainTxSigner auth.Signer, ethKey *ecdsa.PrivateKey) error {
+func (a *AddressMapperClient) AddIdentityMapping(from, to loom.Address, dappchainTxSigner auth.Signer, ethKey *ecdsa.PrivateKey) error {
 	addressMappingSig, err := a.generateAddressMappingSignature(from, to, ethKey)
 	if err != nil {
 		return err
@@ -49,7 +53,7 @@ func (a *AddressMapperClient) generateAddressMappingSignature(from, to loom.Addr
 func NewAddressMapperClient(chainID, writeUri, readUri string) (*AddressMapperClient, error) {
 	rpcClient := client.NewDAppChainRPCClient(chainID, writeUri, readUri)
 
-	contractAddr, err := rpcClient.Resolve("addressmapper")
+	contractAddr, err := rpcClient.Resolve(AddressMapperContractName)
 	if err != nil {
 		return nil, err
 	}
