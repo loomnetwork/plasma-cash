@@ -9,6 +9,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/spf13/viper"
 
 	"github.com/loomnetwork/go-loom/client/plasma_cash"
 	"github.com/loomnetwork/go-loom/client/plasma_cash/eth"
@@ -322,15 +323,15 @@ func (c *Client) GetBlock(blkHeight *big.Int) (plasma_cash.Block, error) {
 	return c.childChain.Block(blkHeight)
 }
 
-func NewClient(childChainServer plasma_cash.ChainServiceClient, rootChain plasma_cash.RootChainClient, tokenContract plasma_cash.TokenContract) *Client {
-	ethPrivKeyHexStr := GetTestAccountHexKey("authority")
+func NewClient(cfg *viper.Viper, childChainServer plasma_cash.ChainServiceClient, rootChain plasma_cash.RootChainClient, tokenContract plasma_cash.TokenContract) *Client {
+	ethPrivKeyHexStr := cfg.GetString("authority")
 	ethPrivKey, err := crypto.HexToECDSA(strings.TrimPrefix(ethPrivKeyHexStr, "0x"))
 	if err != nil {
 		log.Fatalf("failed to load private key: %v", err)
 	}
 	ethCfg := eth.EthPlasmaClientConfig{
 		EthereumURI:      "http://localhost:8545",
-		PlasmaHexAddress: GetContractHexAddress("root_chain"),
+		PlasmaHexAddress: cfg.GetString("root_chain"),
 		PrivateKey:       ethPrivKey,
 		OverrideGas:      true,
 	}
