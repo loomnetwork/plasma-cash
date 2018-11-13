@@ -27,15 +27,13 @@ func main() {
 	ganache, err := client.ConnectToGanache("http://localhost:8545")
 	exitIfError(err)
 
-	svc, err := client.NewLoomChildChainService(hostile, "http://localhost:46658/rpc", "http://localhost:46658/query")
+	testCtx, err := client.SetupTest(hostile, "http://localhost:46658/query", "http://localhost:46658/rpc")
 	exitIfError(err)
 
-	alice := client.NewClient(svc, client.GetRootChain("alice"), client.GetTokenContract("alice"))
-
-	bob := client.NewClient(svc, client.GetRootChain("bob"), client.GetTokenContract("bob"))
-	charlie := client.NewClient(svc, client.GetRootChain("charlie"), client.GetTokenContract("charlie"))
-	authority := client.NewClient(svc, client.GetRootChain("authority"),
-		client.GetTokenContract("authority"))
+	alice := testCtx.Alice
+	bob := testCtx.Bob
+	charlie := testCtx.Charlie
+	authority := testCtx.Authority
 
 	slots := []uint64{}
 	alice.DebugCoinMetaData(slots)
