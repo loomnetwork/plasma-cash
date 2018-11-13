@@ -86,7 +86,13 @@ func parseConfig() (*viper.Viper, error) {
 	v := viper.New()
 	v.SetConfigName("plasma-config")
 	v.AddConfigPath(cfgDir)
-	return v, v.ReadInConfig()
+
+	err := v.ReadInConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	return v, nil
 }
 
 func deriveAddressFromECPubKey(pubKey *ecdsa.PublicKey) loom.LocalAddress {
