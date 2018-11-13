@@ -89,6 +89,11 @@ func parseConfig() (*viper.Viper, error) {
 	return v, v.ReadInConfig()
 }
 
+func deriveAddressFromECPubKey(pubKey *ecdsa.PublicKey) loom.LocalAddress {
+	pubKeyInBinary := elliptic.Marshal(pubKey.Curve, pubKey.X, pubKey.Y)
+	return crypto.Keccak256(pubKeyInBinary[1:])[12:]
+}
+
 func setupClient(cfg *viper.Viper, addressMapper *AddressMapperClient, hostile bool, entityName, readUri, writeUri string) (*Client, error) {
 	signer, err := getDAppchainTxSigner(entityName)
 	if err != nil {
@@ -118,7 +123,7 @@ func setupClient(cfg *viper.Viper, addressMapper *AddressMapperClient, hostile b
 
 	to := loom.Address{
 		ChainID: "eth",
-		Local:   crypto.Keccak256(elliptic.Marshal(privKey.PublicKey.Curve, privKey.PublicKey.X, privKey.PublicKey.Y)[1:])[12:],
+		Local:   deriveAddressFromECPubKey(&privKey.PublicKey),
 	}
 
 	err = addressMapper.RegisterAddressMapping(from, to, signer, privKey)
