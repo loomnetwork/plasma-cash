@@ -254,8 +254,20 @@ func (c *Client) ChallengeAfter(slot uint64, challengingBlockNumber *big.Int) ([
 	return txHash, err
 }
 
-func (c *Client) FinalizeExits() error {
-	return c.RootChain.FinalizeExits()
+func (c *Client) CancelExit(slot uint64) error {
+	return c.RootChain.CancelExit(slot)
+}
+
+func (c *Client) CancelExits(slots []uint64) error {
+	return c.RootChain.CancelExits(slots)
+}
+
+func (c *Client) FinalizeExit(slot uint64) error {
+	return c.RootChain.FinalizeExit(slot)
+}
+
+func (c *Client) FinalizeExits(slots []uint64) error {
+	return c.RootChain.FinalizeExits(slots)
 }
 
 func (c *Client) Withdraw(slot uint64) error {

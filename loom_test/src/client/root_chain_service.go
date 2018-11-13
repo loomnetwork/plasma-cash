@@ -156,8 +156,24 @@ func (d *RootChainService) StartExit(
 	return tx.Hash().Bytes(), nil
 }
 
-func (d *RootChainService) FinalizeExits() error {
-	_, err := d.plasmaContract.FinalizeExits(d.transactOpts)
+func (d *RootChainService) CancelExit(slot uint64) error {
+	_, err := d.plasmaContract.CancelExit(d.transactOpts, slot)
+	return err
+}
+
+func (d *RootChainService) CancelExits(slots []uint64) error {
+	_, err := d.plasmaContract.CancelExits(d.transactOpts, slots)
+	return err
+}
+
+
+func (d *RootChainService) FinalizeExit(slot uint64) error {
+	_, err := d.plasmaContract.FinalizeExit(d.transactOpts, slot)
+	return err
+}
+
+func (d *RootChainService) FinalizeExits(slots []uint64) error {
+	_, err := d.plasmaContract.FinalizeExits(d.transactOpts, slots)
 	return err
 }
 
