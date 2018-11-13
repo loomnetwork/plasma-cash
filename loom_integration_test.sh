@@ -6,7 +6,7 @@
 set -exo pipefail
 
 # Loom build to use for tests when running on Jenkins, this build will be automatically downloaded.
-BUILD_NUMBER=546
+BUILD_NUMBER=573
 
 # These can be toggled via the options below, only useful when running the script locally.
 LOOM_INIT_ONLY=false
@@ -161,31 +161,11 @@ cd $REPO_ROOT/loom_test
 ./plasmacash_challenge_before_tester -hostile
 ./plasmacash_respond_challenge_before_tester -hostile
 
-stop_chains
+# Commented this one out, as we already have trap EXIT to run cleanup, no need to run it here again
+#stop_chains
+
 # Wait for Ganache & Loom to stop
 sleep 10
-
-# Reset the DAppChain again for the JS tests
-init_honest_dappchain
-start_chains
-
-cd $REPO_ROOT/loom_js_test
-mkdir -p db
-rm -rf db/*.json # remove all previously stored db related files
-
-yarn jenkins:test:honest
-
-
-stop_chains
-# Wait for Ganache & Loom to stop
-sleep 10
-
-init_hostile_dappchain
-start_chains
-
-cd $REPO_ROOT/loom_js_test
-rm -rf db/*.json # remove all previously stored db related files
-yarn jenkins:test:hostile
 
 # If the script gets this far then nothing failed and we can wipe out the working dir since we
 # probably wont't need the logs.

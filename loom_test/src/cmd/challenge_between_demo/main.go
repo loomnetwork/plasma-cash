@@ -3,6 +3,7 @@ package main
 import (
 	"client"
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"math/big"
@@ -16,19 +17,27 @@ func main() {
 	maxIteration := 30
 	sleepPerIteration := 2000 * time.Millisecond
 
+	var hostile bool
+	flag.BoolVar(&hostile, "hostile", false, "run the demo with a hostile Plasma Cash operator")
+	flag.Parse()
+
+	if hostile {
+		log.Println("Testing with a hostile Plasma Cash operator")
+	}
+
 	client.InitClients("http://localhost:8545")
 	client.InitTokenClient("http://localhost:8545")
 	ganache, err := client.ConnectToGanache("http://localhost:8545")
 	exitIfError(err)
 
-	svc, err := client.NewLoomChildChainService(true, "http://localhost:46658/rpc", "http://localhost:46658/query")
+	testCtx, err := client.SetupTest(hostile, "http://localhost:46658/query", "http://localhost:46658/rpc")
 	exitIfError(err)
 
-	alice := client.NewClient(svc, client.GetRootChain("alice"), client.GetTokenContract("alice"))
-	bob := client.NewClient(svc, client.GetRootChain("bob"), client.GetTokenContract("bob"))
-	eve := client.NewClient(svc, client.GetRootChain("eve"), client.GetTokenContract("eve"))
-	authority := client.NewClient(svc, client.GetRootChain("authority"),
-		client.GetTokenContract("authority"))
+	alice := testCtx.Alice
+	bob := testCtx.Bob
+	authority := testCtx.Authority
+	eve := testCtx.Eve
+
 	aliceAccount, err := alice.TokenContract.Account()
 	exitIfError(err)
 	bobAccount, err := bob.TokenContract.Account()

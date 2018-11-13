@@ -113,15 +113,11 @@ func round(num, near int64) int64 {
 func (c *HostileOperator) GetPendingTxs(ctx contract.StaticContext, req *GetPendingTxsRequest) (*PendingTxs, error) {
 	pending := &PendingTxs{}
 
-	// If this key does not exists, that means contract hasnt executed
-	// any submit block request. We should return empty object in that
-	// case.
-	if !ctx.Has(pendingTXsKey) {
-		return pending, nil
-	}
-
 	if err := ctx.Get(pendingTXsKey, pending); err != nil {
-		return nil, err
+		if err != contract.ErrNotFound {
+			return nil, err
+		}
+		return pending, nil
 	}
 
 	return pending, nil

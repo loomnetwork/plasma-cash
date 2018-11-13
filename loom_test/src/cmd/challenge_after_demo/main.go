@@ -30,13 +30,14 @@ func main() {
 	ganache, err := client.ConnectToGanache("http://localhost:8545")
 	exitIfError(err)
 
-	svc, err := client.NewLoomChildChainService(hostile, "http://localhost:46658/rpc", "http://localhost:46658/query")
-	exitIfError(err)
+	testCtx, err := client.SetupTest(hostile, "http://localhost:46658/query", "http://localhost:46658/rpc")
+	if err != nil {
+		panic(err)
+	}
 
-	dan := client.NewClient(svc, client.GetRootChain("dan"), client.GetTokenContract("dan"))
-	mallory := client.NewClient(svc, client.GetRootChain("mallory"), client.GetTokenContract("mallory"))
-	authority := client.NewClient(svc, client.GetRootChain("authority"),
-		client.GetTokenContract("authority"))
+	mallory := testCtx.Mallory
+	dan := testCtx.Dan
+	authority := testCtx.Authority
 
 	// Give Mallory 5 tokens
 	mallory.TokenContract.Register()
