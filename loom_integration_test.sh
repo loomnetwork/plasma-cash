@@ -161,7 +161,9 @@ cd $REPO_ROOT/loom_test
 ./plasmacash_challenge_before_tester -hostile
 ./plasmacash_respond_challenge_before_tester -hostile
 
-stop_chains
+# Commented this one out, as we already have trap EXIT to run cleanup, no need to run it here again
+#stop_chains
+
 # Wait for Ganache & Loom to stop
 sleep 10
 
