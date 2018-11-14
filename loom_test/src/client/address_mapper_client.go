@@ -22,6 +22,20 @@ type AddressMapperClient struct {
 	contract *client.Contract
 }
 
+func (a *AddressMapperClient) HasMapping(from, caller loom.Address) (*amtypes.AddressMapperHasMappingResponse, error) {
+	addressMapperResponse := amtypes.AddressMapperHasMappingResponse{}
+
+	_, err := a.contract.StaticCall("HasMapping", &amtypes.AddressMapperHasMappingRequest{
+		From: from.MarshalPB(),
+	}, caller, &addressMapperResponse)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &addressMapperResponse, nil
+}
+
 func (a *AddressMapperClient) AddIdentityMapping(from, to loom.Address, dappchainTxSigner auth.Signer, ethKey *ecdsa.PrivateKey) error {
 	addressMappingSig, err := a.generateAddressMappingSignature(from, to, ethKey)
 	if err != nil {

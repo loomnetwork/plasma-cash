@@ -133,9 +133,16 @@ func setupClient(cfg *viper.Viper, addressMapper *AddressMapperClient, hostile b
 		Local:   deriveAddressFromECPubKey(&privKey.PublicKey),
 	}
 
-	err = addressMapper.AddIdentityMapping(from, to, signer, privKey)
+	hasMappingResponse, err := addressMapper.HasMapping(from, from)
 	if err != nil {
 		return nil, err
+	}
+
+	if !hasMappingResponse.HasMapping {
+		err = addressMapper.AddIdentityMapping(from, to, signer, privKey)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	rootChainClient, err := getRootChain(cfg, entityName)
