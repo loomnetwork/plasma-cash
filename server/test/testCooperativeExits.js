@@ -102,13 +102,13 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
             t0 = (await web3.eth.getBlock('latest')).timestamp;
 
             await increaseTimeTo(t0 + t1);
-            await plasma.finalizeExits({from: random_guy2});
+            await plasma.finalizeExit(UTXO.slot, {from: random_guy2});
             assertRevert(plasma.withdraw(UTXO.slot, {from: alice}));
             assert.equal(await cards.balanceOf.call(alice), 2);
             assert.equal(await cards.balanceOf.call(plasma.address), 3);
 
             await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2});
+            await plasma.finalizeExit(UTXO.slot, {from: random_guy2});
             await plasma.withdraw(UTXO.slot, {from: alice});
             assert.equal(await cards.balanceOf.call(alice), 3);
             assert.equal((await cards.balanceOf.call(plasma.address)).toNumber(), 2);
@@ -147,7 +147,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
 
             // If enough time hasn't passed, neither bob nor alice should be able to withdraw the coin
             await increaseTimeTo(t0 + t1);
-            await plasma.finalizeExits({from: random_guy2});
+            await plasma.finalizeExit(UTXO.slot, {from: random_guy2});
             assertRevert(plasma.withdraw(UTXO.slot, {from: alice}));
             assertRevert(plasma.withdraw(UTXO.slot, {from: bob}));
             assert.equal(await cards.balanceOf.call(alice), 2);
@@ -156,7 +156,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
 
             // After the exit is matured and finalized, bob can withdraw the coin.
             await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2});
+            await plasma.finalizeExit(UTXO.slot, {from: random_guy2});
             assertRevert(plasma.withdraw(UTXO.slot, {from: alice}));
             await plasma.withdraw(UTXO.slot, {from : bob});
             assert.equal((await cards.balanceOf.call(alice)).toNumber(), 2);
@@ -209,7 +209,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
 
             // If enough time hasn't passed, none of bob, alice or charlie should be able to withdraw the coin
             await increaseTimeTo(t0 + t1);
-            await plasma.finalizeExits({from: random_guy2});
+            await plasma.finalizeExit(UTXO.slot, {from: random_guy2});
             assertRevert(plasma.withdraw(UTXO.slot, {from: alice}));
             assertRevert(plasma.withdraw(UTXO.slot, {from: bob}));
             assertRevert(plasma.withdraw(UTXO.slot, {from: charlie}));
@@ -220,7 +220,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
 
             // After the exit is matured and finalized, Charlie can withdraw the coin.
             await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2});
+            await plasma.finalizeExit(UTXO.slot, {from: random_guy2});
             assertRevert(plasma.withdraw(UTXO.slot, {from: alice}));
             assertRevert(plasma.withdraw(UTXO.slot, {from: bob}));
             await plasma.withdraw(UTXO.slot, {from : charlie});
@@ -278,6 +278,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
         it('Alice gives Bob 2 coins who exits both', async function() {
             let UTXO = [{'slot': events[1]['args'].slot, 'block': events[1]['args'].blockNumber.toNumber()},
                         {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()}];
+            const slots = UTXO.map(u => u.slot)
             let alice_to_bob = {};
             let txs = [];
             let tx;
@@ -326,7 +327,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
 
             // If enough time hasn't passed, neither bob nor alice should be able to withdraw the coin
             await increaseTimeTo(t0 + t1);
-            await plasma.finalizeExits({from: random_guy2});
+            await plasma.finalizeExits(slots, {from: random_guy2});
             UTXO.forEach(function(aUTXO) {
                 assertRevert(plasma.withdraw(aUTXO.slot, {from: alice}));
                 assertRevert(plasma.withdraw(aUTXO.slot, {from: bob}));
@@ -338,7 +339,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
 
             // After the exit is matured and finalized, bob can withdraw the coin.
             await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2});
+            await plasma.finalizeExits(slots, {from: random_guy2});
             UTXO.forEach(async function(aUTXO) {
                 assertRevert(plasma.withdraw(aUTXO.slot, {from : alice}));
                 await plasma.withdraw(aUTXO.slot, {from : bob});
@@ -354,6 +355,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
         it('Alice gives Bob 2 coins, he exits 1 and gives another to Charlie who also exits it', async function() {
             let UTXO = [{'slot': events[1]['args'].slot, 'block': events[1]['args'].blockNumber.toNumber()},
                         {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()}];
+            const slots = UTXO.map(u => u.slot)
 
             let alice_to_bob = {};
             let txs = [];
@@ -408,7 +410,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
 
             // After the exit is matured and finalized, bob and charlie can withdraw the coin.
             await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2});
+            await plasma.finalizeExits(slots, {from: random_guy2});
 
             await plasma.withdraw(UTXO[1].slot, {from: bob});
             await plasma.withdraw(UTXO[0].slot, {from: charlie});
@@ -433,6 +435,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
         it('Alice gives Bob 2 coins, who gives both to Charlie who exits both', async function() {
             let UTXO = [{'slot': events[1]['args'].slot, 'block': events[1]['args'].blockNumber.toNumber()},
                         {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()}];
+            const slots = UTXO.map(u => u.slot)
             let alice_to_bob = {};
             let txs = [];
             let tx;
@@ -477,7 +480,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
 
             // After the exit is matured and finalized, Charlie can withdraw the coin.
             await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2});
+            await plasma.finalizeExits(slots, {from: random_guy2});
             UTXO.forEach(async function(aUTXO) {
                 await plasma.withdraw(aUTXO.slot, {from: charlie});
             });
@@ -500,6 +503,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
         it('Alice gives Bob and Charlie 1 coin, they both exit them', async function() {
             let UTXO = [{'slot': events[1]['args'].slot, 'block': events[1]['args'].blockNumber.toNumber()},
                         {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()}];
+            const slots = UTXO.map(u => u.slot)
             let txs = [];
             let alice_to_bob = txlib.createUTXO(UTXO[0].slot, UTXO[0].block, alice, bob);
             let alice_to_charlie = txlib.createUTXO(UTXO[1].slot, UTXO[1].block, alice, charlie);
@@ -539,7 +543,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
             t0 = (await web3.eth.getBlock('latest')).timestamp;
 
             await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2});
+            await plasma.finalizeExits(slots, {from: random_guy2});
 
             await plasma.withdraw(UTXO[0].slot, {from: bob});
             await plasma.withdraw(UTXO[1].slot, {from: charlie});
@@ -565,6 +569,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
         it('Alice gives Bob and Charlie 1 coin, Bob gives Charlie his coin and Charlie exits it', async function() {
             let UTXO = [{'slot': events[1]['args'].slot, 'block': events[1]['args'].blockNumber.toNumber()},
                         {'slot': events[2]['args'].slot, 'block': events[2]['args'].blockNumber.toNumber()}];
+            const slots = UTXO.map(u => u.slot)
             let txs = [];
             let alice_to_bob = txlib.createUTXO(UTXO[0].slot, UTXO[0].block, alice, bob);
             let alice_to_charlie = txlib.createUTXO(UTXO[1].slot, UTXO[1].block, alice, charlie);
@@ -612,7 +617,7 @@ contract("Plasma ERC721 - Cooperative Exits, no challenges", async function(acco
 
             t0 = (await web3.eth.getBlock('latest')).timestamp;
             await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2});
+            await plasma.finalizeExits(slots, {from: random_guy2});
 
             await plasma.withdraw(UTXO[0].slot, {from: charlie});
             await plasma.withdraw(UTXO[1].slot, {from: charlie});

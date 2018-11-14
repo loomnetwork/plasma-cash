@@ -109,7 +109,7 @@ func main() {
 	exitIfError(err)
 
 	fmt.Println("Finalizing exits...")
-	exitIfError(authority.FinalizeExits())
+	exitIfError(authority.FinalizeExit(depositSlot1))
 
 	fmt.Println("Dan attempts to exit...")
 	// Having successfully challenged Trudy's exit Dan should be able to exit the coin
@@ -122,7 +122,7 @@ func main() {
 	_, err = ganache.IncreaseTime(context.TODO(), 8*24*3600)
 	exitIfError(err)
 
-	exitIfError(authority.FinalizeExits())
+	exitIfError(authority.FinalizeExit(depositSlot1))
 
 	exitIfError(dan.Withdraw(depositSlot1))
 

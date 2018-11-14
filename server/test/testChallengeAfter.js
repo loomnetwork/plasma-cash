@@ -81,7 +81,7 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
             t0 = (await web3.eth.getBlock('latest')).timestamp;
 
             await increaseTimeTo( t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2});
+            await plasma.finalizeExit(UTXO.slot, {from: random_guy2});
 
             // The exit was deleted so Charlie is not able to withdraw the coin
             assertRevert(plasma.withdraw(UTXO.slot, {from: charlie}));
@@ -103,7 +103,7 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
             t0 = (await web3.eth.getBlock('latest')).timestamp;
 
             await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2});
+            await plasma.finalizeExit(UTXO.slot, {from: random_guy2});
             await plasma.withdraw(UTXO.slot, {from : dylan});
 
             assert.equal(await cards.balanceOf.call(alice), 2);
@@ -131,7 +131,7 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
 
             t0 = (await web3.eth.getBlock('latest')).timestamp;
             await increaseTimeTo( t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2 });
+            await plasma.finalizeExit(UTXO.slot, {from: random_guy2 });
 
             // Charlie can steal the coin
             plasma.withdraw(UTXO.slot, {from : charlie });
@@ -193,7 +193,7 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
             ));
 
             await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2});
+            await plasma.finalizeExit(UTXO.slot, {from: random_guy2});
             await plasma.withdraw(UTXO.slot, {from : bob});
             await txlib.withdrawBonds(plasma, bob, 0.1);
 
@@ -274,7 +274,7 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
             );
             t0 = (await web3.eth.getBlock('latest')).timestamp;
             await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2});
+            await plasma.finalizeExit(slot, {from: random_guy2});
             assertRevert(plasma.withdraw(slot, {from : alice}));
             assert.equal(await cards.balanceOf.call(alice), 2);
             assert.equal(await cards.balanceOf.call(bob), 0);
@@ -320,8 +320,8 @@ contract("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async f
 
             t0 = (await web3.eth.getBlock('latest')).timestamp;
             await increaseTimeTo(t0 + t1 + t2);
-            await plasma.finalizeExits({from: random_guy2});
-            assertRevert(plasma.withdraw(0, {from : bob}));
+            await plasma.finalizeExit(slot, {from: random_guy2});
+            assertRevert(plasma.withdraw(slot, {from : bob}));
 
             assert.equal(await cards.balanceOf.call(alice), 2);
             assert.equal(await cards.balanceOf.call(bob), 0);

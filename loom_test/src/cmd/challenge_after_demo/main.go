@@ -129,7 +129,7 @@ func main() {
 	_, err = ganache.IncreaseTime(context.TODO(), 8*24*3600)
 	exitIfError(err)
 
-	authority.FinalizeExits()
+	authority.FinalizeExit(depositSlot1)
 
 	dan.Withdraw(depositSlot1)
 

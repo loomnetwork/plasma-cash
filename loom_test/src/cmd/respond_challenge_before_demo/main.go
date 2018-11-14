@@ -110,7 +110,7 @@ func main() {
 	exitIfError(err)
 
 	fmt.Println("Finalizing exits...")
-	exitIfError(authority.FinalizeExits())
+	exitIfError(authority.FinalizeExit(depositSlot1))
 
 	fmt.Println("Dan withdraws his coin...")
 	exitIfError(dan.Withdraw(depositSlot1))

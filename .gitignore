@@ -10,3 +10,12 @@ pip-selfcheck.json
 lib64/
 /src/
 /plasma_cash/src/
+
+loom_test/contracts
+loom_test/*_tester
+
+server/ganache.pid
+server/ganache_run.log
+server/truffle_dev_contracts.log
+server/.node-xmlhttprequest-*
+loom

@@ -115,7 +115,7 @@ func main() {
 	exitIfError(err)
 
 	fmt.Println("Finalizing exits")
-	exitIfError(authority.FinalizeExits())
+	exitIfError(authority.FinalizeExit(deposit1.Slot))
 
 	fmt.Printf("Bob attempts to withdraw slot %v\n", deposit1.Slot)
 	err = bob.Withdraw(deposit1.Slot)
