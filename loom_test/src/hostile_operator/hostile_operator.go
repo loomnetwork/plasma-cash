@@ -71,6 +71,10 @@ var (
 	plasmaMerkleTopic = "pcash_mainnet_merkle"
 )
 
+func eventBatchTallyKey() []byte {
+	return []byte("event_batch_tally")
+}
+
 func coinKey(slot uint64) []byte {
 	var buf bytes.Buffer
 	binary.Write(&buf, binary.BigEndian, slot)
@@ -121,6 +125,109 @@ func (c *HostileOperator) GetPendingTxs(ctx contract.StaticContext, req *GetPend
 	}
 
 	return pending, nil
+}
+
+func (c *HostileOperator) ProcessEventBatch(ctx contract.Context, req *pctypes.PlasmaCashEventBatch) error {
+	eventBatchTally := pctypes.PlasmaCashEventBatchTally{}
+	if err := ctx.Get(eventBatchTallyKey(), &eventBatchTally); err != nil {
+		if err != contract.ErrNotFound {
+			return err
+		}
+	}
+
+	// We have already consumed all the events being offered.
+	if eventBatchTally.LastSeenBlockNumber >= req.EndBlockNumber {
+		return nil
+	}
+
+	var err error
+
+loop:
+	for _, event := range req.Events {
+		switch data := event.Data.(type) {
+		case *pctypes.PlasmaCashEvent_Deposit:
+			depositEvent := data.Deposit
+
+			if isEventAlreadySeen(depositEvent.Meta, &eventBatchTally) {
+				break
+			}
+
+			err = c.DepositRequest(ctx, &pctypes.DepositRequest{
+				Slot:         depositEvent.Slot,
+				DepositBlock: depositEvent.DepositBlock,
+				Denomination: depositEvent.Denomination,
+				From:         depositEvent.From,
+				Contract:     depositEvent.Contract,
+			})
+			if err != nil {
+				break loop
+			}
+			eventBatchTally.LastSeenBlockNumber = depositEvent.Meta.BlockNumber
+			eventBatchTally.LastSeenLogIndex = depositEvent.Meta.LogIndex
+
+		case *pctypes.PlasmaCashEvent_CoinReset:
+			coinResetEvent := data.CoinReset
+
+			if isEventAlreadySeen(coinResetEvent.Meta, &eventBatchTally) {
+				break
+			}
+
+			err = c.CoinReset(ctx, &pctypes.PlasmaCashCoinResetRequest{
+				Owner: coinResetEvent.Owner,
+				Slot:  coinResetEvent.Slot,
+			})
+			if err != nil {
+				break loop
+			}
+
+			eventBatchTally.LastSeenBlockNumber = coinResetEvent.Meta.BlockNumber
+			eventBatchTally.LastSeenLogIndex = coinResetEvent.Meta.LogIndex
+
+		case *pctypes.PlasmaCashEvent_StartedExit:
+			startedExitEvent := data.StartedExit
+
+			if isEventAlreadySeen(startedExitEvent.Meta, &eventBatchTally) {
+				break
+			}
+
+			err = c.ExitCoin(ctx, &pctypes.PlasmaCashExitCoinRequest{
+				Owner: startedExitEvent.Owner,
+				Slot:  startedExitEvent.Slot,
+			})
+			if err != nil {
+				break loop
+			}
+
+			eventBatchTally.LastSeenBlockNumber = startedExitEvent.Meta.BlockNumber
+			eventBatchTally.LastSeenLogIndex = startedExitEvent.Meta.LogIndex
+
+		case *pctypes.PlasmaCashEvent_Withdraw:
+			withdrawEvent := data.Withdraw
+
+			if isEventAlreadySeen(withdrawEvent.Meta, &eventBatchTally) {
+				break
+			}
+
+			err = c.WithdrawCoin(ctx, &pctypes.PlasmaCashWithdrawCoinRequest{
+				Owner: withdrawEvent.Owner,
+				Slot:  withdrawEvent.Slot,
+			})
+			if err != nil {
+				break loop
+			}
+
+			eventBatchTally.LastSeenBlockNumber = withdrawEvent.Meta.BlockNumber
+			eventBatchTally.LastSeenLogIndex = withdrawEvent.Meta.LogIndex
+		}
+	}
+
+	if err != nil {
+		return err
+	}
+
+	err = ctx.Set(eventBatchTallyKey(), &eventBatchTally)
+
+	return err
 }
 
 func (c *HostileOperator) SubmitBlockToMainnet(ctx contract.Context, req *SubmitBlockToMainnetRequest) (*SubmitBlockToMainnetResponse, error) {
@@ -394,6 +501,18 @@ func rlpEncode(pb *PlasmaTx) ([]byte, error) {
 		uint32(pb.Denomination.Value.Int64()),
 		pb.GetNewOwner().Local,
 	})
+}
+
+func isEventAlreadySeen(eventMeta *pctypes.PlasmaCashEventMeta, currentTally *pctypes.PlasmaCashEventBatchTally) bool {
+	if eventMeta.BlockNumber != currentTally.LastSeenBlockNumber {
+		return eventMeta.BlockNumber <= currentTally.LastSeenBlockNumber
+	}
+
+	if eventMeta.LogIndex != currentTally.LastSeenLogIndex {
+		return eventMeta.LogIndex <= currentTally.LastSeenLogIndex
+	}
+
+	return true
 }
 
 var Contract plugin.Contract = contract.MakePluginContract(&HostileOperator{})
