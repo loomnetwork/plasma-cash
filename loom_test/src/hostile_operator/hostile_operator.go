@@ -135,11 +135,6 @@ func (c *HostileOperator) ProcessEventBatch(ctx contract.Context, req *pctypes.P
 		}
 	}
 
-	// We have already consumed all the events being offered.
-	if eventBatchTally.LastSeenBlockNumber >= req.EndBlockNumber {
-		return nil
-	}
-
 	var err error
 
 loop:
