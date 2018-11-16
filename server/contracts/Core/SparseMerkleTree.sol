@@ -2,6 +2,8 @@ pragma solidity ^0.4.24;
 
 
 // Based on https://rinkeby.etherscan.io/address/0x881544e0b2e02a79ad10b01eca51660889d5452b#code
+// Original Code for the sparse merkle tree came from Wolkdb Plasma, this is now no longer compatible with that
+// we have javascript and Golang implementations for reference of the new implementation.
 contract SparseMerkleTree {
 
     uint8 constant DEPTH = 64;
