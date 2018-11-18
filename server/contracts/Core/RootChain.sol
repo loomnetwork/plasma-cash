@@ -508,34 +508,24 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
     /// @notice Exitor has to call respondChallengeBefore and submit a
     ///         transaction before prevTx or prevTx itself.
     /// @param slot The slot corresponding to the coin whose exit is being challenged
-    /// @param prevTxBytes The RLP-encoded transaction involving a particular
-    ///        coin which took place directly before exitingTxBytes
     /// @param txBytes The RLP-encoded transaction involving a particular
     ///        coin which an exiting owner of the coin claims to be the latest
-    /// @param prevTxInclusionProof An inclusion proof of prevTx
     /// @param txInclusionProof An inclusion proof of exitingTx
     /// @param signature The signature of the txBytes by the coin
     ///        owner indicated in prevTx
-    /// @param blocks An array of two block numbers, at index 0, the block
-    ///        containing the prevTx and at index 1, the block containing
-    ///        the exitingTx
+    /// @param blockNumber The block containing the exitingTx
     function challengeBefore(
         uint64 slot,
-        bytes prevTxBytes, bytes txBytes,
-        bytes prevTxInclusionProof, bytes txInclusionProof,
+        bytes txBytes,
+        bytes txInclusionProof,
         bytes signature,
-        uint256[2] blocks)
+        uint256 blockNumber)
         external
         payable isBonded
         isState(slot, State.EXITING)
     {
-        doInclusionChecks(
-            prevTxBytes, txBytes,
-            prevTxInclusionProof, txInclusionProof,
-            signature,
-            blocks
-        );
-        setChallenged(slot, txBytes.getOwner(), blocks[1], txBytes.getHash());
+        checkBefore(slot, txBytes, blockNumber, signature, txInclusionProof);
+        setChallenged(slot, txBytes.getOwner(), blockNumber, txBytes.getHash());
     }
 
     /// @dev Submits proof of a later transaction that corresponds to a challenge
@@ -590,7 +580,8 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         Transaction.TX memory txData = txBytes.getTx();
         require(txData.hash.ecverify(signature, challenges[slot][index].owner), "Invalid signature");
         require(txData.slot == slot, "Tx is referencing another slot");
-        require(blockNumber > challenges[slot][index].challengingBlockNumber);
+        require(blockNumber > challenges[slot][index].challengingBlockNumber, "Must be after the chalenge");
+        require(blockNumber <= coins[slot].exit.prevBlock, "Must be before the exit's parent block");
         checkTxIncluded(txData.slot, txData.hash, blockNumber, proof);
     }
 
@@ -621,6 +612,28 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
 
 
     // Must challenge with a tx in between
+
+    function checkBefore(
+        uint64 slot,
+        bytes txBytes,
+        uint blockNumber, 
+        bytes signature, 
+        bytes proof
+    ) 
+        private 
+        view 
+    {
+        require(
+            blockNumber < coins[slot].exit.prevBlock,
+            "Tx should be before the exit's parent block"
+        );
+
+        Transaction.TX memory txData = txBytes.getTx();
+        require(txData.hash.recover(signature) != address(0x0), "Invalid signature");
+        require(txData.slot == slot, "Tx is referencing another slot");
+        checkTxIncluded(slot, txData.hash, blockNumber, proof);
+    }
+
 
     // Check that the challenging transaction has been signed
     // by the attested previous owner of the coin in the exit

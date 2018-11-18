@@ -6,7 +6,7 @@ import assertRevert from './helpers/assertRevert.js';
 
 const txlib = require('./UTXO.js')
 
-contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async function(accounts) {
+contract.only("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async function(accounts) {
 
     const RESPONSE_PERIOD = 3600 * 24 * 3.5; // 3.5 days later
     const MATURITY_PERIOD = 3600 * 24 * 7; // 3.5 days later
@@ -103,10 +103,10 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
             let alice_to_alice = txlib.createUTXO(UTXO.slot, 0, alice, alice);
             await plasma.challengeBefore(
                 UTXO.slot,
-                '0x0' , alice_to_alice.tx, 
-                '0x0', '0x0', 
+                alice_to_alice.tx, 
+                '0x0', 
                 alice_to_alice.sig,
-                [0, UTXO.block],
+                UTXO.block,
                 {'from': alice, 'value': web3.toWei(0.1, 'ether')}
             );
 
@@ -181,10 +181,10 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
             let tx = alice_to_bob.tx;
             await plasma.challengeBefore(
                 UTXO.slot,
-                prev_tx , tx,
-                '0x0', tx_proof,
+                tx,
+                tx_proof,
                 sig,
-                [UTXO.block, 1000],
+                1000,
                 {'from': bob, 'value': web3.toWei(0.1, 'ether')}
             );
             await increaseTimeTo(t0 + MATURITY_PERIOD + e);
@@ -263,10 +263,10 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
             let challenging_tx = bob_to_charlie.tx;
             await plasma.challengeBefore(
                 UTXO.slot,
-                prev_tx , challenging_tx,
-                prev_tx_proof, tx_proof,
+                challenging_tx,
+                tx_proof,
                 sig,
-                [1000, 2000],
+                2000,
                 {'from': charlie, 'value': web3.toWei(0.1, 'ether')}
             );
             await increaseTimeTo(t0 + MATURITY_PERIOD + e);
@@ -344,10 +344,10 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
             sig = bob_to_alice.sig;
             await plasma.challengeBefore(
                 UTXO.slot,
-                prev_tx , exiting_tx,
-                prev_tx_proof, exiting_tx_proof,
+                exiting_tx,
+                exiting_tx_proof,
                 sig,
-                [1000, 2000],
+                2000,
                 {'from': alice, 'value': web3.toWei(0.1, 'ether')}
             );
             
@@ -428,10 +428,10 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
             let tx = alice_to_bob.tx;
             await plasma.challengeBefore(
                 UTXO.slot,
-                prev_tx , tx,
-                '0x0', proof,
+                tx,
+                proof,
                 sig,
-                [3, 1000],
+                1000,
                 {'from': challenger, 'value': web3.toWei(0.1, 'ether')}
             );
 
@@ -534,10 +534,10 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
                 let tx = charlie_to_dylan.tx;
                 await plasma.challengeBefore(
                     UTXO.slot,
-                    prev_tx , tx,
-                    prev_tx_proof, tx_proof,
+                    tx,
+                    tx_proof,
                     sig,
-                    [2000, 3000],
+                    3000,
                     {'from': dylan, 'value': web3.toWei(0.1, 'ether')}
                 );
 
@@ -546,10 +546,10 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
                 let alice_to_alice = txlib.createUTXO(UTXO.slot, 0, alice, alice);
                 await plasma.challengeBefore(
                     UTXO.slot,
-                    '0x0' , alice_to_alice.tx,
-                    '0x0', '0x0',
+                    alice_to_alice.tx,
+                    '0x0',
                     alice_to_alice.sig,
-                    [0, UTXO.block],
+                    UTXO.block,
                     {'from': alice, 'value': web3.toWei(0.1, 'ether')}
                 );
 
@@ -659,10 +659,10 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
                 let tx = charlie_to_dylan.tx;
                 await plasma.challengeBefore(
                     UTXO.slot,
-                    prev_tx , tx,
-                    prev_tx_proof, tx_proof,
+                    tx,
+                    tx_proof,
                     sig,
-                    [2000, 3000],
+                    3000,
                     {'from': dylan, 'value': web3.toWei(0.1, 'ether')}
                 );
 
@@ -672,10 +672,10 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
                 let alice_to_alice = txlib.createUTXO(UTXO.slot, 0, alice, alice);
                 assertRevert(plasma.challengeBefore(
                     UTXO.slot,
-                    '0x0' , alice_to_alice.tx,
-                    '0x0', '0x0',
+                    alice_to_alice.tx,
+                    '0x0',
                     alice_to_alice.sig,
-                    [0, UTXO.block],
+                    UTXO.block,
                     {'from': alice, 'value': web3.toWei(0.1, 'ether')}
                 ));
 
@@ -784,10 +784,10 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
                 let tx = charlie_to_dylan.tx;
                 await plasma.challengeBefore(
                     UTXO.slot,
-                    prev_tx , tx,
-                    prev_tx_proof, tx_proof,
+                    tx,
+                    tx_proof,
                     sig,
-                    [2000, 3000],
+                    3000,
                     {'from': dylan, 'value': web3.toWei(0.1, 'ether')}
                 );
 
@@ -797,10 +797,10 @@ contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async 
                 let alice_to_alice = txlib.createUTXO(UTXO.slot, 0, alice, alice);
                 await plasma.challengeBefore(
                     UTXO.slot,
-                    '0x0' , alice_to_alice.tx,
-                    '0x0', '0x0',
+                     alice_to_alice.tx,
+                    '0x0',
                     alice_to_alice.sig,
-                    [0, UTXO.block],
+                    UTXO.block,
                     {'from': alice, 'value': web3.toWei(0.1, 'ether')}
                 );
 
