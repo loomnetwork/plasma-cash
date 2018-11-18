@@ -581,7 +581,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         require(txData.hash.ecverify(signature, challenges[slot][index].owner), "Invalid signature");
         require(txData.slot == slot, "Tx is referencing another slot");
         require(blockNumber > challenges[slot][index].challengingBlockNumber, "Must be after the chalenge");
-        require(blockNumber <= coins[slot].exit.prevBlock, "Must be before the exit's parent block");
+        require(blockNumber <= coins[slot].exit.exitBlock, "Cannot respond with a tx after the exit");
         checkTxIncluded(txData.slot, txData.hash, blockNumber, proof);
     }
 
@@ -624,7 +624,7 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         view 
     {
         require(
-            blockNumber < coins[slot].exit.prevBlock,
+            blockNumber <= coins[slot].exit.prevBlock,
             "Tx should be before the exit's parent block"
         );
 
