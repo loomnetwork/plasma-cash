@@ -178,6 +178,7 @@ loop:
 			if err != nil {
 				break loop
 			}
+
 			requestBatchTally.LastSeenBlockNumber = request.Meta.BlockNumber
 			requestBatchTally.LastSeenTxIndex = request.Meta.TxIndex
 			requestBatchTally.LastSeenLogIndex = request.Meta.LogIndex
