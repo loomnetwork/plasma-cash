@@ -6,7 +6,7 @@ import assertRevert from './helpers/assertRevert.js';
 
 const txlib = require('./UTXO.js')
 
-contract.only("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async function(accounts) {
+contract("Plasma ERC721 - Invalid History Challenge / `challengeBefore`", async function(accounts) {
 
     const RESPONSE_PERIOD = 3600 * 24 * 3.5; // 3.5 days later
     const MATURITY_PERIOD = 3600 * 24 * 7; // 3.5 days later
