@@ -66,11 +66,38 @@ async function withdrawBonds(plasma, withdrawer, amount) {
     assert.equal(withdraw.amount, web3.toWei(amount, 'ether'));
 }
 
+async function exitAfterDeposit(plasma, tx, from) {
+
+    // Prevblock = 0 because we're exiting a tx
+    // directly after being minted in the plasma chain
+    let prevBlock = 0;
+
+    let ret = createUTXO(tx.slot, prevBlock, from, from);
+    let utxo = ret.tx;
+    let sig = ret.sig;
+
+    await plasma.startExit(
+        tx.slot,
+        '0x', utxo,
+        '0x0', '0x0',
+        sig,
+        [prevBlock, tx.block],
+        {'from': from, 'value': web3.toWei(0.1, 'ether')}
+    );
+}
+
+async function getState(plasma, slot) {
+    let coin = await plasma.getPlasmaCoin(slot)
+    return coin[4]
+}
+
 
 module.exports = {
     signHash : signHash,
     createUTXO : createUTXO,
     submitTransactions: submitTransactions,
     withdrawBonds: withdrawBonds,
+    exitAfterDeposit: exitAfterDeposit,
+    getState : getState,
     Promisify: Promisify
 }
