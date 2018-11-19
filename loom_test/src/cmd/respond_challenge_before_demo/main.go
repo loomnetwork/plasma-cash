@@ -93,7 +93,7 @@ func main() {
 	// TODO: Dan should start watching for challenges of depositSlot1
 
 	fmt.Println("Trudy attempts to challenge Dan's exit...")
-	challengeTxHash, err := trudy.ChallengeBefore(depositSlot1, big.NewInt(0), coin.DepositBlockNum)
+	challengeTxHash, err := trudy.ChallengeBefore(depositSlot1, coin.DepositBlockNum)
 	exitIfError(err)
 
 	challengedExitEvent, err := trudy.RootChain.ChallengedExitEventData(common.BytesToHash(challengeTxHash))

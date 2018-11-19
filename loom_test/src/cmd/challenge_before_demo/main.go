@@ -101,7 +101,7 @@ func main() {
 	fmt.Println("Dan attempts to challenge...")
 	// Dan challenges Trudy's exit (in practice this will be done automatically by Dan's client
 	// (once watching is implemented)
-	_, err = dan.ChallengeBefore(depositSlot1, big.NewInt(0), coin.DepositBlockNum)
+	_, err = dan.ChallengeBefore(depositSlot1, coin.DepositBlockNum)
 	exitIfError(err)
 
 	// Let 8 days pass without any response to the challenge
