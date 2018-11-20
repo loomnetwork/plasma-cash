@@ -145,7 +145,7 @@ func (c *Client) StartExit(slot uint64, prevTxBlkNum *big.Int, txBlkNum *big.Int
 		prevTxBlkNum, txBlkNum)
 }
 
-func (c *Client) ChallengeBefore(slot uint64, prevTxBlkNum *big.Int, txBlkNum *big.Int) ([]byte, error) {
+func (c *Client) ChallengeBefore(slot uint64, txBlkNum *big.Int) ([]byte, error) {
 	account, err := c.TokenContract.Account()
 	if err != nil {
 		return nil, err
@@ -164,10 +164,10 @@ func (c *Client) ChallengeBefore(slot uint64, prevTxBlkNum *big.Int, txBlkNum *b
 
 		txHash, err := c.RootChain.ChallengeBefore(
 			slot,
-			nil, exitingTx,
-			nil, nil,
+			exitingTx,
+			nil,
 			exitingTxSig,
-			big.NewInt(0), txBlkNum)
+			txBlkNum)
 		if err != nil {
 			return nil, err
 		}
@@ -181,11 +181,6 @@ func (c *Client) ChallengeBefore(slot uint64, prevTxBlkNum *big.Int, txBlkNum *b
 		return nil, err
 	}
 
-	prevTx, prevTxProof, err := c.getTxAndProof(prevTxBlkNum, slot)
-	if err != nil {
-		return nil, err
-	}
-
 	exitingTxSig, err := exitingTx.Sign(account.PrivateKey)
 	if err != nil {
 		return nil, err
@@ -193,10 +188,10 @@ func (c *Client) ChallengeBefore(slot uint64, prevTxBlkNum *big.Int, txBlkNum *b
 
 	txHash, err := c.RootChain.ChallengeBefore(
 		slot,
-		prevTx, exitingTx,
-		prevTxProof, exitingTxProof,
+		exitingTx,
+		exitingTxProof,
 		exitingTxSig,
-		prevTxBlkNum, txBlkNum)
+		txBlkNum)
 	return txHash, err
 
 }
