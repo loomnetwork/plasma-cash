@@ -85,7 +85,7 @@ func main() {
 	coin, err = dan.RootChain.PlasmaCoin(depositSlot1)
 	exitIfError(err)
 	fmt.Println("Dan attempts to exit...")
-	_, err = dan.StartExit(depositSlot1, big.NewInt(0), coin.DepositBlockNum)
+	_, err = dan.StartExit(depositSlot1, coin.DepositBlockNum, trudyToDanBlockNum)
 	exitIfError(err)
 	time.Sleep(2 * time.Second)
 
