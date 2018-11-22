@@ -66,25 +66,51 @@ async function withdrawBonds(plasma, withdrawer, amount) {
     assert.equal(withdraw.amount, web3.toWei(amount, 'ether'));
 }
 
-async function exitAfterDeposit(plasma, tx, from) {
+async function exitDeposit(plasma, from, tx) {
+    let ret = createUTXO(tx.slot, 0, from, from);
 
-    // Prevblock = 0 because we're exiting a tx
-    // directly after being minted in the plasma chain
-    let prevBlock = 0;
+    await exit(
+        plasma, from,
 
-    let ret = createUTXO(tx.slot, prevBlock, from, from);
-    let utxo = ret.tx;
-    let sig = ret.sig;
-
-    await plasma.startExit(
         tx.slot,
-        '0x', utxo,
-        '0x0', '0x0',
-        sig,
-        [prevBlock, tx.block],
+
+        // C
+        { 'block' : tx.block, 'tx': ret },
+        // C Proof
+        '0x0',
+
+        // PC
+        { 'block' : 0, 'tx': { 'tx': '0x', 'sig': '0x' }  },
+        // PC Proof
+        '0x0'
+    )
+}
+
+async function exit(plasma, from, slot, c, cProof, pc, pcProof) {
+    // console.log(c.block, c.tx.tx, c.tx.sig)
+    // console.log(pc.block, pc.tx.tx, pc.tx.sig)
+    await plasma.startExit(
+        slot,
+        pc.tx.tx, c.tx.tx,
+        pcProof, cProof,
+        c.tx.sig,
+        [pc.block, c.block],
         {'from': from, 'value': web3.toWei(0.1, 'ether')}
     );
 }
+
+async function challengeAfter(plasma, from, slot, c, cProof) {
+    await plasma.challengeAfter(
+        slot,
+        c.block,
+        c.tx.tx,
+        cProof,
+        c.tx.sig,
+        {'from': from }
+    );
+}
+
+
 
 async function getState(plasma, slot) {
     let coin = await plasma.getPlasmaCoin(slot)
@@ -97,7 +123,9 @@ module.exports = {
     createUTXO : createUTXO,
     submitTransactions: submitTransactions,
     withdrawBonds: withdrawBonds,
-    exitAfterDeposit: exitAfterDeposit,
+    exitDeposit: exitDeposit,
+    exit: exit,
+    challengeAfter: challengeAfter,
     getState : getState,
     Promisify: Promisify
 }
