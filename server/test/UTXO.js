@@ -69,7 +69,7 @@ async function withdrawBonds(plasma, withdrawer, amount) {
 async function exitDeposit(plasma, from, tx) {
     let ret = createUTXO(tx.slot, 0, from, from);
 
-    await exit(
+    return exit(
         plasma, from,
 
         tx.slot,
@@ -97,6 +97,8 @@ async function exit(plasma, from, slot, c, cProof, pc, pcProof) {
         [pc.block, c.block],
         {'from': from, 'value': web3.toWei(0.1, 'ether')}
     );
+    let t0 = (await web3.eth.getBlock('latest')).timestamp;
+    return t0
 }
 
 async function challengeAfter(plasma, from, slot, c, cProof) {
