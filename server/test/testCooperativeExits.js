@@ -6,7 +6,7 @@ import assertRevert from './helpers/assertRevert.js';
 
 const txlib = require('./UTXO.js')
 
-contract.only("Exits", async function(accounts) {
+contract("Exits", async function(accounts) {
 
     const t1 = 3600 * 24 * 3; // 3 days later
     const t2 = 3600 * 24 * 5; // 5 days later

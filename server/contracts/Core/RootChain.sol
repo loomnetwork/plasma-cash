@@ -660,6 +660,11 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
     }
 
     function checkAfter(uint64 slot, bytes txBytes, uint blockNumber, bytes signature, bytes proof) private view {
+        require(
+            coins[slot].exit.exitBlock < blockNumber,
+            "Tx should be after the exitBlock"
+        );
+
         Transaction.TX memory txData = txBytes.getTx();
         require(txData.hash.ecverify(signature, coins[slot].exit.owner), "Invalid signature");
         require(txData.slot == slot, "Tx is referencing another slot");

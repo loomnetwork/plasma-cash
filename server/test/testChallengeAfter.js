@@ -6,7 +6,7 @@ import assertRevert from './helpers/assertRevert.js';
 
 const txlib = require('./UTXO.js')
 
-contract.only("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", async function(accounts) {
+contract("Challenges: Exit Spent Coin / `challengeAfter`", async function(accounts) {
 
     const t1 = 3600 * 24 * 3; // 3 days later
     const t2 = 3600 * 24 * 5; // 5 days later
@@ -84,6 +84,7 @@ contract.only("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", as
                     tree_bob.createMerkleProof(UTXO.slot)
                 )
             } catch (e) {
+                assert.ok(e !== undefined)
             }
 
             // State after must be 0
@@ -135,7 +136,7 @@ contract.only("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", as
                     tree_bob.createMerkleProof(UTXO.slot)
                 )
             } catch (e) {
-                // console.log(e.reason)
+                assert.ok(e !== undefined)
             }
 
             // State after must be 1
@@ -162,7 +163,7 @@ contract.only("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", as
                     "0x12345678"
                 )
             } catch (e) {
-                // console.log(e)
+                assert.ok(e !== undefined)
             }
             // State before must be 1
             assert.equal(await txlib.getState(plasma, UTXO.slot), 1)
@@ -190,7 +191,7 @@ contract.only("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", as
                 tree_bob.createMerkleProof(UTXO.slot)
             )
             } catch (e) {
-                // console.log(e)
+                assert.ok(e !== undefined)
             }
             // State before must be 1
             assert.equal(await txlib.getState(plasma, UTXO.slot), 1)
@@ -228,10 +229,44 @@ contract.only("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", as
             await plasma.finalizeExit(UTXO.slot, {from: random_guy2});
             assert.equal(await txlib.getState(plasma, UTXO.slot), 2)
         });
+
+        it("Cannot challenge an exit with an earlier spend", async function() {
+            let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, alice, bob);
+            let txs = [alice_to_bob.leaf]
+            let tree_bob = await txlib.submitTransactions(authority, plasma, blk_1, txs);
+
+            let bob_to_alice = txlib.createUTXO(UTXO.slot, blk_1, bob, alice);
+            txs = [bob_to_alice.leaf]
+            let tree_alice = await txlib.submitTransactions(authority, plasma, blk_2, txs);
+
+            // Bob exits at [UTXO.block,blk_1]
+            await txlib.exit(plasma, alice,
+                UTXO.slot,
+
+                { 'block': blk_2, 'tx': bob_to_alice },
+                tree_alice.createMerkleProof(UTXO.slot),
+
+                { 'block': blk_1, 'tx': alice_to_bob },
+                tree_bob.createMerkleProof(UTXO.slot),
+            )
+
+            try { 
+                await txlib.challengeAfter(plasma, bob,
+                    UTXO.slot,
+                    { 'block': blk_1, 'tx': alice_to_bob },
+                    tree_bob.createMerkleProof(UTXO.slot)
+                )
+            } catch (e) { 
+                assert.ok(e !== undefined)
+            }
+            t0 = (await web3.eth.getBlock('latest')).timestamp;
+            await increaseTimeTo( t0 + t1 + t2);
+            await plasma.finalizeExit(UTXO.slot, {from: random_guy2});
+            assert.equal(await txlib.getState(plasma, UTXO.slot), 2)
+        });
     })
 
-    describe('C = Deposit, PC = Deposit', function() {
-
+    describe('C = Deposit, PC = Null', function() {
         it("Can challenge with a direct spend", async function() {
             let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, alice, bob);
             let txs = [alice_to_bob.leaf]
@@ -274,7 +309,9 @@ contract.only("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", as
                     { 'block': blk_2, 'tx': bob_to_charlie },
                     tree_charlie.createMerkleProof(UTXO.slot)
                 )
-            } catch (e) { }
+            } catch (e) {
+                assert.ok(e !== undefined)
+            }
 
             assert.equal(await txlib.getState(plasma, UTXO.slot), 1)
         })
@@ -345,7 +382,7 @@ contract.only("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", as
                     tree_dylan.createMerkleProof(UTXO.slot)
                 )
             } catch (e) { 
-
+                assert.ok(e !== undefined)
             }
             assert.equal(await txlib.getState(plasma, UTXO.slot), 1)
         })
@@ -424,7 +461,7 @@ contract.only("Plasma ERC721 - Exit Spent Coin Challenge / `challengeAfter`", as
                     tree_elliot.createMerkleProof(UTXO.slot)
                 )
             } catch (e) { 
-
+                assert.ok(e !== undefined)
             }
             assert.equal(await txlib.getState(plasma, UTXO.slot), 1)
         })
