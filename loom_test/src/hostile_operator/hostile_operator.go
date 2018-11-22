@@ -48,6 +48,10 @@ type (
 	WithdrawCoinRequest = pctypes.PlasmaCashWithdrawCoinRequest
 
 	GetPendingTxsRequest = pctypes.GetPendingTxsRequest
+
+	RequestBatchTally = pctypes.PlasmaCashRequestBatchTally
+
+	GetRequestBatchTallyRequest = pctypes.PlasmaCashGetRequestBatchTallyRequest
 )
 
 // HostileOperator is a DAppChain Go Contract that handles Plasma Cash txs in a way that allows
@@ -94,6 +98,19 @@ func (c *HostileOperator) Meta() (plugin.Meta, error) {
 		Name:    "hostileoperator",
 		Version: "1.0.0",
 	}, nil
+}
+
+func (c *HostileOperator) GetRequestBatchTally(ctx contract.StaticContext, req *GetRequestBatchTallyRequest) (*RequestBatchTally, error) {
+	tally := &RequestBatchTally{}
+
+	if err := ctx.Get(requestBatchTallyKey(), tally); err != nil {
+		if err == contract.ErrNotFound {
+			return tally, nil
+		}
+		return nil, errors.Wrapf(err, "error while getting request batch tally")
+	}
+
+	return tally, nil
 }
 
 func (c *HostileOperator) Init(ctx contract.Context, req *InitRequest) error {
@@ -157,10 +174,11 @@ loop:
 				break
 			}
 
-			err = c.DepositRequest(ctx, data.Deposit)
+			err = c.depositRequest(ctx, data.Deposit)
 			if err != nil {
 				break loop
 			}
+
 			requestBatchTally.LastSeenBlockNumber = request.Meta.BlockNumber
 			requestBatchTally.LastSeenTxIndex = request.Meta.TxIndex
 			requestBatchTally.LastSeenLogIndex = request.Meta.LogIndex
@@ -170,7 +188,7 @@ loop:
 				break
 			}
 
-			err = c.CoinReset(ctx, data.CoinReset)
+			err = c.coinReset(ctx, data.CoinReset)
 			if err != nil {
 				break loop
 			}
@@ -184,7 +202,7 @@ loop:
 				break
 			}
 
-			err = c.ExitCoin(ctx, data.StartedExit)
+			err = c.exitCoin(ctx, data.StartedExit)
 			if err != nil {
 				break loop
 			}
@@ -198,7 +216,7 @@ loop:
 				break
 			}
 
-			err = c.WithdrawCoin(ctx, data.Withdraw)
+			err = c.withdrawCoin(ctx, data.Withdraw)
 			if err != nil {
 				break loop
 			}
@@ -303,7 +321,7 @@ func (c *HostileOperator) PlasmaTxRequest(ctx contract.Context, req *PlasmaTxReq
 	return ctx.Set(pendingTXsKey, pending)
 }
 
-func (c *HostileOperator) DepositRequest(ctx contract.Context, req *DepositRequest) error {
+func (c *HostileOperator) depositRequest(ctx contract.Context, req *DepositRequest) error {
 	fmt.Printf("Inside DepositRequestDepositRequest- %v\n", req)
 
 	pbk := &PlasmaBookKeeping{}
@@ -403,15 +421,15 @@ func (c *HostileOperator) GetUserSlotsRequest(ctx contract.StaticContext, req *G
 }
 
 // Dummy method
-func (c *HostileOperator) CoinReset(ctc contract.Context, req *CoinResetRequest) error {
+func (c *HostileOperator) coinReset(ctc contract.Context, req *CoinResetRequest) error {
 	return nil
 }
 
-func (c *HostileOperator) ExitCoin(ctc contract.Context, req *ExitCoinRequest) error {
+func (c *HostileOperator) exitCoin(ctc contract.Context, req *ExitCoinRequest) error {
 	return nil
 }
 
-func (c *HostileOperator) WithdrawCoin(ctx contract.Context, req *WithdrawCoinRequest) error {
+func (c *HostileOperator) withdrawCoin(ctx contract.Context, req *WithdrawCoinRequest) error {
 	return nil
 }
 
