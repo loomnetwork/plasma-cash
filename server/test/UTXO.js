@@ -101,6 +101,17 @@ async function exit(plasma, from, slot, c, cProof, pc, pcProof) {
     return t0
 }
 
+async function challengeBetween(plasma, from, slot, c, cProof) {
+    await plasma.challengeBetween(
+        slot,
+        c.block,
+        c.tx.tx,
+        cProof,
+        c.tx.sig,
+        {'from': from }
+    );
+}
+
 async function challengeAfter(plasma, from, slot, c, cProof) {
     await plasma.challengeAfter(
         slot,
@@ -128,6 +139,7 @@ module.exports = {
     exitDeposit: exitDeposit,
     exit: exit,
     challengeAfter: challengeAfter,
+    challengeBetween: challengeBetween,
     getState : getState,
     Promisify: Promisify
 }
