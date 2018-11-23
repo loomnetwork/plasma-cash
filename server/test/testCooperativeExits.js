@@ -470,6 +470,51 @@ contract("Exits", async function(accounts) {
             assert.equal(withdraw.amount, web3.toWei(0.1 * 2, 'ether'));
         });
 
+        it("Alice sends Bob UTXO 2, submits it, Bob deposits his coin and sends Alice UTXO 4, submits it, both exit", async function() {
+            let alice_to_bob = txlib.createUTXO(UTXO.slot, UTXO.block, alice, bob);
+            let txs = [alice_to_bob.leaf];
+            let tree_1000 = await txlib.submitTransactions(authority, plasma, blk_1, txs);
+
+            // Bob deposits Coin 7, which generates a new UTXO in the Plasma chain.
+            await cards.register({from: bob});
+            await cards.depositToPlasma(7, {from: bob});
+            const depositEvent = plasma.Deposit({}, {fromBlock: 0, toBlock: 'latest'});
+            events = await txlib.Promisify(cb => depositEvent.get(cb));
+            let bobCoin = events[events.length - 1].args;
+            let slot = bobCoin.slot;
+            let block = await plasma.getPlasmaCoin.call(slot);
+            block = block[1].toNumber();
+
+            let bob_to_alice = txlib.createUTXO(slot, block, bob, alice);
+            txs = [bob_to_alice.leaf];
+            let tree_2000 = await txlib.submitTransactions(authority, plasma, blk_2, txs);
+
+            t0 = await txlib.exit(plasma, bob,
+                UTXO.slot,
+                
+                { 'block': blk_1, 'tx': alice_to_bob },
+                tree_1000.createMerkleProof(UTXO.slot),
+
+                { 'block': UTXO.block, 'tx': txlib.createUTXO(UTXO.slot, 0, alice, alice) },
+                '0x',
+            )
+
+            t0 = await txlib.exit(plasma, alice,
+                slot,
+                
+                { 'block': blk_2, 'tx': bob_to_alice },
+                tree_2000.createMerkleProof(slot),
+
+                { 'block': block, 'tx': txlib.createUTXO(slot, 0, bob, bob) },
+                '0x',
+            )
+
+            await increaseTimeTo(t0 + t1 + t2);
+            await plasma.finalizeExits([UTXO.slot, slot], {from: random_guy2});
+            assert.equal(await txlib.getState(plasma, UTXO.slot), 2, "State should be 2")
+            assert.equal(await txlib.getState(plasma, slot), 2, "State should be 2")
+        });
+
 
     })
 });
