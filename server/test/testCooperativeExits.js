@@ -28,7 +28,7 @@ contract("Exits", async function(accounts) {
     const blk_3 = 3000
     const blk_4 = 4000
 
-    let [authority, alice, bob, charlie, dylan, elliot, random_guy, random_guy2, challenger] = accounts;
+    let [authority, alice, bob, charlie, dylan, elliot, random_guy, random_guy2, challenger, mallory] = accounts;
 
     beforeEach(async function() {
         vmc = await ValidatorManagerContract.new({from: authority});
@@ -112,6 +112,39 @@ contract("Exits", async function(accounts) {
             await txlib.withdrawBonds(plasma, alice, 0.1);
         })
 
+        // This test proves that even if the operator
+        // decides to enable arbitrary accounts as token accounts,
+        // they are not able to abuse the system and steal other user's coins
+        // due to the `contractAddress` parameter in a coin's state.
+        it("Mallory cannot steal ERC721 by manually calling onERC721Received", async function() {
+            // Validator triggers mallory as a token contract, 
+            // allowing mallory to call the receiver function
+            await vmc.toggleToken(mallory);
+
+            let blk = web3.eth.blocknumber;
+            // The registered `contractAddress` is `msg.sender` which is mallory's address
+            await plasma.onERC721Received(mallory, COINS[1], '0x0', {from: mallory});
+
+            let malloryEvent = plasma.Deposit({from: mallory}, {fromBlock: 0, toBlock: 'latest'});
+            events = await txlib.Promisify(cb => malloryEvent.get(cb));
+            let UTXO = {'slot': events[0]['args'].slot, 'block': events[0]['args'].blockNumber.toNumber()};
+
+            // Mallory now has a UTXO of `COINS[1]` which is owned by Alice.
+            // Tries to exit it.
+            // Note however, that the `contractAddress` in the coin's state is not 
+            // the ERC721, but Mallory's address!
+            t0 = await txlib.exitDeposit(plasma, mallory, UTXO)
+            await increaseTimeTo(t0 + t1 + t2);
+            await plasma.finalizeExit(UTXO.slot, {from: random_guy});
+
+            // However mallory cannot withdraw the coins since `contractAddress` 
+            // of the coin is actually mallory's address and NOT the actual token address
+            assertRevert(plasma.withdraw(UTXO.slot, {from: mallory}));
+
+            // Nonetheless, Mallory's exit was actually valid and can withdraw the bond
+            await txlib.withdrawBonds(plasma, mallory, 0.1)
+        });
+
     });
 
     describe('Exits', async function() {
@@ -129,6 +162,7 @@ contract("Exits", async function(accounts) {
             await plasma.finalizeExit(UTXO.slot, {from: random_guy2});
             assert.equal(await txlib.getState(plasma, UTXO.slot), 2, "State should be 2")
         })
+
 
         it('C = Deposit, PC = Null', async function() {
             t0 = await txlib.exitDeposit(plasma, alice, UTXO)
