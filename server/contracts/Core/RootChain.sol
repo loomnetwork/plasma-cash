@@ -559,9 +559,6 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
         // If the exit was actually challenged and responded, penalize the challenger and award the responder
         slashBond(challenges[slot][index].challenger, msg.sender);
 
-        // Put coin back to the exiting state
-        coins[slot].state = State.EXITING;
-
         challenges[slot].remove(challengingTxHash);
         emit RespondedExitChallenge(slot);
     }
@@ -660,6 +657,11 @@ contract RootChain is ERC721Receiver, ERC20Receiver {
     }
 
     function checkAfter(uint64 slot, bytes txBytes, uint blockNumber, bytes signature, bytes proof) private view {
+        require(
+            coins[slot].exit.exitBlock < blockNumber,
+            "Tx should be after the exitBlock"
+        );
+
         Transaction.TX memory txData = txBytes.getTx();
         require(txData.hash.ecverify(signature, coins[slot].exit.owner), "Invalid signature");
         require(txData.slot == slot, "Tx is referencing another slot");
