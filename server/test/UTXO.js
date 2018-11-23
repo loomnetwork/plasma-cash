@@ -123,7 +123,28 @@ async function challengeAfter(plasma, from, slot, c, cProof) {
     );
 }
 
+async function challengeBefore(plasma, from, slot, c, cProof) {
+    await plasma.challengeBefore(
+        slot,
+        c.tx.tx,
+        cProof,
+        c.tx.sig,
+        c.block,
+        {'from': from, 'value': web3.toWei(0.1, 'ether')}
+    );
+}
 
+async function respondChallengeBefore(plasma, from, slot, c, cProof, txHash) {
+    await plasma.respondChallengeBefore(
+        slot,
+        txHash,
+        c.block,
+        c.tx.tx,
+        cProof,
+        c.tx.sig,
+        {'from': from }
+    );
+}
 
 async function getState(plasma, slot) {
     let coin = await plasma.getPlasmaCoin(slot)
@@ -140,6 +161,8 @@ module.exports = {
     exit: exit,
     challengeAfter: challengeAfter,
     challengeBetween: challengeBetween,
+    challengeBefore: challengeBefore,
+    respondChallengeBefore: respondChallengeBefore,
     getState : getState,
     Promisify: Promisify
 }
