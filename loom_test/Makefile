@@ -1,6 +1,5 @@
 CURRENT_DIRECTORY = $(shell pwd)
-
-
+HASHICORP_DIR = $(GOPATH)/src/github.com/hashicorp/go-plugin 
 
 .PHONY: all clean test lint deps demos abigen contracts
 
@@ -50,6 +49,7 @@ deps:
 		github.com/prometheus/client_golang/prometheus \
 		github.com/loomnetwork/mamamerkle \
 		github.com/miguelmota/go-solidity-sha3
+	cd $(HASHICORP_DIR) && git checkout f4c3476bd38585f9ec669d10ed1686abd52b996
 
 clean:
 	go clean
