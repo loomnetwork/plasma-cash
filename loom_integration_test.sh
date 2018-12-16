@@ -48,6 +48,7 @@ function start_chains {
 function stop_chains {
     echo "exiting ganache-pid(${ganache_pid})"
     kill -9 "${ganache_pid}"    &> /dev/null
+    pkill -f ganache || true
     
     if [[ "$DEBUG_LOOM" == false ]]; then
         echo "exiting loom-pid(${loom_pid})"
@@ -138,6 +139,9 @@ if [[ "$LOOM_INIT_ONLY" == true ]]; then
 fi
 
 trap cleanup EXIT
+
+# Ensure there's no leftover ganache running from a previous test
+pkill -f ganache || true
 
 start_chains
 
