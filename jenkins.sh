@@ -10,6 +10,7 @@ npm run lint
 npm run test
 
 cd $REPO_ROOT/loom_test
+export TMP_GOPATH =/tmp/gopath-$BUILD_TAG
 export GOPATH=/tmp/gopath-$BUILD_TAG:`pwd`
 make clean
 make deps

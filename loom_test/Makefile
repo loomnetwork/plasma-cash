@@ -1,5 +1,5 @@
 CURRENT_DIRECTORY = $(shell pwd)
-HASHICORP_DIR = $(GOPATH)/src/github.com/hashicorp/go-plugin 
+HASHICORP_DIR = $(TMP_GOPATH)/src/github.com/hashicorp/go-plugin 
 
 .PHONY: all clean test lint deps demos abigen contracts
 
