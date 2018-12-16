@@ -48,7 +48,6 @@ function start_chains {
 function stop_chains {
     echo "exiting ganache-pid(${ganache_pid})"
     kill -9 "${ganache_pid}"    &> /dev/null
-    pkill -f ganache || true
     
     if [[ "$DEBUG_LOOM" == false ]]; then
         echo "exiting loom-pid(${loom_pid})"
@@ -103,6 +102,7 @@ function download_dappchain {
 if [[ "$IS_JENKINS_ENV" == true ]]; then
     # Kill off any plugins that weren't killed off by older builds
     pkill -f "hostileoperator.1.0.0" || true
+    pkill -f ganache || true
 fi
 
 # BUILD_TAG is usually only set by Jenkins, so when running locally just hardcode some value
@@ -139,9 +139,6 @@ if [[ "$LOOM_INIT_ONLY" == true ]]; then
 fi
 
 trap cleanup EXIT
-
-# Ensure there's no leftover ganache running from a previous test
-pkill -f ganache || true
 
 start_chains
 
