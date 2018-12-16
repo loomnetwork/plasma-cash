@@ -45,6 +45,7 @@ deps:
 		github.com/stretchr/testify \
 		github.com/grpc-ecosystem/go-grpc-prometheus \
 		github.com/hashicorp/go-plugin \
+		github.com/hashicorp/hcl \
 		github.com/prometheus/client_golang/prometheus \
 		github.com/loomnetwork/mamamerkle \
 		github.com/miguelmota/go-solidity-sha3
