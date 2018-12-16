@@ -6,7 +6,7 @@
 set -exo pipefail
 
 # Loom build to use for tests when running on Jenkins, this build will be automatically downloaded.
-BUILD_NUMBER=593
+BUILD_NUMBER=653
 
 # These can be toggled via the options below, only useful when running the script locally.
 LOOM_INIT_ONLY=false
@@ -102,6 +102,7 @@ function download_dappchain {
 if [[ "$IS_JENKINS_ENV" == true ]]; then
     # Kill off any plugins that weren't killed off by older builds
     pkill -f "hostileoperator.1.0.0" || true
+    pkill -f loom || true
     pkill -f ganache || true
 fi
 
